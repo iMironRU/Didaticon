@@ -9,7 +9,8 @@
     "pwa"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @eios/contracts && npm run build -w @eios/glue && npm run build -w @eios/pwa",
+    "typecheck": "npm run build -w @eios/contracts && npm run typecheck -w @eios/glue && npm run typecheck -w @eios/pwa",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
   },
