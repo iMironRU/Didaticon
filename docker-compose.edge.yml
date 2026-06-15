@@ -1,0 +1,18 @@
+# Кампусный edge-узел (локальный экзамен). Тонкий store на SQLite, без Postgres.
+# Доступен только из сети ОО; сводит свидетельства вверх по возвращении канала.
+# Запуск: docker compose -f docker-compose.yml -f docker-compose.edge.yml up
+services:
+  postgres:
+    profiles: ["disabled"]   # на краю не нужен
+
+  glue:
+    environment:
+      EIOS_STORE: sqlite
+      EIOS_SQLITE_PATH: /data/edge.sqlite
+      EIOS_ROLE: edge          # включает буфер→сверка вместо прямой проводки
+    volumes:
+      - edgedata:/data
+    depends_on: []
+
+volumes:
+  edgedata:

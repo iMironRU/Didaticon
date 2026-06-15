@@ -1,0 +1,27 @@
+{
+  "name": "@eios/glue",
+  "version": "0.1.0",
+  "description": "Сервис-клей: фасад слоя активности между scorm-again и Univerkon",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "echo \"TODO(срез-1): eslint\"",
+    "test": "echo \"TODO(срез-1): tests\""
+  },
+  "dependencies": {
+    "@eios/contracts": "*",
+    "fastify": "^4.28.0",
+    "jose": "^5.9.0",
+    "pg": "^8.12.0",
+    "better-sqlite3": "^11.3.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^20.16.0"
+  },
+  "license": "MIT"
+}

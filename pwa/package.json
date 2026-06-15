@@ -1,0 +1,30 @@
+{
+  "name": "@eios/pwa",
+  "version": "0.1.0",
+  "description": "Тонкий студенческий PWA: OIDC + scorm-again + офлайн-буфер",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "echo \"TODO(срез-1): eslint\"",
+    "test": "echo \"TODO(срез-1): tests\""
+  },
+  "dependencies": {
+    "@eios/contracts": "*",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "scorm-again": "^3.0.0",
+    "oidc-client-ts": "^3.1.0",
+    "idb": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.0"
+  },
+  "license": "MIT"
+}

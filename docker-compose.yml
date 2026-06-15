@@ -1,0 +1,39 @@
+# Центральный стек ЭИОС. Univerkon (1С) в стек НЕ входит — это существующая
+# база организации, к которой клей обращается по сети (см. glue/.env).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: eios
+      POSTGRES_USER: eios
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eios}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eios"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  glue:
+    build: ./glue
+    env_file: ./glue/.env
+    environment:
+      EIOS_STORE: postgres
+      EIOS_PG_URL: postgres://eios:${POSTGRES_PASSWORD:-eios}@postgres:5432/eios
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  # Статика: SCORM-пакеты + собранный PWA. Один origin (важно для scorm-again).
+  static:
+    build: ./pwa
+    ports:
+      - "8081:80"
+    depends_on:
+      - glue
+
+volumes:
+  pgdata:

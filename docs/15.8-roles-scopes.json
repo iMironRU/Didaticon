@@ -1,0 +1,148 @@
+{
+  "section": "15.8",
+  "title": "Ролевая модель субъектов и удостоверяющий слой",
+  "version": "0.1-draft",
+  "status": "working_hypothesis",
+  "belongs_to": "iMironRU/edu-framework",
+  "license": "CC BY-SA 4.0",
+  "platform_independent": true,
+  "protocol_binding": "OIDC",
+
+  "principle": "Природа учётной записи определяет, что субъект вправе породить. validate — только человек (инвариант §4.2).",
+
+  "planes": {
+    "human": {
+      "carrier": "oidc_user_token",
+      "may_witness": true,
+      "may_validate": true,
+      "may_create": true
+    },
+    "technical": {
+      "carrier": "machine_credential",
+      "examples": ["lms", "proctoring", "skud", "exam_station"],
+      "may_witness": true,
+      "may_validate": false,
+      "may_create": false
+    }
+  },
+
+  "token_form": {
+    "carries": ["identity", "roles"],
+    "does_not_carry": ["pointwise_responsibility_scope"],
+    "pointwise_authorization": "resolved_live_by_contour_against_role_registry_and_state"
+  },
+
+  "event_types": {
+    "lesson": {
+      "online_is_attribute": true,
+      "scopes": { "create": "lesson:create", "witness": "lesson:witness", "validate": "lesson:validate" },
+      "validator_of_record_role": "teacher",
+      "witness_holders": ["teacher", "lms", "proctoring"]
+    },
+    "practice_day": {
+      "scopes": { "create": "practice:create", "witness": "practice:witness", "validate": "practice:validate" },
+      "validator_of_record_role": "department",
+      "witness_holders": ["base_supervisor_external", "skud", "scan_upload"]
+    },
+    "attestation": {
+      "cardinality_event_to_discipline": "1..N",
+      "scopes": { "create": "attestation:create", "witness": "attestation:witness", "validate": "attestation:validate" },
+      "validator_of_record_role": "commission_chair",
+      "witness_holders": ["commission_member", "exam_station", "proctoring", "external_expert_ticketed"]
+    }
+  },
+
+  "cross_cutting_scopes": {
+    "module:close": { "role": "department", "ref": "§9" },
+    "vedomost:correct": { "role": "department", "ref": "§10" }
+  },
+
+  "roles": {
+    "teacher": {
+      "plane": "human",
+      "holds": ["lesson:create", "lesson:witness", "lesson:validate"],
+      "validator": "own_discipline"
+    },
+    "department": {
+      "plane": "human",
+      "holds": ["practice:validate", "module:close", "vedomost:correct"],
+      "validator": true
+    },
+    "commission_chair": {
+      "plane": "human",
+      "holds": ["attestation:validate"],
+      "validator": true
+    },
+    "commission_member": {
+      "plane": "human",
+      "holds": ["attestation:witness"],
+      "validator": false
+    },
+    "base_supervisor": {
+      "plane": "human",
+      "external": true,
+      "holds": ["practice:witness"],
+      "credential": "one_time_ticket",
+      "validator": false
+    },
+    "external_expert": {
+      "plane": "human",
+      "external": true,
+      "holds": ["attestation:witness"],
+      "credential": "one_time_ticket",
+      "validator": false
+    },
+    "technical_witness": {
+      "plane": "technical",
+      "holds": ["*:witness"],
+      "validator": false
+    }
+  },
+
+  "witness_to_validator_binding": {
+    "rule": "via_event",
+    "mechanism": "event carries validator_of_record at create-time; technical witness deposits draft onto event; event validator confirms draft into fact",
+    "machine_picks_human": false
+  },
+
+  "external_witness": {
+    "never_registry_slot": true,
+    "never_validator": true,
+    "modes": {
+      "scan_postfactum": {
+        "credential": "none",
+        "evidence": "student_uploaded_scan",
+        "validator": "department"
+      },
+      "online": {
+        "credential": "one_time_witness_ticket",
+        "scope": "practice:witness",
+        "bound_to": ["base", "practice_period", "cohort"],
+        "ttl": "practice_period"
+      }
+    }
+  },
+
+  "auto_validation": {
+    "is_machine_validator": false,
+    "model": "pre_authorized_validation",
+    "record": "проведено правилом R, санкционировал V (человек)",
+    "human_in_chain": true
+  },
+
+  "invariants": [
+    "validate и *:create — только человеческая плоскость",
+    "техническая плоскость держит только *:witness",
+    "точечная зона ответственности не зашивается в токен — разрешается контуром в момент акта",
+    "привязка свидетельства к валидатору — через событие",
+    "внешний субъект — никогда не слот реестра и никогда не валидатор",
+    "авто-проведение несёт ссылку на санкционировавшего человека"
+  ],
+
+  "open_questions": [
+    "гранулярность attestation:witness — человек-комиссия vs техническая станция",
+    "дефолтный валидатор-of-record для распределённого теста без явного назначения",
+    "делегирование валидатора при замещении — роль в реестре или временный грант с TTL",
+    "связывание внешнего тикета со строкой договора/базы — ссылка или копия контекста"
+  ]
+}

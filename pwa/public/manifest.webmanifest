@@ -1,0 +1,8 @@
+{
+  "name": "ЭИОС",
+  "short_name": "ЭИОС",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff"
+}
