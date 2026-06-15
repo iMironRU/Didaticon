@@ -15,6 +15,12 @@ export type Outcome =
 
 export type Valence = "positive" | "negative";
 
+/** Решение границы по конкретному CMI-исходу. valence===null → не терминально. */
+export interface BoundaryDecision {
+  outcome: Outcome;
+  valence: Valence | null;
+}
+
 /** null = граница НЕ достигнута (живое черновое, свидетельство не лепим). */
 export function valenceFor(
   closure: ClosureSemantics,

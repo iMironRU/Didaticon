@@ -1,9 +1,15 @@
 // Применение правила границы (docs/glue-contracts.md §4).
 // Сведение сырого CMI в нормализованный Outcome + валентность по форме контроля.
-import { valenceFor, type ClosureSemantics, type Outcome, type Valence } from "@eios/contracts";
+import {
+  valenceFor,
+  type ClosureSemantics,
+  type Outcome,
+  type CmiSnapshot,
+  type BoundaryDecision,
+} from "@eios/contracts";
 
 /** Свести CMI к нормализованному исходу (SCORM 1.2 / 2004). */
-export function outcomeFromCmi(cmi: Record<string, unknown>): Outcome {
+export function outcomeFromCmi(cmi: CmiSnapshot): Outcome {
   // SCORM 1.2: cmi.core.lesson_status; SCORM 2004: completion_status + success_status.
   // TODO(срез-1): полный маппинг статусов (см. §8.2 открытых вопросов).
   const status =
@@ -16,10 +22,7 @@ export function outcomeFromCmi(cmi: Record<string, unknown>): Outcome {
   return "incomplete";
 }
 
-export function decide(closure: ClosureSemantics, cmi: Record<string, unknown>): {
-  outcome: Outcome;
-  valence: Valence | null; // null = граница не достигнута, свидетельство не лепим
-} {
+export function decide(closure: ClosureSemantics, cmi: CmiSnapshot): BoundaryDecision {
   const outcome = outcomeFromCmi(cmi);
   return { outcome, valence: valenceFor(closure, outcome) };
 }

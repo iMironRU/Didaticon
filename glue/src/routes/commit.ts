@@ -17,15 +17,14 @@ export function registerCommit(
     // 1. дедуп по (eventId, attemptId, sequence) + сохранить CMI (живое черновое)
     await deps.store.putCmi(body.eventId, body.attemptId, body.sequence, body.cmi);
 
-    // 2. граница события? closure-семантика приходит из лонч-контекста.
-    // TODO(срез-1): достать ClosureSemantics из тега лонч-контекста (см. §8.3).
-    const closure = "pass" as const; // дефолт §4
+    // 2. граница события? closure-семантика приходит из лонч-контекста (§8.3 —
+    //    на старте кладём в тело коммита; место может переехать).
     await maybeFormSvidetelstvo({
       store: deps.store,
       eventId: body.eventId,
       studentId: principal.studentId,
       attemptId: body.attemptId,
-      closure,
+      closure: body.closure,
       cmi: body.cmi,
     });
 

@@ -1,3 +1,4 @@
+import type { CmiSnapshot } from "@eios/contracts";
 import type { Store, SvidetelstvoRecord } from "./index.js";
 
 // Тонкий CMI-снимок на (eventId, attemptId). Без трансляции в xAPI (SCORM-only).
@@ -9,7 +10,7 @@ export class SqliteCmiStore implements Store {
   async putCmi(): Promise<void> {
     throw new Error("TODO(срез-1)");
   }
-  async getCmi(): Promise<Record<string, unknown> | null> {
+  async getCmi(): Promise<CmiSnapshot | null> {
     throw new Error("TODO(срез-1)");
   }
   async enqueueSvidetelstvo(_rec: SvidetelstvoRecord): Promise<void> {
