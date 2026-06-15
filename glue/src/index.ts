@@ -7,9 +7,16 @@ import { Outbox } from "./outbox/index.js";
 import { UniverkonClient } from "./univerkon/client.js";
 import { registerCommit } from "./routes/commit.js";
 import { registerResume } from "./routes/resume.js";
+import { AuthError } from "./auth/index.js";
 
 const cfg = loadConfig();
 const app = Fastify({ logger: true });
+
+// AuthError → 401 (jose выкидывает на просроченном/неверном токене).
+app.setErrorHandler((err, _req, reply) => {
+  if (err instanceof AuthError) return reply.status(401).send({ error: err.message });
+  reply.send(err);
+});
 
 const store = makeStore(cfg);
 const univerkon = new UniverkonClient(cfg);

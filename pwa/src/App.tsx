@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
+import type { StudentId } from "@eios/contracts";
 import { login, getStudent } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
 
 // Тонкий студенческий кабинет. Всё — проекции из Univerkon + плеер + лончи.
 export function App() {
-  const [studentId, setStudentId] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<StudentId | null>(null);
 
   useEffect(() => {
-    getStudent().then((s) => setStudentId(s?.id ?? null));
+    void getStudent().then((s) => setStudentId(s?.id ?? null));
   }, []);
 
   if (!studentId) {

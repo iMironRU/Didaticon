@@ -8,6 +8,7 @@ export interface Config {
   univerkonServiceToken: string;
   oidcIssuer: string;
   oidcJwksUrl: string;
+  oidcAudience: string;
 }
 
 export function loadConfig(): Config {
@@ -21,5 +22,6 @@ export function loadConfig(): Config {
     univerkonServiceToken: process.env.UNIVERKON_SERVICE_TOKEN ?? "",
     oidcIssuer: process.env.OIDC_ISSUER ?? "",
     oidcJwksUrl: process.env.OIDC_JWKS_URL ?? "",
+    oidcAudience: process.env.OIDC_AUDIENCE ?? "eios-glue",
   };
 }
