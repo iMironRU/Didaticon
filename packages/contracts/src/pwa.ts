@@ -26,8 +26,9 @@ export interface CommitRequest {
   attemptId: AttemptId;
   sequence: number;       // монотонный счётчик коммита в попытке
   cmi: CmiSnapshot;
-  closure: ClosureSemantics; // из лонч-контекста, §8.3
-  outcome?: Outcome;      // нормализованный исход, если сводится клиентом
+  closure: ClosureSemantics;   // из лонч-контекста, §8.3
+  scormVersion: "1.2" | "2004"; // нужно клею для парсинга rawStatus, §8.4
+  outcome?: Outcome;            // нормализованный исход, если сводится клиентом
   credential: Credential;
 }
 

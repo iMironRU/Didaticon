@@ -16,6 +16,7 @@ export interface BufferedCommit {
   eventId: EventId;
   attemptId: AttemptId;
   closure: ClosureSemantics;
+  scormVersion: "1.2" | "2004";
   cmi: CmiSnapshot;
   sequence: number;
 }
@@ -24,6 +25,7 @@ export async function bufferCommit(args: {
   eventId: EventId;
   attemptId: AttemptId;
   closure: ClosureSemantics;
+  scormVersion: "1.2" | "2004";
   cmi: CmiSnapshot;
 }): Promise<void> {
   const rec: BufferedCommit = { ...args, sequence: ++seq };

@@ -13,6 +13,7 @@ export function mountScormApi(ctx: LaunchContext): () => void {
       eventId: ctx.eventId,
       attemptId: ctx.attemptId,
       closure: ctx.closure,
+      scormVersion: ctx.scormVersion,
       cmi: api.cmi as unknown as CmiSnapshot,
     });
   });

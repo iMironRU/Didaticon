@@ -25,6 +25,7 @@ export function registerCommit(
       studentId: principal.studentId,
       attemptId: body.attemptId,
       closure: body.closure,
+      scormVersion: body.scormVersion,
       cmi: body.cmi,
     });
 
