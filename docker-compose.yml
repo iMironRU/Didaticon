@@ -19,8 +19,12 @@ services:
     build: ./glue
     env_file: ./glue/.env
     environment:
-      EIOS_STORE: postgres
-      EIOS_PG_URL: postgres://eios:${POSTGRES_PASSWORD:-eios}@postgres:5432/eios
+      # Срез-1: SQLite. PgStore реализуем в срез-2; postgres-сервис пока в стеке
+      # для будущего переключения (достаточно поменять EIOS_STORE=postgres).
+      EIOS_STORE: sqlite
+      EIOS_SQLITE_PATH: /data/glue.sqlite
+    volumes:
+      - gluedata:/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,3 +41,4 @@ services:
 
 volumes:
   pgdata:
+  gluedata:

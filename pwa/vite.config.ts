@@ -5,12 +5,32 @@ import { VitePWA } from "vite-plugin-pwa";
 export default defineConfig({
   plugins: [
     react(),
-    // PWA: прекеш приложения и статики; SCORM-пакеты кешируются для офлайна.
     VitePWA({
       registerType: "autoUpdate",
-      // TODO(срез-1): runtimeCaching для SCORM-пакетов (CacheFirst), см. §6.
-      workbox: { globPatterns: ["**/*.{js,css,html}"] },
-      manifest: { name: "ЭИОС", short_name: "ЭИОС", display: "standalone" },
+      // manifest читается из public/manifest.webmanifest — не дублируем здесь.
+      manifest: false,
+      workbox: {
+        globPatterns: ["**/*.{js,css,html}"],
+        runtimeCaching: [
+          {
+            // SCORM-пакеты: кешируем агрессивно (CacheFirst) — контент статичен.
+            // §6.1: курс должен грузиться без 1С вообще.
+            urlPattern: /\/scorm\/.+/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "scorm-packages",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
+      },
     }),
   ],
+
+  server: {
+    proxy: {
+      // dev-режим: /api/* → glue на localhost:8080
+      "/api": { target: "http://localhost:8080", rewrite: (p) => p.replace(/^\/api/, "") },
+    },
+  },
 });
