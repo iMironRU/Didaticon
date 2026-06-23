@@ -87,7 +87,7 @@
 
 ## 8. Открытые вопросы
 
-1. SCORM 2004 `completion_status=completed` при `success_status=unknown` для **оценочного** узла — держать (не терминально) или решать политикой формы контроля?
-2. Полный список SCORM-статусов → валентность (browsed, not attempted) — дефолты.
+1. ~~SCORM 2004 `completion_status=completed` при `success_status=unknown` для **оценочного** узла — держать (не терминально) или решать политикой формы контроля?~~ **Закрыт (v0.1.1):** outcome=`completed`; для `pass`-узла `valenceFor` возвращает null (не терминально — явного passed нет); для `completion`-узла — positive. Студент не застрянет, оценочный узел без явного passed не закроется.
+2. ~~Полный список SCORM-статусов → валентность (browsed, not attempted) — дефолты.~~ **Закрыт (v0.1.1):** `browsed` и `not attempted` (SCORM 1.2) → `incomplete` (не терминально). SCORM 2004: `success_status` имеет приоритет (`passed`/`failed`); `completion=completed + success=unknown` → `completed` (см. §8.1).
 3. Точный формат лонч-контекста (как PWA кладёт форму контроля и семантику закрытия в тег коммита).
 4. ~~Гранулярность аудита `status` в свидетельстве — хранить сырой CMI-статус или нормализованный.~~ **Закрыт (v0.1.1, вариант C):** в свидетельстве оба — `status: Outcome` (нормализованный, для машинной обработки в Univerkon) и `rawStatus: { scormVersion, lessonStatus? | completionStatus?+successStatus? }` (сырьё для аудита; покрывает `browsed`, `not attempted`, `unknown`). `CommitRequest` несёт `scormVersion`, чтобы клей знал, какие ключи парсить.
