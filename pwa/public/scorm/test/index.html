@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>SCORM Smoke Test</title>
+  <style>
+    body { font-family: monospace; padding: 16px; }
+    .ok  { color: green; }
+    .err { color: red; }
+    li   { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h2>SCORM 1.2 — smoke test</h2>
+  <ul id="log"></ul>
+
+  <script>
+    // Ищем window.API в родительских окнах (scorm-again монтирует в parent).
+    function findApi() {
+      let w = window;
+      for (let i = 0; i < 5; i++) {
+        if (w.API) return w.API;
+        if (w.parent === w) break;
+        w = w.parent;
+      }
+      return null;
+    }
+
+    function log(msg, ok = true) {
+      const li = document.createElement("li");
+      li.className = ok ? "ok" : "err";
+      li.textContent = (ok ? "✓ " : "✗ ") + msg;
+      document.getElementById("log").appendChild(li);
+      console.log(msg);
+    }
+
+    function run() {
+      const api = findApi();
+      if (!api) { log("window.API не найден", false); return; }
+
+      // 1. Initialize
+      const init = api.LMSInitialize("");
+      log(`LMSInitialize → ${init}`, init === "true");
+
+      // 2. Читаем начальное состояние
+      const initStatus = api.LMSGetValue("cmi.core.lesson_status");
+      log(`lesson_status начальный: "${initStatus}"`);
+
+      // 3. Проставляем прохождение
+      api.LMSSetValue("cmi.core.lesson_status", "completed");
+      api.LMSSetValue("cmi.core.score.raw",     "87");
+      api.LMSSetValue("cmi.core.score.min",     "0");
+      api.LMSSetValue("cmi.core.score.max",     "100");
+
+      // 4. Commit — клей должен сохранить CMI, граница НЕ достигается (нет passed/failed)
+      const commit = api.LMSCommit("");
+      log(`LMSCommit → ${commit}`, commit === "true");
+
+      // 5. Finish — финальный снимок; closure=completion → valence=positive → свидетельство
+      setTimeout(() => {
+        const finish = api.LMSFinish("");
+        log(`LMSFinish → ${finish}`, finish === "true");
+        log("Готово. Проверь логи клея и mock-сервера.");
+      }, 500);
+    }
+
+    // Ждём монтирования адаптера (useEffect в ScormPlayer)
+    window.addEventListener("load", () => setTimeout(run, 300));
+  </script>
+</body>
+</html>
