@@ -7,6 +7,7 @@ import { Outbox } from "./outbox/index.js";
 import { UniverkonClient } from "./univerkon/client.js";
 import { registerCommit } from "./routes/commit.js";
 import { registerResume } from "./routes/resume.js";
+import { registerProjection } from "./routes/projection.js";
 import { AuthError } from "./auth/index.js";
 
 const cfg = loadConfig();
@@ -25,6 +26,7 @@ const outbox = new Outbox(store, univerkon);
 
 registerCommit(app, { cfg, store, outbox });
 registerResume(app, { cfg, store });
+registerProjection(app, { cfg, univerkon });
 
 app.get("/healthz", async () => ({ ok: true, role: cfg.role }));
 
