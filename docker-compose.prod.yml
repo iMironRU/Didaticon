@@ -1,0 +1,32 @@
+# Продакшн-оверрайд: добавляет Caddy (HTTPS) и убирает прямое открытие портов.
+# Использование: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    environment:
+      EIOS_DOMAIN: ${EIOS_DOMAIN}
+    depends_on:
+      - static
+
+  glue:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-glue:latest
+    build: !reset null
+    ports: !reset []
+
+  static:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-pwa:latest
+    build: !reset null
+    ports: !reset []
+
+volumes:
+  caddydata:
+  caddyconfig:

@@ -1,0 +1,5 @@
+# Замените на ваш домен. Caddy автоматически получит сертификат Let's Encrypt.
+{$EIOS_DOMAIN} {
+    # PWA + SCORM статика + проксирование /api → glue
+    reverse_proxy static:80
+}

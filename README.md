@@ -1,59 +1,80 @@
 # ЭИОС — студенческий контур поверх Univerkon
 
-Тонкая электронная информационно-образовательная среда: студенческий PWA + плеер SCORM + сервис-клей (фасад слоя активности), пристёгнутые к **1С:Univerkon** как ядру фактов и идентичности.
+Тонкая электронная информационно-образовательная среда: студенческий PWA + плеер SCORM + сервис-клей, пристёгнутые к **1С:Univerkon** как ядру фактов и идентичности.
 
-> Это **спутник** Univerkon, а не замена. Univerkon владеет всеми фактами (траектория, события, обязательства, записи, ведомости, зачётка) и выдаёт идентичность (OIDC). ЭИОС ничем не владеет — отражает проекции и порождает свидетельства.
+> **ЭИОС — спутник Univerkon, а не замена.** Univerkon владеет всеми фактами (траектория, события, ведомости, зачётка) и выдаёт идентичность (OIDC). ЭИОС ничем не владеет — отражает проекции и порождает свидетельства.
 
-Полная концепция — в [`docs/concept-eios.md`](docs/concept-eios.md). Здесь — карта репо и план первой сборки.
+Полная концепция — [`docs/concept-eios.md`](docs/concept-eios.md). Контракты клея — [`docs/glue-contracts.md`](docs/glue-contracts.md).
 
-## Несущие идеи (одним экраном)
+## Быстрый старт — установка на VPS
 
-- **Univerkon — единый источник фактов и решений, но вне горячего пути.** Между студентом и ядром лежат буферы; недоступность 1С не останавливает обучение.
-- **Клей видит CMI, Univerkon — только свидетельства.** Форма хранения активности за фасадом не протекает наружу (см. [`docs/glue-contracts.md`](docs/glue-contracts.md)).
-- **Машина — только свидетель; факт рождает человек-валидатор** (ролевая модель — [`docs/15.8-rolevaya-model-udostoveryayushchiy-sloy.md`](docs/15.8-rolevaya-model-udostoveryayushchiy-sloy.md)).
-- **Контент — статический лист на узле**, не структура. Иерархию держит Univerkon.
-- **Граница ≠ коммит.** Свидетельство рождается на терминальном исходе учебного события; failed → отрицательная запись → пересдача.
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/iMironRU/Didaticon/main/manage.sh)
+```
+
+Скрипт спросит домен и параметры Univerkon, установит Docker, скачает образы из ghcr.io, поднимет стек с автоматическим HTTPS через Caddy (Let's Encrypt).
+
+Повторный запуск того же скрипта — меню управления: обновить, настроить, удалить.
+
+## Архитектура (одним экраном)
+
+```
+Univerkon (1С)
+   │  OIDC + JSON-RPC
+   ▼
+ [ glue ]  ← CMI-коммиты от PWA → граница → свидетельство → outbox → Univerkon
+   │  /api/
+   ▼
+ [ pwa ]   ← студент: OIDC-вход → проекция → SCORM-плеер → офлайн-буфер → /commit
+```
+
+- **Univerkon** — единый источник фактов, вне горячего пути (буферы не дают простою 1С остановить обучение)
+- **Клей** видит CMI, Univerkon — только свидетельства (форма хранения активности не протекает наружу)
+- **Граница ≠ коммит**: свидетельство рождается только на терминальном исходе (`passed` / `failed` / `completed`)
+- **Контент** — статический пакет SCORM на узле; иерархию держит Univerkon
 
 ## Карта репозитория
 
 ```
-docs/                 спеки (источник истины по контрактам и модели)
-packages/contracts/   общие TS-типы контрактов (PWA↔клей, клей↔Univerkon, правило границы)
-glue/                 сервис-клей (Node/TS): приём прохождения, граница, проводка свидетельства
-pwa/                  тонкий студенческий PWA (React/Vite): OIDC + scorm-again + офлайн-буфер
-docker-compose.yml        центральный стек
-docker-compose.edge.yml   оверрайд для кампусного edge-узла (локальный экзамен)
+packages/contracts/       общие TS-типы (PWA ↔ клей ↔ Univerkon, правило границы)
+glue/                     сервис-клей (Fastify/TS): коммиты, граница, свидетельство
+pwa/                      студенческий PWA (React/Vite): OIDC, scorm-again, офлайн
+mock/univerkon.ts         локальный mock Univerkon для разработки
+docs/                     спеки — источник истины по контрактам и модели
+docker-compose.yml        базовый стек (glue + postgres + nginx/pwa)
+docker-compose.prod.yml   продакшн-оверрайд: Caddy (HTTPS) + образы из ghcr.io
+manage.sh                 единый скрипт: установка / обновление / настройки / удаление
 ```
 
-## Срез 1 — спина насквозь (walking skeleton)
-
-Цель: один поток через все слои, чтобы прошить швы. Один студент, одна дисциплина, один проход.
-
-1. Вход по OIDC против Univerkon (`pwa/src/auth/oidc.ts`).
-2. PWA тянет проекцию дисциплины из Univerkon (`pwa/src/projections/trajectory.tsx`).
-3. Запуск SCORM-узла через scorm-again в iframe (`pwa/src/player/`).
-4. Коммиты CMI → IndexedDB → outbox → клей `commit` (`pwa/src/offline/`, `glue/src/routes/commit.ts`).
-5. На терминальном исходе клей лепит свидетельство (`glue/src/boundary.ts`, `glue/src/svidetelstvo.ts`).
-6. Клей проводит свидетельство в Univerkon (`glue/src/univerkon/client.ts`) → ведомость → зачётка-view.
-
-Швы, которые этот срез проверяет: OIDC-хэндофф, маршрутизация коммитов, правило границы, RPC-контракт к Univerkon, проекция обратно в PWA.
-
-## Запуск
+## Разработка локально
 
 ```bash
 npm install
-docker compose up --build      # центральный стек: glue + postgres + статика + pwa
-# кампусный edge-узел (локальный экзамен, SQLite):
-docker compose -f docker-compose.yml -f docker-compose.edge.yml up --build
+npm run mock        # mock Univerkon на :9000 (OIDC + JSON-RPC)
+npm run dev:glue    # glue на :8080
+npm run dev:pwa     # PWA на :5173
 ```
 
-Перед запуском скопируй `glue/.env.example` → `glue/.env` и пропиши адрес Univerkon, секреты OIDC/JWT.
+`.env`-файлы для локальной разработки уже в репо (указывают на `localhost:9000`).
+
+## CI / образы
+
+GitHub Actions: typecheck → build → API smoke-тест → push в ghcr.io.
+
+| Образ | Тег |
+|---|---|
+| `ghcr.io/imironru/didaticon-glue` | `latest` / git sha / semver |
+| `ghcr.io/imironru/didaticon-pwa`  | `latest` / git sha / semver |
+
+Теги версий создаются при пуше тега `v*` (например `v0.2.0`).
 
 ## Статус
 
-Это **скелет**. Стабы помечены `TODO(срез-1)` и ссылаются на разделы спеков. Открытые вопросы — в `docs/glue-contracts.md` §8 и `docs/concept-eios.md` §10.
+Walking skeleton (срез-1) пройден: OIDC → проекция → SCORM-плеер → CMI-коммиты → граница → свидетельство → Univerkon. Все швы прошиты и проверены smoke-тестом.
+
+Открытые задачи на срез-2: PgStore для центрального узла, mTLS для кампусной зоны, `attemptId` от Univerkon.
 
 ## Лицензии
 
-- Код — **MIT** (`LICENSE`).
-- Документы в `docs/` — **CC BY-SA 4.0** (`LICENSE-docs`), часть iMironRU/edu-framework.
+- Код — **MIT** ([`LICENSE`](LICENSE))
+- Документы в `docs/` — **CC BY-SA 4.0** ([`LICENSE-docs`](LICENSE-docs)), часть iMironRU/edu-framework

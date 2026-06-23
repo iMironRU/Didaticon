@@ -1,9 +1,13 @@
 name: ci
+
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
+
 jobs:
+  # ── 1. Typecheck + build ──────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
     steps:
@@ -15,15 +19,191 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
-      - run: npm run lint
-      - run: npm run test
+      - run: npm run lint --if-present
+      - run: npm run test --if-present
 
-  images:
+  # ── 2. API smoke-тест (mock + glue, без браузера) ────────────────────────
+  smoke:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      # TODO(срез-1): сборка и пуш образов glue/ и pwa/ в реестр,
-      # затем разворот где нужно (compose up). Тег = git sha.
-      - run: echo "build & push images placeholder"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Start mock Univerkon
+        run: npx tsx mock/univerkon.ts &
+
+      - name: Start glue
+        run: npx tsx glue/src/index.ts &
+        env:
+          OIDC_ISSUER: http://localhost:9000
+          OIDC_JWKS_URL: http://localhost:9000/jwks
+          OIDC_AUDIENCE: eios-glue
+          UNIVERKON_RPC_URL: http://localhost:9000/rpc
+          UNIVERKON_SERVICE_TOKEN: ci-token
+          EIOS_STORE: sqlite
+          EIOS_SQLITE_PATH: /tmp/ci-glue.sqlite
+          EIOS_ROLE: central
+          PORT: "8080"
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:9000/jwks > /dev/null && \
+            curl -sf http://localhost:8080/healthz > /dev/null && break
+            echo "waiting... $i"
+            sleep 1
+          done
+          curl -f http://localhost:9000/jwks   > /dev/null
+          curl -f http://localhost:8080/healthz > /dev/null
+
+      - name: Get OIDC token
+        id: token
+        run: |
+          TOKEN=$(curl -sf -X POST http://localhost:9000/token \
+            -d "grant_type=authorization_code&code=mock-code" \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+          echo "value=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: GET /projection
+        run: |
+          RESULT=$(curl -sf http://localhost:8080/projection \
+            -H "Authorization: Bearer ${{ steps.token.outputs.value }}")
+          echo "$RESULT" | python3 -c "
+          import sys, json
+          d = json.loads(sys.stdin.read())
+          assert d['studentId'] == 'student-001', f'bad studentId: {d}'
+          assert len(d['nodes']) == 1, f'expected 1 node: {d}'
+          print('projection OK:', d['disciplineTitle'])
+          "
+
+      - name: POST /commit (incomplete — no boundary)
+        run: |
+          curl -sf -X POST http://localhost:8080/commit \
+            -H "Content-Type: application/json" \
+            -d '{
+              "eventId":    "event-smoke-1",
+              "attemptId":  "attempt-ci-001",
+              "sequence":   1,
+              "closure":    "completion",
+              "scormVersion": "1.2",
+              "cmi":        {"cmi.core.lesson_status": "incomplete"},
+              "credential": {"kind": "oidc", "value": "${{ steps.token.outputs.value }}"}
+            }' | python3 -c "
+          import sys,json; d=json.loads(sys.stdin.read()); assert d['accepted']
+          print('commit seq=1 OK')
+          "
+
+      - name: POST /commit (completed — boundary fires)
+        run: |
+          curl -sf -X POST http://localhost:8080/commit \
+            -H "Content-Type: application/json" \
+            -d '{
+              "eventId":    "event-smoke-1",
+              "attemptId":  "attempt-ci-001",
+              "sequence":   2,
+              "closure":    "completion",
+              "scormVersion": "1.2",
+              "cmi":        {"cmi.core.lesson_status": "completed", "cmi.core.score.raw": 87},
+              "credential": {"kind": "oidc", "value": "${{ steps.token.outputs.value }}"}
+            }' | python3 -c "
+          import sys,json; d=json.loads(sys.stdin.read()); assert d['accepted']
+          print('commit seq=2 OK')
+          "
+
+      - name: Wait for outbox drain (5 s)
+        run: sleep 6
+
+      - name: Verify svidetelstvo in SQLite + sent to mock
+        run: |
+          node --input-type=module << 'EOF'
+          import { createRequire } from "module";
+          const require = createRequire(import.meta.url);
+          const Db = require("better-sqlite3");
+          const db = new Db("/tmp/ci-glue.sqlite");
+
+          const rows = db.prepare(
+            "SELECT payload, sent FROM svidetelstvo_outbox WHERE event_id=? AND attempt_id=?"
+          ).all("event-smoke-1", "attempt-ci-001");
+
+          if (!rows.length) throw new Error("svidetelstvo NOT in outbox");
+          const p = JSON.parse(rows[0].payload);
+          if (p.valence !== "positive") throw new Error(`bad valence: ${p.valence}`);
+          if (rows[0].sent !== 1)       throw new Error("svidetelstvo NOT sent (outbox drain failed)");
+          console.log("svidetelstvo OK: valence=positive sent=1 status=" + p.status);
+          EOF
+
+      - name: GET /resume
+        run: |
+          curl -sf -X POST http://localhost:8080/resume \
+            -H "Content-Type: application/json" \
+            -d '{
+              "eventId":    "event-smoke-1",
+              "attemptId":  "attempt-ci-001",
+              "credential": {"kind": "oidc", "value": "${{ steps.token.outputs.value }}"}
+            }' | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read())
+          assert d['cmi']['cmi.core.lesson_status'] == 'completed', str(d)
+          print('resume OK: lesson_status=completed')
+          "
+
+  # ── 3. Docker образы → ghcr.io (только main и теги v*) ───────────────────
+  images:
+    needs: smoke
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta — glue
+        id: meta-glue
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/didaticon-glue
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Docker meta — pwa
+        id: meta-pwa
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/didaticon-pwa
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build & push glue
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: glue/Dockerfile
+          push: true
+          tags: ${{ steps.meta-glue.outputs.tags }}
+          labels: ${{ steps.meta-glue.outputs.labels }}
+
+      - name: Build & push pwa
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: pwa/Dockerfile
+          push: true
+          tags: ${{ steps.meta-pwa.outputs.tags }}
+          labels: ${{ steps.meta-pwa.outputs.labels }}

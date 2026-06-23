@@ -9,3 +9,5 @@ build/
 .DS_Store
 coverage/
 .vite/
+*.sqlite-shm
+*.sqlite-wal
