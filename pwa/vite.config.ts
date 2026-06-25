@@ -3,10 +3,10 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  // Целевые браузеры: Safari 13+ (iOS 13+), Chrome 80+, Firefox 75+.
-  // Это покрывает ??/optional chaining и позволяет не тащить тяжёлые polyfill-ы.
+  // es2019 = до ES2020, где появились ?? и ?. — esbuild транспилирует их в совместимый код.
+  // Покрывает Safari 12+ (iOS 12), Chrome 69+. Async/await остаётся нативным.
   build: {
-    target: ["chrome80", "firefox75", "safari13"],
+    target: "es2019",
   },
   plugins: [
     react(),
