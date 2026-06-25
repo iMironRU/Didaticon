@@ -3,6 +3,11 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // Целевые браузеры: Safari 13+ (iOS 13+), Chrome 80+, Firefox 75+.
+  // Это покрывает ??/optional chaining и позволяет не тащить тяжёлые polyfill-ы.
+  build: {
+    target: ["chrome80", "firefox75", "safari13"],
+  },
   plugins: [
     react(),
     VitePWA({
