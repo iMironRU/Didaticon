@@ -23,6 +23,11 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-glue:latest
     build: !reset null
     ports: !reset []
+    environment:
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      SCORM_PATH: /scorm
+    volumes:
+      - scormdata:/scorm
 
   static:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-pwa:latest
@@ -31,7 +36,10 @@ services:
     environment:
       VITE_OIDC_ISSUER: ${OIDC_ISSUER}
       VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-eios-pwa}
+    volumes:
+      - scormdata:/usr/share/nginx/html/scorm
 
 volumes:
   caddydata:
   caddyconfig:
+  scormdata:

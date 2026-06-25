@@ -279,6 +279,7 @@ do_install() {
 
   # ── .env — создаём напрямую, не зависим от .env.example
   local PG_PW; PG_PW="$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
+  local ADMIN_TK; ADMIN_TK="$(head -c 20 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 28)"
   # VITE_OIDC_ISSUER нужен docker-entrypoint.sh PWA-контейнера (runtime config.js).
   local VITE_OIDC_ISSUER_VAL
   VITE_OIDC_ISSUER_VAL="${OIDC_ISSUER}"  # = https://домен в mock-режиме, или реальный Univerkon
@@ -295,6 +296,7 @@ EIOS_SQLITE_PATH=/data/glue.sqlite
 EIOS_ROLE=central
 PORT=8080
 POSTGRES_PASSWORD=${PG_PW}
+ADMIN_TOKEN=${ADMIN_TK}
 GITHUB_REPOSITORY_OWNER=imironru
 ENVEOF
   log ".env создан"
@@ -444,10 +446,15 @@ UNIT
     || hostname -I 2>/dev/null | awk '{print $1}' || echo '<IP>')"
 
   echo
+  local SAVED_TOKEN; SAVED_TOKEN="$(_env_get ADMIN_TOKEN "${INSTALL_DIR}/.env" 2>/dev/null || echo "")"
   echo -e "${GREEN}${BOLD}  ✓  ЭИОС Didaticon установлен!${NC}"
   echo -e "${GREEN}  ──────────────────────────────────────────${NC}"
   echo -e "  ${BOLD}URL:${NC}         ${GREEN}https://${EIOS_DOMAIN}${NC}"
+  echo -e "  ${BOLD}Admin-панель:${NC} ${GREEN}https://${EIOS_DOMAIN}/admin${NC}"
+  echo -e "  ${BOLD}Admin-токен:${NC} ${YELLOW}${SAVED_TOKEN}${NC}"
   echo -e "  ${BOLD}IP сервера:${NC}  ${HOST_IP}"
+  echo
+  echo -e "  ${DIM}Токен также сохранён в .env → ADMIN_TOKEN${NC}"
   if [ "$USE_MOCK" = "y" ]; then
     echo
     echo -e "  ${YELLOW}Тестовый режим: вход автоматический (student-001).${NC}"

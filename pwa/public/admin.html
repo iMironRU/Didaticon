@@ -2,113 +2,238 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ЭИОС — Администрирование</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #1a1a1a; }
-    header { background: #1a56db; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
-    header h1 { font-size: 1.1rem; font-weight: 600; }
-    header span { font-size: 0.85rem; opacity: .75; }
-    main { max-width: 720px; margin: 32px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 20px; }
-    .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.12); padding: 20px 24px; }
-    .card h2 { font-size: .95rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #555; margin-bottom: 16px; }
-    .status-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-    .status-row:last-child { border-bottom: none; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: #d1d5db; }
-    .dot.ok  { background: #22c55e; }
-    .dot.err { background: #ef4444; }
-    .dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .label { font-size: .9rem; flex: 1; }
-    .cfg-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-    .cfg-table td { padding: 7px 4px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
-    .cfg-table td:first-child { color: #555; width: 150px; white-space: nowrap; }
-    .cfg-table td:last-child { font-family: ui-monospace, monospace; word-break: break-all; }
-    .cfg-table tr:last-child td { border-bottom: none; }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: .88rem; font-weight: 500; transition: opacity .15s; }
-    .btn:hover { opacity: .85; }
-    .btn-primary { background: #1a56db; color: #fff; }
-    .btn-secondary { background: #e5e7eb; color: #374151; }
-    #error-banner { display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 12px 16px; color: #b91c1c; font-size: .88rem; }
-    footer { text-align: center; font-size: .78rem; color: #aaa; padding: 24px 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;background:#f3f4f6;color:#111827;font-size:15px}
+    a{color:#1a56db}
+    header{background:#1a56db;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:10px}
+    header svg{flex-shrink:0}
+    header h1{font-size:1.05rem;font-weight:700}
+    header span{font-size:.82rem;opacity:.75;margin-left:4px}
+    .tabs{display:flex;background:#fff;border-bottom:2px solid #e5e7eb;padding:0 24px}
+    .tab{padding:12px 18px;cursor:pointer;border:none;background:none;font-size:.9rem;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+    .tab.active{color:#1a56db;border-bottom-color:#1a56db;font-weight:600}
+    .tab:hover:not(.active){color:#374151}
+    main{max-width:800px;margin:24px auto;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+    .card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+    .card-head{padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+    .card-head h2{font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280}
+    .card-body{padding:20px}
+    /* Status */
+    .status-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+    .status-row:last-child{border:none}
+    .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .dot.ok{background:#22c55e}.dot.err{background:#ef4444}.dot.loading{background:#f59e0b;animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .label{flex:1;font-size:.9rem}
+    /* Login */
+    #login-section{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:24px;max-width:400px;margin:24px auto}
+    #login-section h2{font-size:1rem;margin-bottom:16px;color:#374151}
+    /* Inputs */
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+    .field label{font-size:.83rem;color:#6b7280;font-weight:500}
+    .field input,.field select{border:1px solid #d1d5db;border-radius:6px;padding:9px 12px;font-size:.9rem;width:100%;outline:none;transition:border .15s}
+    .field input:focus,.field select:focus{border-color:#1a56db;box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+    .field input[type=password]{letter-spacing:.12em}
+    .meta{font-size:.78rem;color:#9ca3af;margin-top:2px}
+    .restart-badge{font-size:.72rem;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;margin-left:6px}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:7px;cursor:pointer;font-size:.88rem;font-weight:600;transition:opacity .15s}
+    .btn:disabled{opacity:.5;cursor:default}
+    .btn-primary{background:#1a56db;color:#fff}
+    .btn-secondary{background:#e5e7eb;color:#374151}
+    .btn-danger{background:#fee2e2;color:#b91c1c}
+    .btn-sm{padding:5px 12px;font-size:.82rem}
+    .btn:not(:disabled):hover{opacity:.87}
+    /* Table */
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th{text-align:left;padding:8px 10px;font-size:.78rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #f0f0f0}
+    td{padding:9px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+    tr:last-child td{border:none}
+    td.mono{font-family:ui-monospace,monospace;font-size:.82rem;color:#374151;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* Alerts */
+    .alert{padding:12px 16px;border-radius:7px;font-size:.87rem;margin-bottom:12px;line-height:1.5}
+    .alert-ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+    .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+    .alert-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+    /* Upload zone */
+    .upload-zone{border:2px dashed #d1d5db;border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .15s;color:#6b7280}
+    .upload-zone:hover,.upload-zone.drag{border-color:#1a56db;background:#eff4ff;color:#1a56db}
+    .upload-zone input{display:none}
+    .pkg-row td:first-child{font-weight:600}
+    footer{text-align:center;font-size:.78rem;color:#9ca3af;padding:20px 0}
+    .hidden{display:none!important}
   </style>
 </head>
 <body>
 
 <header>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-  <h1>ЭИОС</h1>
-  <span>Панель администрирования</span>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+  <h1>ЭИОС</h1><span>Панель администрирования</span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <span id="user-badge" style="font-size:.82rem;opacity:.85"></span>
+    <button class="btn btn-secondary btn-sm" id="btn-logout" style="display:none" onclick="logout()">Выйти</button>
+  </div>
 </header>
 
-<main>
-  <div id="error-banner"></div>
+<!-- Логин -->
+<div id="login-section">
+  <h2>Вход в панель администрирования</h2>
+  <div class="field">
+    <label>Токен администратора (ADMIN_TOKEN)</label>
+    <input type="password" id="inp-token" placeholder="Введите токен…" onkeydown="if(event.key==='Enter')doLogin()">
+  </div>
+  <div id="login-error" class="alert alert-err hidden"></div>
+  <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Войти</button>
+</div>
 
-  <div class="card">
-    <h2>Статус сервисов</h2>
-    <div class="status-row"><div class="dot loading" id="d-glue"></div><div class="label">Клей (glue)</div></div>
-    <div class="status-row"><div class="dot loading" id="d-oidc"></div><div class="label">OIDC (Univerkon)</div></div>
-    <div class="status-row"><div class="dot loading" id="d-rpc"></div><div class="label">JSON-RPC (Univerkon)</div></div>
-    <div style="margin-top:14px">
-      <button class="btn btn-secondary" onclick="load()">↺ Обновить</button>
+<!-- Основной контент (скрыт до логина) -->
+<div id="main-content" class="hidden">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('status')">Статус</button>
+    <button class="tab" onclick="showTab('config')">Конфигурация</button>
+    <button class="tab" onclick="showTab('scorm')">SCORM-пакеты</button>
+  </div>
+
+  <!-- Вкладка: Статус -->
+  <main id="tab-status">
+    <div class="card">
+      <div class="card-head"><h2>Сервисы</h2><button class="btn btn-secondary btn-sm" onclick="loadStatus()">↺ Обновить</button></div>
+      <div class="card-body">
+        <div id="status-alert"></div>
+        <div class="status-row"><div class="dot loading" id="d-glue"></div><div class="label">Клей (glue API)</div></div>
+        <div class="status-row"><div class="dot loading" id="d-oidc"></div><div class="label">OIDC (Univerkon)</div></div>
+        <div class="status-row"><div class="dot loading" id="d-rpc"></div><div class="label">JSON-RPC (Univerkon)</div></div>
+      </div>
     </div>
-  </div>
+    <div class="card">
+      <div class="card-head"><h2>Текущие параметры</h2></div>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th></tr></thead>
+          <tbody id="status-cfg"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
 
-  <div class="card">
-    <h2>Текущая конфигурация</h2>
-    <table class="cfg-table" id="cfg-table">
-      <tr><td colspan="2" style="color:#aaa;font-style:italic">Загрузка…</td></tr>
-    </table>
-  </div>
+  <!-- Вкладка: Конфиг -->
+  <main id="tab-config" class="hidden">
+    <div class="card">
+      <div class="card-head"><h2>Настройки подключения</h2></div>
+      <div class="card-body">
+        <div id="cfg-alert"></div>
+        <div id="cfg-fields"></div>
+        <button class="btn btn-primary" onclick="saveConfig()">Сохранить</button>
+      </div>
+    </div>
+    <div class="card" style="font-size:.85rem;color:#6b7280;padding:14px 20px">
+      Изменения сохраняются в базе данных. Параметры с меткой <span class="restart-badge">↺ рестарт</span>
+      вступят в силу после перезапуска стека через <code>manage.sh</code>.
+    </div>
+  </main>
 
-  <div class="card">
-    <h2>Обновление настроек</h2>
-    <p style="font-size:.88rem;color:#555;line-height:1.5">
-      Чтобы изменить домен, OIDC-сервер или подключение к Univerkon — запустите скрипт управления повторно.
-      Скрипт задаст новые значения и перезапустит стек.
-    </p>
-    <pre style="margin-top:12px;background:#f5f5f5;padding:12px;border-radius:6px;font-size:.82rem;overflow-x:auto">bash &lt;(curl -fsSL https://raw.githubusercontent.com/iMironRU/Didaticon/main/manage.sh)</pre>
-  </div>
-</main>
+  <!-- Вкладка: SCORM -->
+  <main id="tab-scorm" class="hidden">
+    <div class="card">
+      <div class="card-head"><h2>Загрузить пакет</h2></div>
+      <div class="card-body">
+        <div id="upload-alert"></div>
+        <label class="upload-zone" id="upload-zone" ondragover="onDrag(event)" ondragleave="offDrag()" ondrop="onDrop(event)">
+          <input type="file" id="file-input" accept=".zip" onchange="uploadFile(this.files[0])">
+          <div style="font-size:2rem;margin-bottom:8px">📦</div>
+          <div style="font-weight:600;margin-bottom:4px">Перетащите ZIP-файл или нажмите для выбора</div>
+          <div style="font-size:.82rem">Формат: SCORM 1.2 или 2004 в .zip-архиве</div>
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Установленные пакеты</h2><button class="btn btn-secondary btn-sm" onclick="loadScorm()">↺ Обновить</button></div>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>ID пакета</th><th>index.html</th><th>URL</th><th></th></tr></thead>
+          <tbody id="scorm-list"></tbody>
+        </table>
+        <p id="scorm-empty" class="hidden" style="color:#9ca3af;font-size:.88rem;padding:8px 0">Нет установленных пакетов.</p>
+      </div>
+    </div>
+  </main>
+</div>
 
-<footer>ЭИОС · <a href="/" style="color:#1a56db">← Студенческий кабинет</a></footer>
+<footer><a href="/">← Студенческий кабинет</a></footer>
 
 <script>
-async function load() {
-  setDot("d-glue", "loading");
-  setDot("d-oidc", "loading");
-  setDot("d-rpc",  "loading");
+let TOKEN = sessionStorage.getItem("eios_admin_token") || "";
 
-  const banner = document.getElementById("error-banner");
-  banner.style.display = "none";
+function api(path, opts) {
+  return fetch("/api" + path, {
+    ...opts,
+    headers: { ...(opts && opts.headers), Authorization: "Bearer " + TOKEN }
+  });
+}
 
+// ── Авторизация ──────────────────────────────────────────────────────────
+async function doLogin() {
+  const t = document.getElementById("inp-token").value.trim();
+  if (!t) return;
+  TOKEN = t;
+  const r = await api("/admin/config");
+  if (r.status === 401 || r.status === 403) {
+    showErr("login-error", "Неверный токен или admin-панель отключена (ADMIN_TOKEN не задан).");
+    TOKEN = "";
+    return;
+  }
+  sessionStorage.setItem("eios_admin_token", TOKEN);
+  document.getElementById("login-section").classList.add("hidden");
+  document.getElementById("main-content").classList.remove("hidden");
+  document.getElementById("btn-logout").style.display = "";
+  document.getElementById("user-badge").textContent = "Администратор";
+  loadStatus(); loadConfig(); loadScorm();
+}
+
+function logout() {
+  TOKEN = ""; sessionStorage.removeItem("eios_admin_token");
+  location.reload();
+}
+
+// ── Вкладки ──────────────────────────────────────────────────────────────
+function showTab(name) {
+  ["status","config","scorm"].forEach(t => {
+    document.getElementById("tab-" + t).classList.toggle("hidden", t !== name);
+  });
+  document.querySelectorAll(".tab").forEach((el, i) => {
+    el.classList.toggle("active", ["status","config","scorm"][i] === name);
+  });
+}
+
+// ── Статус ────────────────────────────────────────────────────────────────
+async function loadStatus() {
+  setDot("d-glue", "loading"); setDot("d-oidc", "loading"); setDot("d-rpc", "loading");
   try {
-    const r = await fetch("/api/admin/status");
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
-
-    setDot("d-glue", d.glue      ? "ok" : "err");
-    setDot("d-oidc", d.oidc      ? "ok" : "err");
+    const d = await fetch("/api/admin/status").then(r => r.json());
+    setDot("d-glue", d.glue ? "ok" : "err");
+    setDot("d-oidc", d.oidc ? "ok" : "err");
     setDot("d-rpc",  d.univerkon ? "ok" : "err");
-
-    const cfg = d.config ?? {};
-    const rows = [
-      ["Домен",          cfg.domain      ?? "—"],
-      ["OIDC-сервер",    cfg.oidcIssuer  ?? "—"],
-      ["Univerkon RPC",  cfg.univerkonRpc ?? "—"],
-      ["Хранилище",      cfg.store       ?? "—"],
-      ["Роль узла",      cfg.role        ?? "—"],
-    ];
-    document.getElementById("cfg-table").innerHTML = rows
-      .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
-      .join("");
-  } catch (e) {
-    banner.textContent = "Не удалось получить статус: " + e.message;
-    banner.style.display = "block";
-    setDot("d-glue", "err");
-    setDot("d-oidc", "err");
-    setDot("d-rpc",  "err");
+    const cfg = d.config || {};
+    document.getElementById("status-cfg").innerHTML = [
+      ["Домен",         cfg.domain],
+      ["OIDC Issuer",   cfg.oidcIssuer],
+      ["Univerkon RPC", cfg.univerkonRpc],
+      ["Хранилище",     cfg.store],
+      ["Роль узла",     cfg.role],
+    ].map(([k,v]) => `<tr><td>${k}</td><td class="mono">${v||"—"}</td></tr>`).join("");
+    if (!d.oidc || !d.univerkon) {
+      document.getElementById("status-alert").innerHTML =
+        '<div class="alert alert-warn">Один или несколько сервисов недоступны. Проверьте конфигурацию подключения.</div>';
+    } else {
+      document.getElementById("status-alert").innerHTML = "";
+    }
+  } catch(e) {
+    setDot("d-glue","err"); setDot("d-oidc","err"); setDot("d-rpc","err");
+    document.getElementById("status-alert").innerHTML =
+      `<div class="alert alert-err">Ошибка: ${e.message}</div>`;
   }
 }
 
@@ -117,7 +242,111 @@ function setDot(id, state) {
   el.className = "dot " + state;
 }
 
-load();
+// ── Конфигурация ──────────────────────────────────────────────────────────
+let cfgData = [];
+
+async function loadConfig() {
+  const r = await api("/admin/config");
+  if (!r.ok) return;
+  cfgData = await r.json();
+  const el = document.getElementById("cfg-fields");
+  el.innerHTML = cfgData.map(f => `
+    <div class="field">
+      <label>${f.label}${f.restart ? '<span class="restart-badge">↺ рестарт</span>' : ''}</label>
+      <input type="${f.secret ? 'password' : 'text'}" id="cfg-${f.key}"
+        value="${esc(f.savedValue !== null ? f.savedValue : (f.secret ? '' : f.envValue))}"
+        placeholder="${esc(f.secret ? '(из env, скрыто)' : f.envValue || 'не задано')}">
+      ${f.savedValue !== null ? '<div class="meta">✏️ Сохранено в базе. Оставьте пустым чтобы сбросить к env-переменной.</div>' : ''}
+    </div>
+  `).join("");
+}
+
+async function saveConfig() {
+  const body = {};
+  cfgData.forEach(f => {
+    const val = document.getElementById("cfg-" + f.key).value;
+    body[f.key] = val;
+  });
+  document.getElementById("cfg-alert").innerHTML = "";
+  const r = await api("/admin/config", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  if (r.ok && d.ok) {
+    document.getElementById("cfg-alert").innerHTML =
+      `<div class="alert alert-ok">${esc(d.message)}</div>`;
+    loadConfig();
+    loadStatus();
+  } else {
+    document.getElementById("cfg-alert").innerHTML =
+      `<div class="alert alert-err">${esc(d.error || "Ошибка сохранения")}</div>`;
+  }
+}
+
+// ── SCORM ─────────────────────────────────────────────────────────────────
+async function loadScorm() {
+  const r = await api("/admin/scorm");
+  if (!r.ok) return;
+  const list = await r.json();
+  const tbody = document.getElementById("scorm-list");
+  const empty = document.getElementById("scorm-empty");
+  if (!list.length) { tbody.innerHTML = ""; empty.classList.remove("hidden"); return; }
+  empty.classList.add("hidden");
+  tbody.innerHTML = list.map(p => `
+    <tr class="pkg-row">
+      <td>${esc(p.id)}</td>
+      <td>${p.hasIndex ? "✓" : "✗ нет"}</td>
+      <td><a href="${esc(p.url)}" target="_blank">/scorm/${esc(p.id)}/</a></td>
+      <td><button class="btn btn-danger btn-sm" onclick="delScorm('${esc(p.id)}')">Удалить</button></td>
+    </tr>
+  `).join("");
+}
+
+async function delScorm(id) {
+  if (!confirm("Удалить пакет «" + id + "»?")) return;
+  const r = await api("/admin/scorm/" + id, { method: "DELETE" });
+  if (r.ok) loadScorm();
+  else showErr("upload-alert", "Ошибка удаления: " + (await r.json()).error);
+}
+
+function onDrag(e) { e.preventDefault(); document.getElementById("upload-zone").classList.add("drag"); }
+function offDrag() { document.getElementById("upload-zone").classList.remove("drag"); }
+function onDrop(e) {
+  e.preventDefault(); offDrag();
+  const file = e.dataTransfer.files[0];
+  if (file) uploadFile(file);
+}
+
+async function uploadFile(file) {
+  if (!file) return;
+  document.getElementById("upload-alert").innerHTML =
+    '<div class="alert alert-warn">⏳ Загрузка и распаковка…</div>';
+  const fd = new FormData();
+  fd.append("file", file);
+  const r = await api("/admin/scorm", { method: "POST", body: fd });
+  const d = await r.json();
+  if (r.ok && d.ok) {
+    document.getElementById("upload-alert").innerHTML =
+      `<div class="alert alert-ok">✓ Пакет «${esc(d.id)}» установлен. ${d.hasIndex ? '' : '⚠️ index.html не найден — проверьте структуру архива.'}</div>`;
+    document.getElementById("file-input").value = "";
+    loadScorm();
+  } else {
+    showErr("upload-alert", "Ошибка: " + (d.error || "неизвестная ошибка"));
+  }
+}
+
+// ── Утилиты ───────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function showErr(id, msg) {
+  document.getElementById(id).innerHTML = `<div class="alert alert-err">${esc(msg)}</div>`;
+}
+
+// Автологин если токен уже в sessionStorage
+if (TOKEN) doLogin();
 </script>
 </body>
 </html>

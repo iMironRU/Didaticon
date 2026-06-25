@@ -9,6 +9,8 @@ export interface Config {
   oidcIssuer: string;
   oidcJwksUrl: string;
   oidcAudience: string;
+  adminToken: string;
+  scormPath: string;
 }
 
 export function loadConfig(): Config {
@@ -23,5 +25,7 @@ export function loadConfig(): Config {
     oidcIssuer: process.env.OIDC_ISSUER ?? "",
     oidcJwksUrl: process.env.OIDC_JWKS_URL ?? "",
     oidcAudience: process.env.OIDC_AUDIENCE ?? "eios-glue",
+    adminToken: process.env.ADMIN_TOKEN ?? "",
+    scormPath: process.env.SCORM_PATH ?? "/scorm",
   };
 }

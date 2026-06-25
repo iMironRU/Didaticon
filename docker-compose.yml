@@ -19,15 +19,14 @@ services:
     build: ./glue
     env_file: ./glue/.env
     environment:
-      # Срез-1: SQLite. PgStore реализуем в срез-2; postgres-сервис пока в стеке
-      # для будущего переключения (достаточно поменять EIOS_STORE=postgres).
       EIOS_STORE: sqlite
       EIOS_SQLITE_PATH: /data/glue.sqlite
+      SCORM_PATH: /scorm
     extra_hosts:
-      # Позволяет обращаться к host.docker.internal:9000 (mock Univerkon в dev/test).
       - "host.docker.internal:host-gateway"
     volumes:
       - gluedata:/data
+      - scormdata:/scorm
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +36,8 @@ services:
   # Статика: SCORM-пакеты + собранный PWA. Один origin (важно для scorm-again).
   static:
     build: ./pwa
+    volumes:
+      - scormdata:/usr/share/nginx/html/scorm
     ports:
       - "8081:80"
     depends_on:
@@ -45,3 +46,4 @@ services:
 volumes:
   pgdata:
   gluedata:
+  scormdata:
