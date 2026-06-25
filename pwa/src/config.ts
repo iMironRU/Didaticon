@@ -1,8 +1,34 @@
+export interface Branding {
+  orgName: string;
+  brandColor: string;
+  logoUrl: string | null;
+  supportEmail: string;
+  supportPhone: string;
+  supportHours: string;
+  accessInfo: string;
+  footerText: string;
+}
+
 declare global {
   interface Window {
-    __EIOS_CONFIG__?: { oidcIssuer: string; oidcClientId: string };
+    __EIOS_CONFIG__?: {
+      oidcIssuer: string;
+      oidcClientId: string;
+      branding?: Partial<Branding>;
+    };
   }
 }
+
+export const DEFAULT_BRANDING: Branding = {
+  orgName:      "Образовательная организация",
+  brandColor:   "#4B9EE5",
+  logoUrl:      null,
+  supportEmail: "",
+  supportPhone: "",
+  supportHours: "",
+  accessInfo:   "Доступ к ЭИОС предоставляется учебной частью при зачислении.\n\nЕсли вы уже обучаетесь, но не можете войти — обратитесь в деканат или службу поддержки.",
+  footerText:   "",
+};
 
 // Версия: v2 — принудительная смена хэша бандла после перехода на runtime config.
 export const EIOS_BUNDLE_VER = "v2";
