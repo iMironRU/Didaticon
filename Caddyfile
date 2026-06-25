@@ -1,5 +1,13 @@
-# Замените на ваш домен. Caddy автоматически получит сертификат Let's Encrypt.
 {$EIOS_DOMAIN} {
-    # PWA + SCORM статика + проксирование /api → glue
-    reverse_proxy static:80
+    # В тестовом режиме (USE_MOCK=y): OIDC-эндпоинты проксируются к mock на хосте.
+    # В продакшне этого блока нет — Univerkon доступен напрямую из браузера.
+    @oidc path /.well-known/openid-configuration /authorize /token /jwks
+    handle @oidc {
+        reverse_proxy host.docker.internal:9000
+    }
+
+    # PWA + SCORM статика + /api → glue
+    handle {
+        reverse_proxy static:80
+    }
 }

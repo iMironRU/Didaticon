@@ -19,7 +19,9 @@ import {
 } from "jose";
 
 const PORT = 9000;
-const ISSUER = `http://localhost:${PORT}`;
+// В prod-подобной среде: MOCK_ISSUER=https://your.domain (для браузерного OIDC-флоу).
+// Для локальной разработки оставить пустым — будет http://localhost:9000.
+const ISSUER = process.env.MOCK_ISSUER ?? `http://localhost:${PORT}`;
 
 // --- Ключ ---------------------------------------------------------------
 async function init() {

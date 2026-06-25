@@ -221,10 +221,10 @@ do_install() {
   read -rp "  URL OIDC Univerkon (Enter — тестовый mock): " OIDC_ISSUER
   if [ -z "$OIDC_ISSUER" ]; then
     USE_MOCK="y"
-    # OIDC_ISSUER должен совпадать с `iss` в JWT, который mock пишет как localhost.
-    # OIDC_JWKS_URL/RPC — через host.docker.internal (extra_hosts в compose),
-    # иначе контейнер не достучится до хоста.
-    OIDC_ISSUER="http://localhost:9000"
+    # Mock выставляет iss=https://{домен} (через MOCK_ISSUER).
+    # Caddy проксирует OIDC-эндпоинты mock → браузер ходит на публичный домен.
+    # Внутри контейнеров mock достигается через host.docker.internal.
+    OIDC_ISSUER="https://${EIOS_DOMAIN}"
     OIDC_JWKS_URL="http://host.docker.internal:9000/jwks"
     UNIVERKON_RPC_URL="http://host.docker.internal:9000/rpc"
     UNIVERKON_SERVICE_TOKEN="mock-service-token"
@@ -279,11 +279,15 @@ do_install() {
 
   # ── .env — создаём напрямую, не зависим от .env.example
   local PG_PW; PG_PW="$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
+  # VITE_OIDC_ISSUER нужен docker-entrypoint.sh PWA-контейнера (runtime config.js).
+  local VITE_OIDC_ISSUER_VAL
+  VITE_OIDC_ISSUER_VAL="${OIDC_ISSUER}"  # = https://домен в mock-режиме, или реальный Univerkon
   cat > .env << ENVEOF
 EIOS_DOMAIN=${EIOS_DOMAIN}
 OIDC_ISSUER=${OIDC_ISSUER}
 OIDC_JWKS_URL=${OIDC_JWKS_URL}
 OIDC_AUDIENCE=eios-glue
+VITE_OIDC_ISSUER=${VITE_OIDC_ISSUER_VAL}
 UNIVERKON_RPC_URL=${UNIVERKON_RPC_URL}
 UNIVERKON_SERVICE_TOKEN=${UNIVERKON_SERVICE_TOKEN}
 EIOS_STORE=sqlite
@@ -313,7 +317,7 @@ ENVEOF
     cat > "${INSTALL_DIR}/mock/univerkon.mjs" << 'MOCKEOF'
 import http from "http";
 const PORT = 9000;
-const ISSUER = "http://localhost:" + PORT;
+const ISSUER = process.env.MOCK_ISSUER || "http://localhost:" + PORT;
 const { subtle } = globalThis.crypto;
 const kp = await subtle.generateKey({ name:"ECDSA", namedCurve:"P-256" }, true, ["sign","verify"]);
 const pub = await subtle.exportKey("jwk", kp.publicKey);
@@ -402,6 +406,7 @@ Description=ЭИОС mock Univerkon
 After=network.target
 [Service]
 WorkingDirectory=${INSTALL_DIR}
+Environment="MOCK_ISSUER=https://${EIOS_DOMAIN}"
 ExecStart=$(command -v node) mock/univerkon.mjs
 Restart=always
 [Install]
