@@ -26,6 +26,9 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-pwa:latest
     build: !reset null
     ports: !reset []
+    environment:
+      VITE_OIDC_ISSUER: ${OIDC_ISSUER}
+      VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-eios-pwa}
 
 volumes:
   caddydata:

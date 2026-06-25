@@ -3,10 +3,11 @@
 // docs/concept-eios.md §3.
 import { UserManager, WebStorageStateStore } from "oidc-client-ts";
 import { StudentId } from "@eios/contracts";
+import { config } from "../config.js";
 
 const mgr = new UserManager({
-  authority: import.meta.env.VITE_OIDC_ISSUER ?? "",
-  client_id: import.meta.env.VITE_OIDC_CLIENT_ID ?? "eios-pwa",
+  authority: config.oidcIssuer,
+  client_id: config.oidcClientId,
   redirect_uri: window.location.origin + "/callback",
   post_logout_redirect_uri: window.location.origin + "/",
   // Univerkon выдаёт access_token с audience=eios-glue; нам нужны openid+profile
