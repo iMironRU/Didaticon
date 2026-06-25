@@ -23,6 +23,9 @@ services:
       # для будущего переключения (достаточно поменять EIOS_STORE=postgres).
       EIOS_STORE: sqlite
       EIOS_SQLITE_PATH: /data/glue.sqlite
+    extra_hosts:
+      # Позволяет обращаться к host.docker.internal:9000 (mock Univerkon в dev/test).
+      - "host.docker.internal:host-gateway"
     volumes:
       - gluedata:/data
     depends_on:

@@ -10,9 +10,10 @@ RUN npm ci && npm run build -w @eios/contracts && npm run build -w @eios/glue
 
 FROM node:22-alpine
 WORKDIR /app
-# Копируем node_modules целиком — нативные .node файлы собраны под alpine/x86_64.
+# node_modules/@eios/contracts — симлинк на ../../packages/contracts.
+# Копируем packages/contracts целиком (с package.json + dist) чтобы симлинк резолвился.
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/contracts ./packages/contracts
 COPY --from=build /app/glue/dist ./dist
-COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 EXPOSE 8080
 CMD ["node", "dist/index.js"]

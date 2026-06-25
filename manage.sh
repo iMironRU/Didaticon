@@ -221,9 +221,12 @@ do_install() {
   read -rp "  URL OIDC Univerkon (Enter — тестовый mock): " OIDC_ISSUER
   if [ -z "$OIDC_ISSUER" ]; then
     USE_MOCK="y"
+    # OIDC_ISSUER должен совпадать с `iss` в JWT, который mock пишет как localhost.
+    # OIDC_JWKS_URL/RPC — через host.docker.internal (extra_hosts в compose),
+    # иначе контейнер не достучится до хоста.
     OIDC_ISSUER="http://localhost:9000"
-    OIDC_JWKS_URL="http://localhost:9000/jwks"
-    UNIVERKON_RPC_URL="http://localhost:9000/rpc"
+    OIDC_JWKS_URL="http://host.docker.internal:9000/jwks"
+    UNIVERKON_RPC_URL="http://host.docker.internal:9000/rpc"
     UNIVERKON_SERVICE_TOKEN="mock-service-token"
     warn "Будет запущен локальный mock Univerkon — только для тестирования!"
   else
