@@ -83,7 +83,8 @@ _fetch() {
 # ── Статус установки / обновления ────────────────────────────────────────────
 _install_status() {
   local dir; dir="$(_find_install_dir)"
-  [ -n "$dir" ] && echo "installed" || echo "not_installed"
+  # Считаем установленным только если есть и compose и .env (т.е. был запуск установки)
+  [ -n "$dir" ] && [ -f "${dir}/.env" ] && echo "installed" || echo "not_installed"
 }
 
 _update_status() {
@@ -260,53 +261,145 @@ do_install() {
   mkdir -p "$INSTALL_DIR"
   cd "$INSTALL_DIR"
 
-  run_spin "Скачиваем compose-файлы" bash -c "
-    curl -fsSL '${RAW}/docker-compose.yml'      -o docker-compose.yml &&
-    curl -fsSL '${RAW}/docker-compose.prod.yml' -o docker-compose.prod.yml &&
-    curl -fsSL '${RAW}/Caddyfile'               -o Caddyfile &&
-    curl -fsSL '${RAW}/.env.example'            -o .env.example
-  "
+  # Скачиваем compose-файлы из репозитория; если файлы уже есть (ручная загрузка,
+  # приватный репо) — используем их и продолжаем.
+  if curl -fsSL --max-time 5 "${RAW}/docker-compose.yml" -o docker-compose.yml 2>>"$LOG_FILE" &&
+     curl -fsSL --max-time 5 "${RAW}/docker-compose.prod.yml" -o docker-compose.prod.yml 2>>"$LOG_FILE" &&
+     curl -fsSL --max-time 5 "${RAW}/Caddyfile" -o Caddyfile 2>>"$LOG_FILE" &&
+     curl -fsSL --max-time 5 "${RAW}/.env.example" -o .env.example 2>>"$LOG_FILE"; then
+    log "Compose-файлы скачаны"
+  elif [ -f docker-compose.yml ] && [ -f docker-compose.prod.yml ]; then
+    warn "Репозиторий недоступен — используем локальные compose-файлы"
+  else
+    err "Не удалось скачать compose-файлы и локальных копий нет. Положите их в ${INSTALL_DIR}/ вручную."; exit 1
+  fi
 
-  # ── .env
-  cp .env.example .env
-  _env_set EIOS_DOMAIN             "$EIOS_DOMAIN"             .env
-  _env_set OIDC_ISSUER             "$OIDC_ISSUER"             .env
-  _env_set OIDC_JWKS_URL           "$OIDC_JWKS_URL"           .env
-  _env_set OIDC_AUDIENCE           "eios-glue"                .env
-  _env_set UNIVERKON_RPC_URL       "$UNIVERKON_RPC_URL"        .env
-  _env_set UNIVERKON_SERVICE_TOKEN "$UNIVERKON_SERVICE_TOKEN"  .env
-  _env_set EIOS_STORE              "sqlite"                    .env
-  _env_set EIOS_SQLITE_PATH        "/data/glue.sqlite"         .env
-  _env_set EIOS_ROLE               "central"                   .env
-  _env_set PORT                    "8080"                      .env
-  _env_set POSTGRES_PASSWORD \
-    "$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)" .env
-  _env_set GITHUB_REPOSITORY_OWNER "imironru"                  .env
+  # ── .env — создаём напрямую, не зависим от .env.example
+  local PG_PW; PG_PW="$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
+  cat > .env << ENVEOF
+EIOS_DOMAIN=${EIOS_DOMAIN}
+OIDC_ISSUER=${OIDC_ISSUER}
+OIDC_JWKS_URL=${OIDC_JWKS_URL}
+OIDC_AUDIENCE=eios-glue
+UNIVERKON_RPC_URL=${UNIVERKON_RPC_URL}
+UNIVERKON_SERVICE_TOKEN=${UNIVERKON_SERVICE_TOKEN}
+EIOS_STORE=sqlite
+EIOS_SQLITE_PATH=/data/glue.sqlite
+EIOS_ROLE=central
+PORT=8080
+POSTGRES_PASSWORD=${PG_PW}
+GITHUB_REPOSITORY_OWNER=imironru
+ENVEOF
   log ".env создан"
 
   # glue читает свой .env отдельно — кладём рядом
   mkdir -p glue && cp .env glue/.env
 
-  # ── Mock (тестовый режим) — нужен Node.js только для него
+  # ── Mock (тестовый режим) — pure Node.js, без внешних зависимостей
+  # Использует встроенный Web Crypto (Node 18+) для ES256. Никакого npm install.
   if [ "$USE_MOCK" = "y" ]; then
-    run_spin "Устанавливаем Node.js (для mock)" bash -c \
-      "curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-       apt-get install -y -qq nodejs"
-    # Скачиваем только mock + минимальный package.json
-    mkdir -p mock
-    run_spin "Скачиваем mock" bash -c "
-      curl -fsSL '${RAW}/mock/univerkon.ts' -o mock/univerkon.ts &&
-      curl -fsSL '${RAW}/package.json'      -o package.json &&
-      npm install --omit=dev 2>/dev/null || npm install
-    "
+    command -v node >/dev/null 2>&1 || \
+      run_spin "Устанавливаем Node.js" bash -c \
+        "curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+         apt-get install -y -qq nodejs"
+
+    mkdir -p "${INSTALL_DIR}/mock"
+    # Пишем mock как plain JS — Node 18+ Web Crypto, ноль npm-зависимостей.
+    # Single-quoted heredoc: shell не интерпретирует $ и ` внутри.
+    mkdir -p "${INSTALL_DIR}/mock"
+    cat > "${INSTALL_DIR}/mock/univerkon.mjs" << 'MOCKEOF'
+import http from "http";
+const PORT = 9000;
+const ISSUER = "http://localhost:" + PORT;
+const { subtle } = globalThis.crypto;
+const kp = await subtle.generateKey({ name:"ECDSA", namedCurve:"P-256" }, true, ["sign","verify"]);
+const pub = await subtle.exportKey("jwk", kp.publicKey);
+pub.kid = "mock-1"; pub.use = "sig"; pub.alg = "ES256";
+
+function b64u(b) {
+  return Buffer.from(b).toString("base64").replace(/\+/g,"-").replace(/\//g,"_").replace(/=/g,"");
+}
+async function mint(sub) {
+  const h = b64u(JSON.stringify({ alg:"ES256", kid:"mock-1" }));
+  const now = Math.floor(Date.now()/1000);
+  const p = b64u(JSON.stringify({
+    sub, name:"Тестов Студент", iss:ISSUER,
+    aud:["eios-pwa","eios-glue"], iat:now, exp:now+28800
+  }));
+  const sig = await subtle.sign({ name:"ECDSA", hash:"SHA-256" },
+    kp.privateKey, Buffer.from(h + "." + p));
+  return h + "." + p + "." + b64u(sig);
+}
+function trajectory(id) {
+  return {
+    student_id: id, discipline_title: "Тестовая дисциплина",
+    nodes: [{ unit_id:"unit-1", event_id:"event-smoke-1",
+      title:"Вводный SCORM-модуль", closure:"completion",
+      scorm_version:"1.2", package_url:"/scorm/test/index.html", state:"open" }],
+    projected_at: new Date().toISOString()
+  };
+}
+function json(res, st, body) {
+  const d = JSON.stringify(body);
+  res.writeHead(st, { "Content-Type":"application/json",
+    "Access-Control-Allow-Origin":"*",
+    "Access-Control-Allow-Headers":"Content-Type,Authorization" });
+  res.end(d);
+}
+function readBody(req) {
+  return new Promise((ok,er) => {
+    const c = []; req.on("data", b => c.push(b));
+    req.on("end", () => ok(Buffer.concat(c).toString())); req.on("error", er);
+  });
+}
+http.createServer(async (req, res) => {
+  const u = new URL(req.url || "/", ISSUER);
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, { "Access-Control-Allow-Origin":"*",
+      "Access-Control-Allow-Methods":"GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers":"Content-Type,Authorization" });
+    return res.end();
+  }
+  if (u.pathname === "/.well-known/openid-configuration")
+    return json(res, 200, { issuer:ISSUER,
+      authorization_endpoint: ISSUER+"/authorize",
+      token_endpoint: ISSUER+"/token", jwks_uri: ISSUER+"/jwks",
+      response_types_supported:["code"], code_challenge_methods_supported:["S256"] });
+  if (u.pathname === "/jwks") return json(res, 200, { keys:[pub] });
+  if (u.pathname === "/authorize") {
+    const t = new URL(u.searchParams.get("redirect_uri") || "http://x");
+    t.searchParams.set("code","mock-code");
+    t.searchParams.set("state", u.searchParams.get("state") || "");
+    res.writeHead(302, { Location: t.toString() }); return res.end();
+  }
+  if (req.method === "POST" && u.pathname === "/token") {
+    const tok = await mint("student-001");
+    return json(res, 200, { access_token:tok, id_token:tok, token_type:"Bearer", expires_in:28800 });
+  }
+  if (req.method === "POST" && u.pathname === "/rpc") {
+    const b = JSON.parse(await readBody(req));
+    console.log("[mock] RPC", b.method);
+    if (b.method === "trajectory.get")
+      return json(res, 200, { jsonrpc:"2.0", id:b.id, result:trajectory(b.params.student_id) });
+    if (b.method === "deposit_svidetelstvo") {
+      console.log("[mock] valence=" + b.params.valence + " status=" + b.params.status);
+      return json(res, 200, { jsonrpc:"2.0", id:b.id, result:{ deduplicated:false } });
+    }
+    return json(res, 200, { jsonrpc:"2.0", id:b.id,
+      error:{ code:-32601, message:"Method not found: " + b.method } });
+  }
+  res.writeHead(404); res.end("Not found");
+}).listen(PORT, () => console.log("Mock Univerkon -> http://localhost:" + PORT));
+MOCKEOF
+
     if command -v systemctl >/dev/null 2>&1 && [ -d /etc/systemd/system ]; then
-      cat > /etc/systemd/system/eios-mock.service <<UNIT
+      cat > /etc/systemd/system/eios-mock.service << UNIT
 [Unit]
 Description=ЭИОС mock Univerkon
 After=network.target
 [Service]
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=/usr/bin/npx tsx mock/univerkon.ts
+ExecStart=$(command -v node) mock/univerkon.mjs
 Restart=always
 [Install]
 WantedBy=multi-user.target
@@ -315,7 +408,7 @@ UNIT
       systemctl enable --now eios-mock >> "$LOG_FILE" 2>&1
       log "Mock Univerkon запущен как сервис (порт 9000)"
     else
-      nohup npx tsx mock/univerkon.ts >> "$LOG_FILE" 2>&1 &
+      nohup node "${INSTALL_DIR}/mock/univerkon.mjs" >> "$LOG_FILE" 2>&1 &
       log "Mock Univerkon запущен в фоне (порт 9000)"
     fi
   fi

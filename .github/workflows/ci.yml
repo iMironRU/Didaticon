@@ -33,6 +33,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run build -w @eios/contracts
 
       - name: Start mock Univerkon
         run: npx tsx mock/univerkon.ts &
