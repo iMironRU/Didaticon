@@ -7,6 +7,13 @@ export default defineConfig({
   // Покрывает Safari 12+ (iOS 12), Chrome 69+. Async/await остаётся нативным.
   build: {
     target: "es2019",
+    // terser уважает зарезервированные слова JS (of, in, let...) при манглинге имён.
+    // esbuild по умолчанию переименовывает классы в зарезервированные слова,
+    // что ломает парсер Safari < 15.
+    minify: "terser",
+    terserOptions: {
+      mangle: { reserved: ["of", "in", "do", "if", "for", "let", "new", "try", "var"] },
+    },
   },
   plugins: [
     react(),
