@@ -11,7 +11,7 @@ type AuthState =
   | { phase: "error"; message: string }
   | { phase: "authenticated"; studentId: StudentId };
 
-const USE_MOCK = import.meta.env.DEV;
+const USE_MOCK = import.meta.env.DEV || new URLSearchParams(window.location.search).has("demo");
 
 export function App() {
   const [auth, setAuth] = useState<AuthState>(
