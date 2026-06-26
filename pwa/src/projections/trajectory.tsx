@@ -194,6 +194,7 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   const [showContextSwitcher, setShowContextSwitcher] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [openNotification, setOpenNotification] = useState<Notification | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   function switchContext(id: string) {
     setCurrentContextId(id);
@@ -277,8 +278,18 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
         unreadCount={unreadCount}
         onContextTap={() => setShowContextSwitcher(true)}
         onBell={() => setShowNotifications(true)}
-        onLogout={onLogout}
+        onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
       />
+      {showLogoutConfirm && (
+        <ConfirmModal
+          title="Выйти из ЭИОС?"
+          message="Сессия будет завершена на этом устройстве."
+          confirmLabel="Выйти"
+          onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
+          onCancel={() => setShowLogoutConfirm(false)}
+          danger
+        />
+      )}
       <div style={s.body}>
         {tab === "schedule" && (
           <ScheduleTab
@@ -516,6 +527,31 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
         {discipline.lessons.map((l, i) => (
           <LessonCard key={l.id} lesson={l} showDate={true} onOpen={() => onLesson(l)} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Модальное окно подтверждения ─────────────────────────────────────────────
+function ConfirmModal({ title, message, confirmLabel, onConfirm, onCancel, danger }: {
+  title: string;
+  message?: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <div style={s.modalOverlay} onClick={onCancel}>
+      <div style={s.modalBox} onClick={e => e.stopPropagation()}>
+        <div style={s.modalTitle}>{title}</div>
+        {message && <div style={s.modalMessage}>{message}</div>}
+        <div style={s.modalActions}>
+          <button style={s.modalCancelBtn} onClick={onCancel}>Отмена</button>
+          <button style={{ ...s.modalConfirmBtn, ...(danger ? s.modalConfirmDanger : {}) }} onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -816,6 +852,14 @@ const s: Record<string, React.CSSProperties> = {
   ctxName: { color: "var(--c-text-primary)", fontSize: "0.92rem", fontWeight: 600, marginBottom: 3 },
   ctxPeriod: { color: "var(--c-text-muted)", fontSize: "0.75rem" },
   ctxSetDefaultBtn: { background: "none", border: "none", padding: "6px 0 0", fontSize: "0.73rem", color: "var(--c-accent)", cursor: "pointer", display: "block", fontWeight: 500 },
+  modalOverlay: { position: "fixed" as const, inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "0 24px" },
+  modalBox: { background: "var(--c-card)", border: "1px solid var(--c-border)", borderRadius: 16, padding: "24px 20px 20px", width: "100%", maxWidth: 360 },
+  modalTitle: { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 700, marginBottom: 8, textAlign: "center" as const },
+  modalMessage: { color: "var(--c-text-muted)", fontSize: "0.83rem", textAlign: "center" as const, marginBottom: 24, lineHeight: 1.5 },
+  modalActions: { display: "flex", gap: 10 },
+  modalCancelBtn: { flex: 1, background: "none", border: "1px solid var(--c-border)", borderRadius: 10, padding: "11px 0", color: "var(--c-text-secondary)", fontSize: "0.9rem", cursor: "pointer", fontWeight: 500 },
+  modalConfirmBtn: { flex: 1, background: "var(--c-accent)", border: "none", borderRadius: 10, padding: "11px 0", color: "#fff", fontSize: "0.9rem", cursor: "pointer", fontWeight: 600 },
+  modalConfirmDanger: { background: "var(--c-danger)" },
   readAllBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.75rem", cursor: "pointer", padding: "2px 0", fontWeight: 500, flexShrink: 0, marginLeft: "auto" },
   notifCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8 },
   notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 },

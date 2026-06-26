@@ -37,7 +37,6 @@ export function App() {
   }, []);
 
   function handleLogout() {
-    if (!window.confirm("Выйти из ЭИОС?")) return;
     sessionStorage.clear();
     setAuth({ phase: "anonymous" });
   }
