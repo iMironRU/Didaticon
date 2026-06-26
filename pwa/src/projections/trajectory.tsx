@@ -82,6 +82,44 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
   },
 ];
 
+// Мок зачётки — все дисциплины за все курсы (включая прошедшие)
+interface GradebookEntry {
+  id: string;
+  title: string;
+  course: number;
+  semester: number;
+  hours: number;
+  grade?: string;       // оценка от преподавателя
+  gradeValue?: number;  // числовое значение для цвета
+  type: "exam" | "test" | "coursework"; // экзамен / зачёт / курсовая
+}
+
+const MOCK_GRADEBOOK: GradebookEntry[] = [
+  // Курс 1
+  { id: "g1",  course: 1, semester: 1, title: "Математика (ч. 1)",             hours: 108, type: "exam",       grade: "5",        gradeValue: 5 },
+  { id: "g2",  course: 1, semester: 1, title: "Введение в программирование",   hours: 72,  type: "exam",       grade: "4",        gradeValue: 4 },
+  { id: "g3",  course: 1, semester: 1, title: "Дискретная математика",         hours: 54,  type: "test",       grade: "Зачтено",  gradeValue: 5 },
+  { id: "g4",  course: 1, semester: 2, title: "Математика (ч. 2)",             hours: 108, type: "exam",       grade: "4",        gradeValue: 4 },
+  { id: "g5",  course: 1, semester: 2, title: "Алгоритмы и структуры данных",  hours: 90,  type: "exam",       grade: "5",        gradeValue: 5 },
+  { id: "g6",  course: 1, semester: 2, title: "Физическая культура",           hours: 72,  type: "test",       grade: "Зачтено",  gradeValue: 5 },
+  // Курс 2
+  { id: "g7",  course: 2, semester: 3, title: "ООП и паттерны проектирования", hours: 90,  type: "exam",       grade: "5",        gradeValue: 5 },
+  { id: "g8",  course: 2, semester: 3, title: "Операционные системы",          hours: 72,  type: "exam",       grade: "4",        gradeValue: 4 },
+  { id: "g9",  course: 2, semester: 3, title: "Теория вероятностей",           hours: 72,  type: "test",       grade: "Зачтено",  gradeValue: 5 },
+  { id: "g10", course: 2, semester: 4, title: "Компьютерные сети",             hours: 90,  type: "exam",       grade: "3",        gradeValue: 3 },
+  { id: "g11", course: 2, semester: 4, title: "Базы данных (основы)",          hours: 72,  type: "exam",       grade: "5",        gradeValue: 5 },
+  { id: "g12", course: 2, semester: 4, title: "Курсовая работа",               hours: 36,  type: "coursework", grade: "5",        gradeValue: 5 },
+  // Курс 3
+  { id: "g13", course: 3, semester: 5, title: "Архитектура ПО",                hours: 90,  type: "exam",       grade: "4",        gradeValue: 4 },
+  { id: "g14", course: 3, semester: 5, title: "Веб-технологии",                hours: 72,  type: "exam",       grade: "5",        gradeValue: 5 },
+  { id: "g15", course: 3, semester: 6, title: "Безопасность ИС",               hours: 72,  type: "exam",       grade: "4",        gradeValue: 4 },
+  { id: "g16", course: 3, semester: 6, title: "Курсовой проект",               hours: 36,  type: "coursework", grade: "5",        gradeValue: 5 },
+  // Курс 4 — текущий (оценки не выставлены)
+  { id: "g17", course: 4, semester: 7, title: "Базы данных",                   hours: 108, type: "exam"   },
+  { id: "g18", course: 4, semester: 7, title: "Математический анализ",         hours: 72,  type: "exam"   },
+  { id: "g19", course: 4, semester: 8, title: "Правовое регулирование в ИТ",   hours: 54,  type: "test"   },
+];
+
 // ── Контексты обучающегося ────────────────────────────────────────────────────
 type ContextStatus = "active" | "completed";
 type ContextType   = "specialty" | "dpo" | "course";
@@ -258,6 +296,7 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 
   const unreadCount = notifications.filter(n => !n.read).length;
   const tab = route.name === "disciplines" ? "disciplines"
+            : route.name === "gradebook"   ? "gradebook"
             : route.name === "profile"     ? "profile"
             : "schedule";
 
@@ -363,6 +402,9 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
               t={t}
             />
           )}
+          {tab === "gradebook" && (
+            <GradebookTab periodsPerYear={currentCtx.periodsPerYear} t={t} />
+          )}
           {tab === "profile" && (
             <ProfileTab
               locale={locale}
@@ -462,6 +504,7 @@ function BottomNav({ tab, onChange, t }: { tab: string; onChange: (v: string) =>
   const items = [
     { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
     { id: "disciplines", label: t("disciplines"), icon: <BookIcon /> },
+    { id: "gradebook",   label: t("gradebook"),   icon: <GradebookIcon /> },
     { id: "profile",     label: t("profile"),     icon: <PersonIcon /> },
   ];
   return (
@@ -920,6 +963,65 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
   );
 }
 
+// ── Зачётка ───────────────────────────────────────────────────────────────────
+const TYPE_LABEL: Record<GradebookEntry["type"], string> = {
+  exam: "Экз", test: "Зач", coursework: "КР",
+};
+const TYPE_LABEL_EN: Record<GradebookEntry["type"], string> = {
+  exam: "Exam", test: "Test", coursework: "CW",
+};
+
+function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: StringKey) => string }) {
+  const isEn = t("gradebook") === "Grades";
+  const typeLabel = isEn ? TYPE_LABEL_EN : TYPE_LABEL;
+
+  type Group = Record<number, Record<number, GradebookEntry[]>>;
+  const byCourse = MOCK_GRADEBOOK.reduce<Group>((acc, e) => {
+    if (!acc[e.course]) acc[e.course] = {};
+    if (!acc[e.course][e.semester]) acc[e.course][e.semester] = [];
+    acc[e.course][e.semester].push(e);
+    return acc;
+  }, {});
+
+  function gradeColor(v?: number) {
+    if (!v) return "var(--c-text-muted)";
+    if (v >= 5) return "var(--c-success)";
+    if (v >= 4) return "var(--c-accent)";
+    if (v >= 3) return "#E5A94B";
+    return "var(--c-danger)";
+  }
+
+  function semLabel(course: number, sem: number) {
+    const within = ((sem - 1) % periodsPerYear) + 1;
+    return `${t("semester")} ${sem} (${ROMAN[within - 1] ?? within})`;
+  }
+
+  return (
+    <div>
+      {Object.keys(byCourse).map(Number).sort((a, b) => a - b).map(course => (
+        <div key={course}>
+          <div style={s.courseLabel}>{t("course")} {course}</div>
+          {Object.keys(byCourse[course]).map(Number).sort((a, b) => a - b).map(sem => (
+            <div key={sem}>
+              <div style={s.sectionLabel}>{semLabel(course, sem)}</div>
+              {byCourse[course][sem].map(e => (
+                <div key={e.id} style={s.gbRow}>
+                  <div style={s.gbTypeTag}>{typeLabel[e.type]}</div>
+                  <div style={s.gbTitle}>{e.title}</div>
+                  <div style={s.gbHours}>{e.hours} {t("credits")}</div>
+                  <div style={{ ...s.gbGrade, color: gradeColor(e.gradeValue) }}>
+                    {e.grade ?? t("inProgress")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Профиль / настройки ──────────────────────────────────────────────────────
 function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, onLogout, t }: {
   locale: string;
@@ -1002,6 +1104,9 @@ function CalIcon() {
 }
 function BookIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+}
+function GradebookIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
 }
 function PersonIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
@@ -1117,6 +1222,12 @@ const s: Record<string, React.CSSProperties> = {
   notifLink: { display: "block", color: "var(--c-accent)", fontSize: "0.88rem", fontWeight: 500, padding: "12px 16px", background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 10, textDecoration: "none" },
   // Иерархия дисциплин
   courseLabel: { color: "var(--c-text-primary)", fontSize: "0.82rem", fontWeight: 700, marginTop: 16, marginBottom: 8 },
+  // Зачётка
+  gbRow: { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-card)", borderRadius: 8, border: "0.5px solid var(--c-border)", marginBottom: 6 },
+  gbTypeTag: { fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.04em", color: "var(--c-text-muted)", background: "var(--c-border)", borderRadius: 3, padding: "2px 5px", flexShrink: 0 },
+  gbTitle: { flex: 1, color: "var(--c-text-primary)", fontSize: "0.82rem", lineHeight: 1.3 },
+  gbHours: { color: "var(--c-text-dim)", fontSize: "0.7rem", flexShrink: 0 },
+  gbGrade: { fontSize: "0.85rem", fontWeight: 700, flexShrink: 0, minWidth: 40, textAlign: "right" as const },
   // Профиль / настройки
   profileBlock: { marginBottom: 24 },
   profileValue: { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 600, marginTop: 4 },

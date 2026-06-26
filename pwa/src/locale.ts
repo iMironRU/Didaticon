@@ -8,6 +8,7 @@ export const STRINGS = {
     // Навигация
     schedule:          "Расписание",
     disciplines:       "Дисциплины",
+    gradebook:         "Зачётка",
     profile:           "Профиль",
     // Экраны / заголовки
     notifications:     "Уведомления",
@@ -27,9 +28,11 @@ export const STRINGS = {
     noLessons:         "Занятий нет",
     notAvailable:      "Ещё не доступно",
     passed:            "пройдено",
-    // Дисциплины
+    // Дисциплины / зачётка
     course:            "Курс",
     semester:          "Семестр",
+    inProgress:        "В процессе",
+    credits:           "ч.",
     // Типы занятий
     lec:               "Лек",
     prac:              "Пр",
@@ -61,6 +64,7 @@ export const STRINGS = {
     // Nav
     schedule:          "Schedule",
     disciplines:       "Courses",
+    gradebook:         "Grades",
     profile:           "Profile",
     // Screens
     notifications:     "Notifications",
@@ -80,9 +84,11 @@ export const STRINGS = {
     noLessons:         "No lessons",
     notAvailable:      "Not yet available",
     passed:            "completed",
-    // Disciplines
+    // Disciplines / gradebook
     course:            "Year",
     semester:          "Semester",
+    inProgress:        "In progress",
+    credits:           "h.",
     // Lesson types
     lec:               "Lec",
     prac:              "Pr",
