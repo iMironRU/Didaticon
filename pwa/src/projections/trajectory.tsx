@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import type { StudentId } from "@eios/contracts";
 import { onSwUpdate, applySwUpdate } from "../sw-update.js";
-import { getThemeMode, cycleTheme, type ThemeMode } from "../theme.js";
+import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { useRoute, navigate } from "../router.js";
+import { useLocale, type StringKey } from "../locale.js";
 
 // Мок ЕИВ: в реальной интеграции приходит от Univerkon после авторизации
 const MOCK_EIV = "260001";
@@ -29,6 +30,8 @@ interface MockDiscipline {
   doneLessons: number;
   grade?: string;
   lessons: MockLesson[];
+  course: number;    // год обучения: 1, 2, 3…
+  semester: number;  // сквозная нумерация: 1, 2, 3, 4…
 }
 
 const TODAY = new Date(2026, 5, 26); // 26 июня 2026
@@ -64,14 +67,17 @@ const MOCK_LESSONS: MockLesson[] = [
 const MOCK_DISCIPLINES: MockDiscipline[] = [
   {
     id: "d1", title: "Базы данных", totalLessons: 8, doneLessons: 4,
+    course: 4, semester: 7,
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Базы данных"),
   },
   {
     id: "d2", title: "Математический анализ", totalLessons: 5, doneLessons: 2,
+    course: 4, semester: 7,
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Математический анализ"),
   },
   {
     id: "d3", title: "Правовое регулирование в сфере ИТ", totalLessons: 3, doneLessons: 1,
+    course: 4, semester: 8,
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Правовое регулирование"),
   },
 ];
@@ -86,14 +92,15 @@ interface LearnerContext {
   type: ContextType;
   period: string;
   status: ContextStatus;
-  completedAt?: string; // год завершения, только для completed
+  completedAt?: string;
+  periodsPerYear: number; // 2 = семестры, 3 = триместры
 }
 
 const MOCK_CONTEXTS: LearnerContext[] = [
-  { id: "c1", name: "Информационные технологии",    type: "specialty", period: "IV курс · Весенний семестр 2026", status: "active" },
-  { id: "c2", name: "Маркетинг и реклама",          type: "specialty", period: "I курс · Осенний семестр 2026",   status: "active" },
-  { id: "c3", name: "Python для анализа данных",    type: "dpo",       period: "Курс ДПО · 72 часа",              status: "active" },
-  { id: "c4", name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", completedAt: "2025" },
+  { id: "c1", name: "Информационные технологии",    type: "specialty", period: "IV курс · Весенний семестр 2026", status: "active",    periodsPerYear: 2 },
+  { id: "c2", name: "Маркетинг и реклама",          type: "specialty", period: "I курс · Осенний семестр 2026",   status: "active",    periodsPerYear: 2 },
+  { id: "c3", name: "Python для анализа данных",    type: "dpo",       period: "Курс ДПО · 72 часа",              status: "active",    periodsPerYear: 3 },
+  { id: "c4", name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", periodsPerYear: 2, completedAt: "2025" },
 ];
 
 interface CompletedDiscipline {
@@ -206,6 +213,8 @@ function hexToRgba(hex: string, alpha: number) {
 // ── Главный компонент ─────────────────────────────────────────────────────────
 export function Trajectory({ studentId: _studentId, onLogout }: { studentId: StudentId; onLogout?: () => void }) {
   const route = useRoute();
+  const { locale, changeLocale, t } = useLocale();
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const [currentContextId, setCurrentContextId] = useState(getDefaultContextId);
@@ -215,6 +224,11 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   const [swUpdate, setSwUpdate] = useState(false);
 
   useEffect(() => { onSwUpdate((s) => setSwUpdate(s === "available")); }, []);
+
+  function handleThemeChange(mode: ThemeMode) {
+    setTheme(mode);
+    setThemeMode(mode);
+  }
 
   const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
 
@@ -243,7 +257,9 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   }
 
   const unreadCount = notifications.filter(n => !n.read).length;
-  const tab = route.name === "disciplines" ? "disciplines" : "schedule";
+  const tab = route.name === "disciplines" ? "disciplines"
+            : route.name === "profile"     ? "profile"
+            : "schedule";
 
   const lesson           = route.name === "lesson"       ? MOCK_LESSONS.find(l => l.id === route.id) ?? null : null;
   const openDisciplineId = route.name === "discipline"   ? route.id : null;
@@ -265,7 +281,8 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
           onContextTap={() => history.back()}
           onBell={() => navigate({ name: "notifications" })}
           onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
-          contextLabel="Профиль обучающегося"
+          contextLabel={t("learnerProfile")}
+          t={t}
         />
         {showLogoutConfirm && (
           <ConfirmModal
@@ -315,12 +332,13 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
           onContextTap={() => navigate({ name: "profiles" })}
           onBell={() => navigate({ name: "notifications" })}
           onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
+          t={t}
         />
         {showLogoutConfirm && (
           <ConfirmModal
-            title="Выйти из ЭИОС?"
+            title={t("logout") + "?"}
             message="Сессия будет завершена на этом устройстве."
-            confirmLabel="Выйти"
+            confirmLabel={t("logout")}
             onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
             onCancel={() => setShowLogoutConfirm(false)}
             danger
@@ -334,16 +352,30 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
               selectedDay={selectedDay}
               onDayChange={setSelectedDay}
               onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+              t={t}
             />
           )}
           {tab === "disciplines" && (
             <DisciplinesTab
+              periodsPerYear={currentCtx.periodsPerYear}
               onDiscipline={(id) => navigate({ name: "discipline", id })}
               onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+              t={t}
+            />
+          )}
+          {tab === "profile" && (
+            <ProfileTab
+              locale={locale}
+              onChangeLocale={changeLocale}
+              themeMode={themeMode}
+              onThemeChange={handleThemeChange}
+              eiv={MOCK_EIV}
+              onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
+              t={t}
             />
           )}
         </div>
-        <BottomNav tab={tab} onChange={(t: "schedule" | "disciplines") => navigate({ name: t })} />
+        <BottomNav tab={tab} onChange={(v: string) => navigate({ name: v as "schedule" | "disciplines" | "profile" })} t={t} />
       </>
     );
   }
@@ -351,19 +383,20 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   return (
     <div style={s.root}>
       {inner}
-      <StatusBar swUpdate={swUpdate} eiv={MOCK_EIV} />
+      <StatusBar swUpdate={swUpdate} eiv={MOCK_EIV} t={t} />
     </div>
   );
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextLabel }: {
+function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextLabel, t }: {
   context: LearnerContext;
   unreadCount: number;
   onContextTap: () => void;
   onBell: () => void;
   onLogout?: () => void;
-  contextLabel?: string; // когда задан — заменяет кнопку профиля простым текстом
+  contextLabel?: string;
+  t: (k: StringKey) => string;
 }) {
   return (
     <header style={s.header}>
@@ -386,7 +419,7 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextL
       </button>
       <div style={s.avatar}>АМ</div>
       {onLogout && (
-        <button style={s.logoutBtn} onClick={onLogout} title="Выйти">
+        <button style={s.logoutBtn} onClick={onLogout} title={t("logout")}>
           <LogoutIcon />
         </button>
       )}
@@ -395,10 +428,9 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextL
 }
 
 // ── Статусная строка ──────────────────────────────────────────────────────────
-function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv?: string }) {
+function StatusBar({ swUpdate, eiv, t }: { swUpdate: boolean; eiv?: string; t: (k: StringKey) => string }) {
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
   const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
-  const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [copied, setCopied] = useState(false);
 
   function copySupportInfo() {
@@ -413,14 +445,11 @@ function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv?: string }) {
   return (
     <div style={s.statusBar}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <button style={s.themeBtn} onClick={() => setThemeMode(cycleTheme())} title={themeMode}>
-          <ThemeIcon mode={themeMode} />
-        </button>
-        {swUpdate && <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить</button>}
+        {swUpdate && <button style={s.updateBtn} onClick={applySwUpdate}>{t("update")}</button>}
       </div>
       <button style={s.versionBtn} onClick={copySupportInfo} title="Скопировать для поддержки">
         {copied
-          ? <span style={{ color: "var(--c-success)" }}>✓ Скопировано</span>
+          ? <span style={{ color: "var(--c-success)" }}>✓ {t("copied")}</span>
           : <span style={s.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
         }
       </button>
@@ -429,10 +458,11 @@ function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv?: string }) {
 }
 
 // ── Нижняя навигация ──────────────────────────────────────────────────────────
-function BottomNav({ tab, onChange }: { tab: string; onChange: (t: any) => void }) {
+function BottomNav({ tab, onChange, t }: { tab: string; onChange: (v: string) => void; t: (k: StringKey) => string }) {
   const items = [
-    { id: "schedule",    label: "Расписание", icon: <CalIcon /> },
-    { id: "disciplines", label: "Дисциплины", icon: <BookIcon /> },
+    { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
+    { id: "disciplines", label: t("disciplines"), icon: <BookIcon /> },
+    { id: "profile",     label: t("profile"),     icon: <PersonIcon /> },
   ];
   return (
     <nav style={s.bottomNav}>
@@ -447,12 +477,13 @@ function BottomNav({ tab, onChange }: { tab: string; onChange: (t: any) => void 
 }
 
 // ── Расписание ────────────────────────────────────────────────────────────────
-function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson }: {
+function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson, t }: {
   view: "day" | "week";
   onViewChange: (v: "day" | "week") => void;
   selectedDay: Date;
   onDayChange: (d: Date) => void;
   onLesson: (l: MockLesson) => void;
+  t: (k: StringKey) => string;
 }) {
   // Генерируем 14 дней от сегодня - 7 до сегодня + 7
   const days: Date[] = Array.from({ length: 14 }, (_, i) => {
@@ -476,8 +507,8 @@ function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson }:
     <div>
       {/* Тоггл день/неделя */}
       <div style={s.toggle}>
-        <button style={{ ...s.toggleBtn, ...(view === "day" ? s.toggleActive : {}) }} onClick={() => onViewChange("day")}>День</button>
-        <button style={{ ...s.toggleBtn, ...(view === "week" ? s.toggleActive : {}) }} onClick={() => onViewChange("week")}>Неделя</button>
+        <button style={{ ...s.toggleBtn, ...(view === "day" ? s.toggleActive : {}) }} onClick={() => onViewChange("day")}>{t("day")}</button>
+        <button style={{ ...s.toggleBtn, ...(view === "week" ? s.toggleActive : {}) }} onClick={() => onViewChange("week")}>{t("week")}</button>
       </div>
 
       {/* Горизонтальная полоса дней */}
@@ -507,14 +538,14 @@ function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson }:
       {/* Заголовок */}
       <div style={s.sectionLabel}>
         {view === "day"
-          ? sameDay(selectedDay, TODAY) ? "Сегодня" : formatDay(selectedDay)
+          ? sameDay(selectedDay, TODAY) ? t("today") : formatDay(selectedDay)
           : `${formatDay(weekDays[0])} — ${formatDay(weekDays[6])}`
         }
       </div>
 
       {/* Карточки занятий */}
       {visibleLessons.length === 0
-        ? <div style={s.empty}>Занятий нет</div>
+        ? <div style={s.empty}>{t("noLessons")}</div>
         : visibleLessons.map(l => (
           <LessonCard key={l.id} lesson={l} showDate={view === "week"} onOpen={() => onLesson(l)} />
         ))
@@ -549,26 +580,54 @@ function LessonCard({ lesson: l, showDate, onOpen }: { lesson: MockLesson; showD
 }
 
 // ── Дисциплины ────────────────────────────────────────────────────────────────
-function DisciplinesTab({ onDiscipline, onLesson: _onLesson }: {
+const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+
+function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }: {
+  periodsPerYear: number;
   onDiscipline: (id: string) => void;
   onLesson: (l: MockLesson) => void;
+  t: (k: StringKey) => string;
 }) {
+  // Группируем: course → semester → disciplines
+  type Group = Record<number, Record<number, MockDiscipline[]>>;
+  const byCourse = MOCK_DISCIPLINES.reduce<Group>((acc, d) => {
+    if (!acc[d.course]) acc[d.course] = {};
+    if (!acc[d.course][d.semester]) acc[d.course][d.semester] = [];
+    acc[d.course][d.semester].push(d);
+    return acc;
+  }, {});
+
+  function semLabel(course: number, semester: number): string {
+    const withinCourse = ((semester - 1) % periodsPerYear) + 1;
+    const roman = ROMAN[withinCourse - 1] ?? String(withinCourse);
+    return `${t("semester")} ${semester} (${roman})`;
+  }
+
   return (
     <div>
-      <div style={s.sectionLabel}>Дисциплины семестра</div>
-      {MOCK_DISCIPLINES.map(d => (
-        <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
-          <div style={s.disciplineHead}>
-            <span style={s.disciplineTitle}>{d.title}</span>
-            {d.grade
-              ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
-              : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
-            }
-          </div>
-          <div style={s.disciplineBar}>
-            <div style={{ ...s.disciplineFill, width: `${(d.doneLessons / d.totalLessons) * 100}%` }} />
-          </div>
-        </button>
+      {Object.keys(byCourse).map(Number).sort((a, b) => a - b).map(course => (
+        <div key={course}>
+          <div style={s.courseLabel}>{t("course")} {course}</div>
+          {Object.keys(byCourse[course]).map(Number).sort((a, b) => a - b).map(sem => (
+            <div key={sem}>
+              <div style={s.sectionLabel}>{semLabel(course, sem)}</div>
+              {byCourse[course][sem].map(d => (
+                <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
+                  <div style={s.disciplineHead}>
+                    <span style={s.disciplineTitle}>{d.title}</span>
+                    {d.grade
+                      ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
+                      : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
+                    }
+                  </div>
+                  <div style={s.disciplineBar}>
+                    <div style={{ ...s.disciplineFill, width: `${(d.doneLessons / d.totalLessons) * 100}%` }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -861,6 +920,72 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
   );
 }
 
+// ── Профиль / настройки ──────────────────────────────────────────────────────
+function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, onLogout, t }: {
+  locale: string;
+  onChangeLocale: (l: "ru" | "en") => void;
+  themeMode: ThemeMode;
+  onThemeChange: (m: ThemeMode) => void;
+  eiv?: string;
+  onLogout?: () => void;
+  t: (k: StringKey) => string;
+}) {
+  const themeOptions: { value: ThemeMode; key: StringKey }[] = [
+    { value: "auto",  key: "themeAuto"  },
+    { value: "light", key: "themeLight" },
+    { value: "dark",  key: "themeDark"  },
+  ];
+
+  return (
+    <div>
+      {eiv && (
+        <div style={s.profileBlock}>
+          <div style={s.sectionLabel}>{t("eivLabel")}</div>
+          <div style={s.profileValue}>{eiv}</div>
+        </div>
+      )}
+
+      <div style={s.profileBlock}>
+        <div style={s.sectionLabel}>{t("language")}</div>
+        <div style={s.settingRow}>
+          {(["ru", "en"] as const).map(l => (
+            <button
+              key={l}
+              style={{ ...s.optionBtn, ...(locale === l ? s.optionBtnActive : {}) }}
+              onClick={() => onChangeLocale(l)}
+            >
+              {l === "ru" ? "Русский" : "English"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={s.profileBlock}>
+        <div style={s.sectionLabel}>{t("theme")}</div>
+        <div style={s.settingRow}>
+          {themeOptions.map(({ value, key }) => (
+            <button
+              key={value}
+              style={{ ...s.optionBtn, ...(themeMode === value ? s.optionBtnActive : {}) }}
+              onClick={() => onThemeChange(value)}
+            >
+              {t(key)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {onLogout && (
+        <div style={{ marginTop: 32 }}>
+          <button style={s.logoutFullBtn} onClick={onLogout}>
+            {t("logout")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Иконки ────────────────────────────────────────────────────────────────────
 function LogoIcon() {
   return (
@@ -877,6 +1002,9 @@ function CalIcon() {
 }
 function BookIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
+}
+function PersonIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 }
 function LogoutIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
@@ -987,4 +1115,13 @@ const s: Record<string, React.CSSProperties> = {
   notifDetailBody: { color: "var(--c-text-secondary)", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 24px", whiteSpace: "pre-wrap" as const },
   notifLinks: { display: "flex", flexDirection: "column" as const, gap: 10 },
   notifLink: { display: "block", color: "var(--c-accent)", fontSize: "0.88rem", fontWeight: 500, padding: "12px 16px", background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 10, textDecoration: "none" },
+  // Иерархия дисциплин
+  courseLabel: { color: "var(--c-text-primary)", fontSize: "0.82rem", fontWeight: 700, marginTop: 16, marginBottom: 8 },
+  // Профиль / настройки
+  profileBlock: { marginBottom: 24 },
+  profileValue: { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 600, marginTop: 4 },
+  settingRow: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" as const },
+  optionBtn: { border: "1px solid var(--c-border)", borderRadius: 8, padding: "8px 16px", background: "var(--c-card)", color: "var(--c-text-secondary)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 500 },
+  optionBtnActive: { borderColor: "var(--c-accent)", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 10%, transparent)" },
+  logoutFullBtn: { width: "100%", border: "1px solid var(--c-danger)", borderRadius: 10, padding: "13px 0", background: "none", color: "var(--c-danger)", fontSize: "0.95rem", cursor: "pointer", fontWeight: 600 },
 };

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 export type Route =
   | { name: "schedule" }
   | { name: "disciplines" }
+  | { name: "profile" }
   | { name: "profiles" }
   | { name: "completed"; contextId: string }
   | { name: "notifications" }
@@ -16,6 +17,7 @@ export function parseHash(hash: string): Route {
   const [seg0, seg1] = parts;
 
   if (seg0 === "disciplines")   return { name: "disciplines" };
+  if (seg0 === "profile")       return { name: "profile" };
   if (seg0 === "profiles")      return seg1 ? { name: "completed", contextId: seg1 } : { name: "profiles" };
   if (seg0 === "notifications") return seg1 ? { name: "notification", id: seg1 } : { name: "notifications" };
   if (seg0 === "discipline" && seg1) return { name: "discipline", id: seg1 };
@@ -27,6 +29,7 @@ export function routeToHash(route: Route): string {
   switch (route.name) {
     case "schedule":      return "#/";
     case "disciplines":   return "#/disciplines";
+    case "profile":       return "#/profile";
     case "profiles":      return "#/profiles";
     case "completed":     return `#/profiles/${route.contextId}`;
     case "notifications": return "#/notifications";
