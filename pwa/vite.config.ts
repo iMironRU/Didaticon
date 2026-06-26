@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
 const { version } = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
-const commitHash = (() => { try { return execSync("git rev-parse --short HEAD").toString().trim(); } catch { return "dev"; } })();
+const commitHash = process.env.COMMIT_HASH || (() => { try { return execSync("git rev-parse --short HEAD").toString().trim(); } catch { return "dev"; } })();
 
 export default defineConfig({
   define: {

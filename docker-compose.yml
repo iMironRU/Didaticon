@@ -36,7 +36,10 @@ services:
 
   # Статика: SCORM-пакеты + собранный PWA. Один origin (важно для scorm-again).
   static:
-    build: ./pwa
+    build:
+      context: ./pwa
+      args:
+        COMMIT_HASH: ${COMMIT_HASH:-dev}
     volumes:
       - scormdata:/usr/share/nginx/html/scorm
     ports:

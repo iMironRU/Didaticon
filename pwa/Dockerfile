@@ -1,4 +1,6 @@
 FROM node:22-alpine AS build
+ARG COMMIT_HASH=dev
+ENV COMMIT_HASH=$COMMIT_HASH
 WORKDIR /app
 COPY package*.json ./
 COPY packages/contracts ./packages/contracts
