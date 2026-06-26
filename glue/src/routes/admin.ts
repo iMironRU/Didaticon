@@ -28,6 +28,7 @@ const CONFIG_KEYS: { key: string; label: string; secret?: boolean; restart?: boo
   { key: "UNIVERKON_SERVICE_TOKEN", label: "Сервисный токен Univerkon", secret: true },
   { key: "EIOS_DOMAIN",            label: "Домен ЭИОС", restart: true },
   { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)", html: true },
+  { key: "BRANDING_LK_URL",        label: "Ссылка на личный кабинет (ЛК)" },
 ];
 
 function requireAdmin(cfg: Config, req: FastifyRequest, reply: FastifyReply): boolean {

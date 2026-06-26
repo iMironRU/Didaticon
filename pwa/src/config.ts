@@ -2,6 +2,7 @@ export interface Branding {
   orgName: string;
   brandColor: string;
   logoUrl: string | null;
+  lkUrl: string | null;
   supportEmail: string;
   supportPhone: string;
   supportHours: string;
@@ -24,6 +25,7 @@ export const DEFAULT_BRANDING: Branding = {
   orgName:      "Образовательная организация",
   brandColor:   "#4B9EE5",
   logoUrl:      null,
+  lkUrl:        null,
   supportEmail: "",
   supportPhone: "",
   supportHours: "",

@@ -47,6 +47,13 @@ export const STRINGS = {
     defaultBadge:      "По умолчанию",
     disciplinesGrades: "Дисциплины и оценки",
     profiles:          "Профили",
+    // Профиль / личные данные
+    personalInfo:      "Личные данные",
+    lastName:          "Фамилия",
+    firstName:         "Имя",
+    patronymic:        "Отчество",
+    eivFull:           "Единый идентификатор ВУЗа",
+    goToLk:            "Перейти в личный кабинет",
     // Профиль / настройки
     language:          "Язык",
     theme:             "Тема",
@@ -103,6 +110,13 @@ export const STRINGS = {
     defaultBadge:      "Default",
     disciplinesGrades: "Courses & grades",
     profiles:          "Profiles",
+    // Profile / personal info
+    personalInfo:      "Personal info",
+    lastName:          "Last name",
+    firstName:         "First name",
+    patronymic:        "Patronymic",
+    eivFull:           "University unique ID",
+    goToLk:            "Go to personal account",
     // Profile screen
     language:          "Language",
     theme:             "Theme",

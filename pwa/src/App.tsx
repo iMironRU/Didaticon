@@ -28,6 +28,7 @@ export function App() {
         if (d.accessInfo  != null) patch.accessInfo  = d.accessInfo;
         if (d.oidcEnabled != null) patch.oidcEnabled = d.oidcEnabled;
         if (d.logoUrl     != null) patch.logoUrl     = d.logoUrl;
+        if (d.lkUrl       != null) patch.lkUrl       = d.lkUrl;
         setRemoteBranding(patch);
         // Обновляем фавикон если организация задала свой логотип
         if (d.logoUrl) {
@@ -69,15 +70,15 @@ export function App() {
     }
   }
 
-  if (auth.phase === "authenticated") {
-    return <Trajectory studentId={auth.studentId} onLogout={handleLogout} />;
-  }
-
   const branding: Branding = {
     ...DEFAULT_BRANDING,
     ...(window.__EIOS_CONFIG__?.branding ?? {}),
     ...remoteBranding,
   };
+
+  if (auth.phase === "authenticated") {
+    return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
+  }
 
   return <LoginScreen auth={auth} onLogin={handleLogin} branding={branding} />;
 }

@@ -5,8 +5,9 @@ import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { useRoute, navigate } from "../router.js";
 import { useLocale, type StringKey } from "../locale.js";
 
-// Мок ЕИВ: в реальной интеграции приходит от Univerkon после авторизации
+// Мок ЕИВ и ФИО: в реальной интеграции приходят от Univerkon после авторизации
 const MOCK_EIV = "260001";
+const MOCK_STUDENT = { lastName: "Иванов", firstName: "Иван", patronymic: "Иванович" };
 
 // ── Мок-данные ────────────────────────────────────────────────────────────────
 type LessonType = "lecture" | "practice" | "lab";
@@ -249,7 +250,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 // ── Главный компонент ─────────────────────────────────────────────────────────
-export function Trajectory({ studentId: _studentId, onLogout }: { studentId: StudentId; onLogout?: () => void }) {
+export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { studentId: StudentId; onLogout?: () => void; lkUrl?: string }) {
   const route = useRoute();
   const { locale, changeLocale, t } = useLocale();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
@@ -412,6 +413,8 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
               themeMode={themeMode}
               onThemeChange={handleThemeChange}
               eiv={MOCK_EIV}
+              student={MOCK_STUDENT}
+              lkUrl={lkUrl}
               onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
               t={t}
             />
@@ -1040,12 +1043,14 @@ function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: St
 }
 
 // ── Профиль / настройки ──────────────────────────────────────────────────────
-function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, onLogout, t }: {
+function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, student, lkUrl, onLogout, t }: {
   locale: string;
   onChangeLocale: (l: "ru" | "en") => void;
   themeMode: ThemeMode;
   onThemeChange: (m: ThemeMode) => void;
   eiv?: string;
+  student?: { lastName: string; firstName: string; patronymic: string };
+  lkUrl?: string;
   onLogout?: () => void;
   t: (k: StringKey) => string;
 }) {
@@ -1057,10 +1062,38 @@ function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, onL
 
   return (
     <div>
+      {/* Личные данные */}
+      {student && (
+        <div style={s.profileBlock}>
+          <div style={s.sectionLabel}>{t("personalInfo")}</div>
+          {[
+            { key: "lastName",   value: student.lastName   },
+            { key: "firstName",  value: student.firstName  },
+            { key: "patronymic", value: student.patronymic },
+          ].map(({ key, value }) => (
+            <div key={key} style={s.profileField}>
+              <div style={s.profileFieldLabel}>{t(key as StringKey)}</div>
+              <div style={s.profileFieldValue}>{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ЕИВ */}
       {eiv && (
         <div style={s.profileBlock}>
           <div style={s.sectionLabel}>{t("eivLabel")}</div>
+          <div style={s.profileFieldLabel}>{t("eivFull")}</div>
           <div style={s.profileValue}>{eiv}</div>
+        </div>
+      )}
+
+      {/* Перейти в ЛК */}
+      {lkUrl && (
+        <div style={s.profileBlock}>
+          <a href={lkUrl} target="_blank" rel="noopener noreferrer" style={s.lkBtn}>
+            {t("goToLk")} ↗
+          </a>
         </div>
       )}
 
@@ -1252,6 +1285,10 @@ const s: Record<string, React.CSSProperties> = {
   // Профиль / настройки
   profileBlock: { marginBottom: 24 },
   profileValue: { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 600, marginTop: 4 },
+  profileField: { marginTop: 10 },
+  profileFieldLabel: { color: "var(--c-text-muted)", fontSize: "0.72rem", marginBottom: 2 },
+  profileFieldValue: { color: "var(--c-text-primary)", fontSize: "0.95rem", fontWeight: 500 },
+  lkBtn: { display: "block", padding: "11px 16px", borderRadius: 10, background: "var(--c-accent)", color: "#fff", textDecoration: "none", fontSize: "0.88rem", fontWeight: 600, textAlign: "center" as const },
   settingRow: { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" as const },
   optionBtn: { border: "1px solid var(--c-border)", borderRadius: 8, padding: "8px 16px", background: "var(--c-card)", color: "var(--c-text-secondary)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 500 },
   optionBtnActive: { borderColor: "var(--c-accent)", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 10%, transparent)" },
