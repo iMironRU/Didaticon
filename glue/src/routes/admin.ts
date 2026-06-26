@@ -17,13 +17,14 @@ interface AdmZipInstance {
 
 // Ключи конфига которые можно менять через admin UI.
 // Метки для отображения и признак "требует рестарта".
-const CONFIG_KEYS: { key: string; label: string; secret?: boolean; restart?: boolean }[] = [
+const CONFIG_KEYS: { key: string; label: string; secret?: boolean; restart?: boolean; html?: boolean }[] = [
   { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)" },
   { key: "OIDC_JWKS_URL",          label: "JWKS URL (обычно OIDC Issuer + /jwks)" },
   { key: "OIDC_AUDIENCE",          label: "OIDC Audience" },
   { key: "UNIVERKON_RPC_URL",       label: "Univerkon JSON-RPC URL" },
   { key: "UNIVERKON_SERVICE_TOKEN", label: "Сервисный токен Univerkon", secret: true },
   { key: "EIOS_DOMAIN",            label: "Домен ЭИОС", restart: true },
+  { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)", html: true },
 ];
 
 function requireAdmin(cfg: Config, req: FastifyRequest, reply: FastifyReply): boolean {
@@ -77,6 +78,7 @@ export function registerAdmin(
       label:   k.label,
       secret:  k.secret ?? false,
       restart: k.restart ?? false,
+      html:    k.html ?? false,
       envValue: k.secret ? "****" : (process.env[k.key] ?? ""),
       savedValue: saved[k.key] ?? null,
       effectiveValue: k.secret ? "****" : (saved[k.key] ?? process.env[k.key] ?? ""),

@@ -35,6 +35,12 @@ registerResume(app, { cfg, store });
 registerProjection(app, { cfg, univerkon });
 registerAdmin(app, { cfg, settings });
 
+// Публичный эндпоинт — PWA читает без авторизации для рендера экрана входа.
+app.get("/branding", async () => {
+  const accessInfo = settings.get("BRANDING_ACCESS_INFO");
+  return { accessInfo: accessInfo ?? null };
+});
+
 app.get("/healthz", async () => ({ ok: true, role: cfg.role }));
 
 app.listen({ port: cfg.port, host: "0.0.0.0" }).then(() => {

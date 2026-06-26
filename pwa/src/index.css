@@ -1,3 +1,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#091629;height:100%}
 #root{min-height:100vh;display:flex;flex-direction:column}
+.access-html p{margin:0 0 10px}
+.access-html p:last-child{margin-bottom:0}
+.access-html ul,.access-html ol{margin:0 0 10px;padding-left:18px}
+.access-html a{color:inherit}

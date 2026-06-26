@@ -13,8 +13,13 @@ type AuthState =
 
 export function App() {
   const [auth, setAuth] = useState<AuthState>({ phase: "checking" });
+  const [remoteBranding, setRemoteBranding] = useState<Partial<Branding>>({});
 
   useEffect(() => {
+    fetch("/api/branding")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.accessInfo) setRemoteBranding({ accessInfo: d.accessInfo }); })
+      .catch(() => {});
     getStudent()
       .then((s) => setAuth(s ? { phase: "authenticated", studentId: s.id } : { phase: "anonymous" }))
       .catch(() => setAuth({ phase: "anonymous" }));
@@ -36,9 +41,8 @@ export function App() {
 
   const branding: Branding = {
     ...DEFAULT_BRANDING,
-    ...(window.__EIOS_CONFIG__ && window.__EIOS_CONFIG__.branding
-      ? window.__EIOS_CONFIG__.branding
-      : {}),
+    ...(window.__EIOS_CONFIG__?.branding ?? {}),
+    ...remoteBranding,
   };
 
   return <LoginScreen auth={auth} onLogin={handleLogin} branding={branding} />;
@@ -121,7 +125,6 @@ function LoginScreen({
 
 function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => void }) {
   const b = branding.brandColor;
-  const paragraphs = branding.accessInfo.split("\n\n").filter(Boolean);
 
   return (
     <div style={r.root}>
@@ -137,9 +140,11 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
 
         <div style={{ ...r.section, borderColor: hex20(b) }}>
           <p style={{ ...r.sectionLabel, color: hex80(b) }}>Для студентов</p>
-          {paragraphs.map((p, i) => (
-            <p key={i} style={{ ...r.accessText, marginTop: i > 0 ? 10 : 0 }}>{p}</p>
-          ))}
+          <div
+            className="access-html"
+            style={r.accessText}
+            dangerouslySetInnerHTML={{ __html: branding.accessInfo }}
+          />
         </div>
 
         {(branding.supportEmail || branding.supportPhone || branding.supportHours) && (
@@ -351,6 +356,7 @@ const r: Record<string, React.CSSProperties> = {
     color: "#7FA4CC",
     fontSize: "0.82rem",
     lineHeight: 1.6,
+    margin: 0,
   },
   footer: {
     marginTop: 20,
