@@ -4,6 +4,9 @@ import { onSwUpdate, applySwUpdate } from "../sw-update.js";
 import { getThemeMode, cycleTheme, type ThemeMode } from "../theme.js";
 import { useRoute, navigate } from "../router.js";
 
+// Мок ЕИВ: в реальной интеграции приходит от Univerkon после авторизации
+const MOCK_EIV = "260001";
+
 // ── Мок-данные ────────────────────────────────────────────────────────────────
 type LessonType = "lecture" | "practice" | "lab";
 type LessonStatus = "done" | "available" | "locked";
@@ -329,7 +332,7 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   return (
     <div style={s.root}>
       {inner}
-      <StatusBar swUpdate={swUpdate} />
+      <StatusBar swUpdate={swUpdate} eiv={MOCK_EIV} />
     </div>
   );
 }
@@ -367,10 +370,21 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout }: {
 }
 
 // ── Статусная строка ──────────────────────────────────────────────────────────
-function StatusBar({ swUpdate }: { swUpdate: boolean }) {
+function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv?: string }) {
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
   const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
+  const [copied, setCopied] = useState(false);
+
+  function copySupportInfo() {
+    const screen = window.location.hash || "#/";
+    const parts = [`ЭИОС v${version}`, commit, eiv ? `ЕИВ ${eiv}` : null, screen].filter(Boolean);
+    navigator.clipboard.writeText(parts.join(" · ")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
     <div style={s.statusBar}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -379,7 +393,12 @@ function StatusBar({ swUpdate }: { swUpdate: boolean }) {
         </button>
         {swUpdate && <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить</button>}
       </div>
-      <span style={s.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
+      <button style={s.versionBtn} onClick={copySupportInfo} title="Скопировать для поддержки">
+        {copied
+          ? <span style={{ color: "var(--c-success)" }}>✓ Скопировано</span>
+          : <span style={s.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
+        }
+      </button>
     </div>
   );
 }
@@ -910,6 +929,7 @@ const s: Record<string, React.CSSProperties> = {
   logoutBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-text-dim)", padding: "2px", display: "flex", flexShrink: 0 },
   bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "var(--c-danger)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
   statusBar: { height: 24, background: "var(--c-status-bg)", borderTop: "0.5px solid var(--c-status-border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 },
+  versionBtn: { background: "none", border: "none", cursor: "pointer", padding: "0 2px", display: "flex", alignItems: "center", fontSize: "0.6rem", letterSpacing: "0.04em", lineHeight: 1 },
   versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },
   updateBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
   themeBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-status-text)", padding: 0, display: "flex", alignItems: "center", lineHeight: 1 },
