@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { StudentId } from "@eios/contracts";
 import { onSwUpdate, applySwUpdate } from "../sw-update.js";
+import { getThemeMode, cycleTheme, type ThemeMode } from "../theme.js";
 
 // ── Мок-данные ────────────────────────────────────────────────────────────────
 type LessonType = "lecture" | "practice" | "lab";
@@ -213,12 +214,15 @@ function Header({ unreadCount, onBell }: { unreadCount: number; onBell: () => vo
 // ── Статусная строка ──────────────────────────────────────────────────────────
 function StatusBar({ swUpdate }: { swUpdate: boolean }) {
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   return (
     <div style={s.statusBar}>
-      {swUpdate
-        ? <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить приложение</button>
-        : <span />
-      }
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button style={s.themeBtn} onClick={() => setThemeMode(cycleTheme())} title={themeMode}>
+          <ThemeIcon mode={themeMode} />
+        </button>
+        {swUpdate && <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить</button>}
+      </div>
       <span style={s.versionLabel}>v{version}</span>
     </div>
   );
@@ -234,8 +238,8 @@ function BottomNav({ tab, onChange }: { tab: string; onChange: (t: any) => void 
     <nav style={s.bottomNav}>
       {items.map(it => (
         <button key={it.id} style={s.navItem} onClick={() => onChange(it.id)}>
-          <span style={{ color: tab === it.id ? "#4B9EE5" : "#2A4A6A" }}>{it.icon}</span>
-          <span style={{ ...s.navLabel, color: tab === it.id ? "#4B9EE5" : "#2A4A6A" }}>{it.label}</span>
+          <span style={{ color: tab === it.id ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.icon}</span>
+          <span style={{ ...s.navLabel, color: tab === it.id ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.label}</span>
         </button>
       ))}
     </nav>
@@ -284,17 +288,17 @@ function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson }:
           const isToday = sameDay(day, TODAY);
           return (
             <button key={day.toISOString()} style={s.dayBtn} onClick={() => { onDayChange(day); onViewChange("day"); }}>
-              <span style={{ ...s.dayBtnWd, color: isSelected ? "#4B9EE5" : isToday ? "#C8DEF4" : "#4D7BA8" }}>
+              <span style={{ ...s.dayBtnWd, color: isSelected ? "var(--c-accent)" : isToday ? "var(--c-text-primary)" : "var(--c-text-muted)" }}>
                 {day.toLocaleDateString("ru", { weekday: "short" })}
               </span>
               <span style={{
                 ...s.dayBtnNum,
-                background: isSelected ? "#4B9EE5" : "transparent",
-                color: isSelected ? "#fff" : isToday ? "#fff" : "#7FA4CC",
+                background: isSelected ? "var(--c-accent)" : "transparent",
+                color: isSelected ? "#fff" : isToday ? "#fff" : "var(--c-text-secondary)",
               }}>
                 {day.getDate()}
               </span>
-              {hasLessons && <span style={{ ...s.dayDot, background: isSelected ? "#fff" : "#4B9EE5" }} />}
+              {hasLessons && <span style={{ ...s.dayDot, background: isSelected ? "#fff" : "var(--c-accent)" }} />}
             </button>
           );
         })}
@@ -332,7 +336,7 @@ function LessonCard({ lesson: l, showDate, onOpen }: { lesson: MockLesson; showD
       <div style={s.lessonBody}>
         {showDate && <div style={s.lessonDate}>{formatDay(l.date)} · {formatTime(l.date)}</div>}
         <div style={s.lessonDiscipline}>{l.discipline}</div>
-        <div style={{ ...s.lessonTopic, color: isLocked ? "#4D7BA8" : "#C8DEF4" }}>{l.topic}</div>
+        <div style={{ ...s.lessonTopic, color: isLocked ? "var(--c-text-muted)" : "var(--c-text-primary)" }}>{l.topic}</div>
         {l.score !== undefined && <div style={s.lessonScore}>{l.score}% · пройдено</div>}
         {l.status === "locked" && <div style={s.lessonLocked}>Ещё не доступно</div>}
       </div>
@@ -357,7 +361,7 @@ function DisciplinesTab({ onDiscipline, onLesson: _onLesson }: {
           <div style={s.disciplineHead}>
             <span style={s.disciplineTitle}>{d.title}</span>
             {d.grade
-              ? <span style={{ ...s.gradeChip, background: "#1A3A1A", color: "#2EA05A" }}>{d.grade}</span>
+              ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
               : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
             }
           </div>
@@ -418,7 +422,7 @@ function NotificationsScreen({ notifications, onBack, onRead }: {
               onClick={() => onRead(n.id)}
             >
               <div style={s.notifHead}>
-                <span style={{ ...s.notifType, color: n.type === "system" ? "#7C5CBF" : "#4B9EE5" }}>
+                <span style={{ ...s.notifType, color: n.type === "system" ? "var(--c-purple)" : "var(--c-accent)" }}>
                   {n.type === "system" ? "Система" : "Univerkon"}
                 </span>
                 <span style={s.notifDate}>{formatDay(n.date)}</span>
@@ -449,17 +453,17 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
         <div style={{ ...s.lessonTypeTag, background: hexToRgba(typeColor, 0.15), color: typeColor, marginBottom: 12 }}>
           {LESSON_TYPE_LABEL[lesson.type]}
         </div>
-        <div style={{ color: "#C8DEF4", fontSize: "1.05rem", fontWeight: 600, textAlign: "center", marginBottom: 6 }}>
+        <div style={{ color: "var(--c-text-primary)", fontSize: "1.05rem", fontWeight: 600, textAlign: "center", marginBottom: 6 }}>
           {lesson.topic}
         </div>
-        <div style={{ color: "#4D7BA8", fontSize: "0.8rem", marginBottom: 32 }}>
+        <div style={{ color: "var(--c-text-muted)", fontSize: "0.8rem", marginBottom: 32 }}>
           {formatDay(lesson.date)} · {formatTime(lesson.date)}
         </div>
-        <button style={{ ...s.launchBtn, background: "#4B9EE5" }}>
+        <button style={{ ...s.launchBtn, background: "var(--c-accent)" }}>
           ► Открыть занятие
         </button>
         {lesson.score !== undefined && (
-          <div style={{ color: "#2EA05A", marginTop: 16, fontSize: "0.85rem" }}>
+          <div style={{ color: "var(--c-success)", marginTop: 16, fontSize: "0.85rem" }}>
             Пройдено · {lesson.score}%
           </div>
         )}
@@ -471,7 +475,7 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
 // ── Иконки ────────────────────────────────────────────────────────────────────
 function LogoIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B9EE5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3L1 9l11 6 9-4.91V17M5 13.18v4L12 21l7-3.82v-4" />
     </svg>
   );
@@ -485,65 +489,77 @@ function CalIcon() {
 function BookIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
 }
+function MoonIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+}
+function SunIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
+}
+function AutoIcon() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5 3" strokeOpacity="0.5"/><path d="M12 3a9 9 0 0 0 0 18" fill="currentColor" fillOpacity="0.12"/></svg>;
+}
+function ThemeIcon({ mode }: { mode: ThemeMode }) {
+  if (mode === "light") return <SunIcon />;
+  if (mode === "dark") return <MoonIcon />;
+  return <AutoIcon />;
+}
 
 // ── Стили ─────────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
-  root: { maxWidth: 480, margin: "0 auto", height: "100vh", background: "#091629", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", boxShadow: "0 0 60px rgba(0,0,0,0.7)" },
-  header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", flexShrink: 0 },
+  root: { maxWidth: 480, margin: "0 auto", height: "100vh", background: "var(--c-bg)", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", boxShadow: "0 0 60px rgba(0,0,0,0.7)" },
+  header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
   headerLogo: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
-  headerTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.06em" },
+  headerTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.06em" },
   contextBtn: { flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "2px 8px", minWidth: 0 },
-  contextName: { color: "#7FA4CC", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  contextPeriod: { color: "#4D7BA8", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  avatar: { width: 30, height: 30, borderRadius: "50%", background: "#1A3560", color: "#4B9EE5", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  contextName: { color: "var(--c-text-secondary)", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  contextPeriod: { color: "var(--c-text-muted)", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  avatar: { width: 30, height: 30, borderRadius: "50%", background: "var(--c-border)", color: "var(--c-accent)", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   body: { flex: 1, padding: "12px 16px 12px", overflowY: "auto" },
-  bottomNav: { background: "#0A1E3B", borderTop: "0.5px solid #1A3560", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
+  bottomNav: { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem: { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel: { fontSize: "0.62rem", fontWeight: 500 },
-  toggle: { display: "flex", background: "#0F2545", borderRadius: 8, padding: 3, marginBottom: 12 },
-  toggleBtn: { flex: 1, border: "none", background: "none", color: "#4D7BA8", fontSize: "0.82rem", fontWeight: 500, padding: "6px 0", borderRadius: 6, cursor: "pointer" },
-  toggleActive: { background: "#1A3560", color: "#C8DEF4" },
+  toggle: { display: "flex", background: "var(--c-card)", borderRadius: 8, padding: 3, marginBottom: 12 },
+  toggleBtn: { flex: 1, border: "none", background: "none", color: "var(--c-text-muted)", fontSize: "0.82rem", fontWeight: 500, padding: "6px 0", borderRadius: 6, cursor: "pointer" },
+  toggleActive: { background: "var(--c-border)", color: "var(--c-text-primary)" },
   dayStrip: { display: "flex", gap: 4, overflowX: "auto", marginBottom: 16, paddingBottom: 4 },
   dayBtn: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "0 4px", flexShrink: 0 },
   dayBtnWd: { fontSize: "0.62rem", textTransform: "capitalize" as const },
   dayBtnNum: { width: 28, height: 28, borderRadius: "50%", fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 500 },
   dayDot: { width: 4, height: 4, borderRadius: "50%" },
-  sectionLabel: { color: "#4D7BA8", fontSize: "0.68rem", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 10, fontWeight: 600 },
-  empty: { color: "#2A4A6A", textAlign: "center" as const, padding: "32px 0", fontSize: "0.85rem" },
-  lessonCard: { background: "#0F2545", borderRadius: 10, border: "0.5px solid #1A3560", padding: "12px", marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" },
+  sectionLabel: { color: "var(--c-text-muted)", fontSize: "0.68rem", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 10, fontWeight: 600 },
+  empty: { color: "var(--c-text-dim)", textAlign: "center" as const, padding: "32px 0", fontSize: "0.85rem" },
+  lessonCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px", marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" },
   lessonTypeTag: { borderRadius: 4, padding: "2px 6px", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.04em", flexShrink: 0, marginTop: 2 },
   lessonBody: { flex: 1, minWidth: 0 },
-  lessonDate: { color: "#4D7BA8", fontSize: "0.68rem", marginBottom: 2 },
-  lessonDiscipline: { color: "#4B9EE5", fontSize: "0.68rem", marginBottom: 3, fontWeight: 500 },
+  lessonDate: { color: "var(--c-text-muted)", fontSize: "0.68rem", marginBottom: 2 },
+  lessonDiscipline: { color: "var(--c-accent)", fontSize: "0.68rem", marginBottom: 3, fontWeight: 500 },
   lessonTopic: { fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.3 },
-  lessonScore: { color: "#2EA05A", fontSize: "0.7rem", marginTop: 4 },
-  lessonLocked: { color: "#2A4A6A", fontSize: "0.7rem", marginTop: 4 },
-  lessonChevron: { color: "#2A4A6A", fontSize: "1.2rem", lineHeight: 1, flexShrink: 0, alignSelf: "center" },
-  lessonDoneDot: { width: 6, height: 6, borderRadius: "50%", background: "#2EA05A", flexShrink: 0, marginTop: 4 },
-  disciplineCard: { width: "100%", background: "#0F2545", borderRadius: 10, border: "0.5px solid #1A3560", padding: "12px 14px", marginBottom: 8, cursor: "pointer", textAlign: "left" as const },
+  lessonScore: { color: "var(--c-success)", fontSize: "0.7rem", marginTop: 4 },
+  lessonLocked: { color: "var(--c-text-dim)", fontSize: "0.7rem", marginTop: 4 },
+  lessonChevron: { color: "var(--c-text-dim)", fontSize: "1.2rem", lineHeight: 1, flexShrink: 0, alignSelf: "center" },
+  lessonDoneDot: { width: 6, height: 6, borderRadius: "50%", background: "var(--c-success)", flexShrink: 0, marginTop: 4 },
+  disciplineCard: { width: "100%", background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8, cursor: "pointer", textAlign: "left" as const },
   disciplineHead: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 },
-  disciplineTitle: { color: "#C8DEF4", fontSize: "0.88rem", fontWeight: 500 },
-  progressChip: { color: "#4D7BA8", fontSize: "0.75rem", flexShrink: 0 },
+  disciplineTitle: { color: "var(--c-text-primary)", fontSize: "0.88rem", fontWeight: 500 },
+  progressChip: { color: "var(--c-text-muted)", fontSize: "0.75rem", flexShrink: 0 },
   gradeChip: { borderRadius: 4, padding: "2px 7px", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 },
-  disciplineBar: { height: 2, background: "#152A4A", borderRadius: 1 },
-  disciplineFill: { height: "100%", background: "#4B9EE5", borderRadius: 1 },
-  subHeader: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", flexShrink: 0 },
-  backBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
-  subHeaderTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
+  disciplineBar: { height: 2, background: "var(--c-progress-track)", borderRadius: 1 },
+  disciplineFill: { height: "100%", background: "var(--c-accent)", borderRadius: 1 },
+  subHeader: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
+  backBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
+  subHeaderTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   launchBtn: { width: "100%", maxWidth: 320, border: "none", borderRadius: 10, color: "#fff", fontSize: "0.95rem", fontWeight: 500, padding: "14px 20px", cursor: "pointer" },
-  // Колокольчик
-  bellBtn: { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "#4D7BA8", padding: "2px", display: "flex", flexShrink: 0 },
-  bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "#E05555", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
-  // Статусная строка
-  statusBar: { height: 24, background: "#060F1E", borderTop: "0.5px solid #0F2030", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 },
-  versionLabel: { color: "#1E3A5F", fontSize: "0.6rem", letterSpacing: "0.04em" },
-  updateBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
-  // Уведомления
-  notifCard: { background: "#0F2545", borderRadius: 10, border: "0.5px solid #1A3560", padding: "12px 14px", marginBottom: 8, cursor: "pointer" },
+  bellBtn: { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "var(--c-text-muted)", padding: "2px", display: "flex", flexShrink: 0 },
+  bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "var(--c-danger)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
+  statusBar: { height: 24, background: "var(--c-status-bg)", borderTop: "0.5px solid var(--c-status-border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 },
+  versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },
+  updateBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
+  themeBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-status-text)", padding: 0, display: "flex", alignItems: "center", lineHeight: 1 },
+  notifCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8, cursor: "pointer" },
   notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 5 },
   notifType: { fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.04em" },
-  notifDate: { color: "#2A4A6A", fontSize: "0.65rem", flex: 1 },
-  notifDot: { width: 6, height: 6, borderRadius: "50%", background: "#4B9EE5", flexShrink: 0 },
-  notifTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 500, marginBottom: 4 },
-  notifBody: { color: "#4D7BA8", fontSize: "0.78rem", lineHeight: 1.5 },
+  notifDate: { color: "var(--c-text-dim)", fontSize: "0.65rem", flex: 1 },
+  notifDot: { width: 6, height: 6, borderRadius: "50%", background: "var(--c-accent)", flexShrink: 0 },
+  notifTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 500, marginBottom: 4 },
+  notifBody: { color: "var(--c-text-muted)", fontSize: "0.78rem", lineHeight: 1.5 },
 };
