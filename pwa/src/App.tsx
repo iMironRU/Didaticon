@@ -68,7 +68,7 @@ function LoginScreen({
     <div style={r.root}>
       <div style={r.inner}>
 
-        <div style={{ ...r.logoWrap, borderColor: hex20(b) }}>
+        <div style={{ ...r.logoWrap, border: "0.5px solid " + hex20(b) }}>
           {branding.logoUrl
             ? <img src={branding.logoUrl} alt="Логотип" style={{ width: 52, height: 52, objectFit: "contain" }} />
             : <SchoolIcon color={b} />
