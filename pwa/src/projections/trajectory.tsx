@@ -75,19 +75,49 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
 const MOCK_CONTEXT = { name: "Информационные технологии", period: "IV курс · Весенний семестр 2026" };
 
 // ── Мок-уведомления ───────────────────────────────────────────────────────────
+interface NotifLink { label: string; url: string; }
 interface Notification {
   id: string;
   type: "univerkon" | "system";
   title: string;
-  body: string;
+  body: string;           // краткое, всегда показывается в списке
+  fullText?: string;      // если есть → карточка кликабельна и открывает детальный экран
+  links?: NotifLink[];    // ссылки на детальном экране
   date: Date;
   read: boolean;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: "n1", type: "univerkon", title: "Новое занятие доступно", body: "Открылось занятие «Транзакции и блокировки» по дисциплине Базы данных", date: d(0, 8), read: false },
-  { id: "n2", type: "univerkon", title: "Оценка выставлена", body: "По дисциплине «Математический анализ» выставлена оценка за тему «Производные»", date: d(-1, 14), read: false },
-  { id: "n3", type: "system",    title: "Плановые работы", body: "26 июня с 23:00 до 01:00 будут проводиться технические работы. ЭИОС будет недоступна.", date: d(-2, 10), read: true },
+  {
+    id: "n1", type: "univerkon", read: false, date: d(0, 8),
+    title: "Новое занятие доступно",
+    body: "Открылось занятие «Транзакции и блокировки» по дисциплине Базы данных",
+    fullText: "Уважаемый обучающийся!\n\nВам открыт доступ к занятию «Транзакции и блокировки» в рамках дисциплины «Базы данных».\n\nЗанятие содержит теоретический материал и практическое задание. Срок выполнения — до 5 июля 2026 г. По итогам занятия будет выставлена оценка в ведомости.",
+    links: [
+      { label: "Перейти к занятию", url: "#/lesson/l6" },
+      { label: "Учебный план", url: "#/disciplines" },
+    ],
+  },
+  {
+    id: "n2", type: "univerkon", read: false, date: d(-1, 14),
+    title: "Оценка выставлена",
+    body: "По дисциплине «Математический анализ» выставлена оценка за тему «Производные»",
+    fullText: "По результатам проверки работы по теме «Производные и их применение» преподавателем выставлена оценка: 4 (хорошо).\n\nНабрано баллов: 55 из 100. Работа зачтена.",
+    links: [
+      { label: "Посмотреть оценку", url: "#/disciplines/d2" },
+    ],
+  },
+  {
+    id: "n3", type: "system", read: true, date: d(-2, 10),
+    title: "Плановые работы",
+    body: "26 июня с 23:00 до 01:00 технические работы — ЭИОС будет недоступна",
+  },
+  {
+    id: "n4", type: "system", read: true, date: d(-5, 9),
+    title: "Обновление системы",
+    body: "ЭИОС обновлена до версии 0.2.0. Исправлены ошибки и улучшена скорость загрузки.",
+    fullText: "В версии 0.2.0:\n• Улучшена скорость загрузки расписания\n• Исправлено отображение оценок при слабом интернете\n• Добавлена тёмная/светлая тема\n• Уведомления теперь содержат подробный текст и ссылки",
+  },
 ];
 
 // ── Вспомогательные функции ───────────────────────────────────────────────────
@@ -130,8 +160,16 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
   const [openDiscipline, setOpenDiscipline] = useState<string | null>(null);
   const [openLesson, setOpenLesson] = useState<MockLesson | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [openNotification, setOpenNotification] = useState<Notification | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [swUpdate, setSwUpdate] = useState(false);
+
+  function markRead(id: string) {
+    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+  }
+  function markAllRead() {
+    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+  }
 
   useEffect(() => {
     onSwUpdate((s) => setSwUpdate(s === "available"));
@@ -143,12 +181,23 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
     return <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
   }
 
+  if (openNotification) {
+    return (
+      <NotificationDetailScreen
+        notification={openNotification}
+        onBack={() => setOpenNotification(null)}
+      />
+    );
+  }
+
   if (showNotifications) {
     return (
       <NotificationsScreen
         notifications={notifications}
         onBack={() => setShowNotifications(false)}
-        onRead={(id) => setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))}
+        onOpen={(n) => { markRead(n.id); setOpenNotification(n); }}
+        onRead={markRead}
+        onReadAll={markAllRead}
       />
     );
   }
@@ -399,11 +448,14 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
 }
 
 // ── Экран уведомлений ─────────────────────────────────────────────────────────
-function NotificationsScreen({ notifications, onBack, onRead }: {
+function NotificationsScreen({ notifications, onBack, onOpen, onRead, onReadAll }: {
   notifications: Notification[];
   onBack: () => void;
+  onOpen: (n: Notification) => void;
   onRead: (id: string) => void;
+  onReadAll: () => void;
 }) {
+  const hasUnread = notifications.some(n => !n.read);
   return (
     <div style={s.root}>
       <div style={s.subHeader}>
@@ -411,28 +463,75 @@ function NotificationsScreen({ notifications, onBack, onRead }: {
           <span style={{ fontSize: 20 }}>‹</span> Назад
         </button>
         <div style={s.subHeaderTitle}>Уведомления</div>
+        {hasUnread && (
+          <button style={s.readAllBtn} onClick={onReadAll}>Прочитать все</button>
+        )}
       </div>
       <div style={{ ...s.body, paddingTop: 16 }}>
         {notifications.length === 0
           ? <div style={s.empty}>Нет уведомлений</div>
-          : notifications.map(n => (
-            <div
-              key={n.id}
-              style={{ ...s.notifCard, opacity: n.read ? 0.55 : 1 }}
-              onClick={() => onRead(n.id)}
-            >
-              <div style={s.notifHead}>
-                <span style={{ ...s.notifType, color: n.type === "system" ? "var(--c-purple)" : "var(--c-accent)" }}>
-                  {n.type === "system" ? "Система" : "Univerkon"}
-                </span>
-                <span style={s.notifDate}>{formatDay(n.date)}</span>
-                {!n.read && <span style={s.notifDot} />}
+          : notifications.map(n => {
+            const hasDetail = !!n.fullText;
+            return (
+              <div
+                key={n.id}
+                style={{ ...s.notifCard, opacity: n.read ? 0.55 : 1, cursor: hasDetail ? "pointer" : "default" }}
+                onClick={() => hasDetail ? onOpen(n) : onRead(n.id)}
+              >
+                <div style={s.notifHead}>
+                  <span style={{ ...s.notifType, color: n.type === "system" ? "var(--c-purple)" : "var(--c-accent)" }}>
+                    {n.type === "system" ? "Система" : "Univerkon"}
+                  </span>
+                  <span style={s.notifDate}>{formatDay(n.date)}</span>
+                  {!n.read && <span style={s.notifDot} />}
+                </div>
+                <div style={s.notifRow}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={s.notifTitle}>{n.title}</div>
+                    <div style={s.notifBody}>{n.body}</div>
+                  </div>
+                  {hasDetail && <span style={s.notifChevron}>›</span>}
+                </div>
               </div>
-              <div style={s.notifTitle}>{n.title}</div>
-              <div style={s.notifBody}>{n.body}</div>
-            </div>
-          ))
+            );
+          })
         }
+      </div>
+    </div>
+  );
+}
+
+// ── Детальный экран уведомления ───────────────────────────────────────────────
+function NotificationDetailScreen({ notification: n, onBack }: {
+  notification: Notification;
+  onBack: () => void;
+}) {
+  return (
+    <div style={s.root}>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onBack}>
+          <span style={{ fontSize: 20 }}>‹</span> Назад
+        </button>
+        <div style={s.subHeaderTitle}>{n.title}</div>
+      </div>
+      <div style={{ ...s.body, paddingTop: 20 }}>
+        <div style={s.notifDetailMeta}>
+          <span style={{ ...s.notifType, color: n.type === "system" ? "var(--c-purple)" : "var(--c-accent)" }}>
+            {n.type === "system" ? "Система" : "Univerkon"}
+          </span>
+          <span style={s.notifDate}>{formatDay(n.date)}</span>
+        </div>
+        <h2 style={s.notifDetailTitle}>{n.title}</h2>
+        <p style={s.notifDetailBody}>{n.fullText}</p>
+        {n.links && n.links.length > 0 && (
+          <div style={s.notifLinks}>
+            {n.links.map((lnk, i) => (
+              <a key={i} href={lnk.url} style={s.notifLink} target="_blank" rel="noopener noreferrer">
+                {lnk.label} →
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -555,11 +654,19 @@ const s: Record<string, React.CSSProperties> = {
   versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },
   updateBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
   themeBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-status-text)", padding: 0, display: "flex", alignItems: "center", lineHeight: 1 },
-  notifCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8, cursor: "pointer" },
-  notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 5 },
+  readAllBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.75rem", cursor: "pointer", padding: "2px 0", fontWeight: 500, flexShrink: 0, marginLeft: "auto" },
+  notifCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8 },
+  notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 },
+  notifRow: { display: "flex", alignItems: "flex-start", gap: 8 },
   notifType: { fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.04em" },
   notifDate: { color: "var(--c-text-dim)", fontSize: "0.65rem", flex: 1 },
   notifDot: { width: 6, height: 6, borderRadius: "50%", background: "var(--c-accent)", flexShrink: 0 },
   notifTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 500, marginBottom: 4 },
   notifBody: { color: "var(--c-text-muted)", fontSize: "0.78rem", lineHeight: 1.5 },
+  notifChevron: { color: "var(--c-text-dim)", fontSize: "1.2rem", lineHeight: 1.5, flexShrink: 0 },
+  notifDetailMeta: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10 },
+  notifDetailTitle: { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 600, margin: "0 0 16px", lineHeight: 1.4 },
+  notifDetailBody: { color: "var(--c-text-secondary)", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 24px", whiteSpace: "pre-wrap" as const },
+  notifLinks: { display: "flex", flexDirection: "column" as const, gap: 10 },
+  notifLink: { display: "block", color: "var(--c-accent)", fontSize: "0.88rem", fontWeight: 500, padding: "12px 16px", background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 10, textDecoration: "none" },
 };
