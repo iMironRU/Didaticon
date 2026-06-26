@@ -471,8 +471,8 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextL
             <div style={{ ...s.contextName, fontSize: "0.78rem", fontWeight: 600 }}>{contextLabel}</div>
           </div>
         : <button style={s.contextBtn} onClick={onContextTap}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-              <div style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 5, minWidth: 0 }}>
+              <div style={{ minWidth: 0, overflow: "hidden" }}>
                 <div style={s.contextName}>{context.name}</div>
                 <div style={s.contextPeriod}>{context.period}</div>
               </div>
