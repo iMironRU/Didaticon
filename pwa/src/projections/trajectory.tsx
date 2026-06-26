@@ -348,6 +348,7 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout }: {
 // ── Статусная строка ──────────────────────────────────────────────────────────
 function StatusBar({ swUpdate }: { swUpdate: boolean }) {
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
+  const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   return (
     <div style={s.statusBar}>
@@ -357,7 +358,7 @@ function StatusBar({ swUpdate }: { swUpdate: boolean }) {
         </button>
         {swUpdate && <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить</button>}
       </div>
-      <span style={s.versionLabel}>v{version}</span>
+      <span style={s.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
     </div>
   );
 }
