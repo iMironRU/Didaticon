@@ -10,7 +10,9 @@ export type Route =
   | { name: "notifications" }
   | { name: "notification"; id: string }
   | { name: "discipline"; id: string }
-  | { name: "lesson"; id: string };
+  | { name: "lesson"; id: string }
+  | { name: "pm"; id: string }
+  | { name: "practice"; id: string };
 
 export function parseHash(hash: string): Route {
   const path = hash.startsWith("#/") ? hash.slice(2) : hash.replace(/^#/, "");
@@ -23,7 +25,9 @@ export function parseHash(hash: string): Route {
   if (seg0 === "profiles")      return seg1 ? { name: "completed", contextId: seg1 } : { name: "profiles" };
   if (seg0 === "notifications") return seg1 ? { name: "notification", id: seg1 } : { name: "notifications" };
   if (seg0 === "discipline" && seg1) return { name: "discipline", id: seg1 };
-  if (seg0 === "lesson"      && seg1) return { name: "lesson",      id: seg1 };
+  if (seg0 === "lesson"     && seg1) return { name: "lesson",     id: seg1 };
+  if (seg0 === "pm"         && seg1) return { name: "pm",         id: seg1 };
+  if (seg0 === "practice"   && seg1) return { name: "practice",   id: seg1 };
   return { name: "schedule" };
 }
 
@@ -39,6 +43,8 @@ export function routeToHash(route: Route): string {
     case "notification":  return `#/notifications/${route.id}`;
     case "discipline":    return `#/discipline/${route.id}`;
     case "lesson":        return `#/lesson/${route.id}`;
+    case "pm":            return `#/pm/${route.id}`;
+    case "practice":      return `#/practice/${route.id}`;
   }
 }
 

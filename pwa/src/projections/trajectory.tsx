@@ -188,6 +188,143 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
   },
 ];
 
+// ── СПО: ПМ / МДК / УП / ПП ──────────────────────────────────────────────────
+interface MockMDK {
+  id: string;
+  code: string;
+  title: string;
+  department?: string;
+  lessonCounts?: { lec?: number; prac?: number; lab?: number };
+  brs?: { current: number; max: number };
+  finalControl?: { type: string; date: string; confirmed: boolean };
+  totalLessons: number;
+  doneLessons: number;
+  lessons: MockLesson[];
+}
+
+interface MockPractice {
+  id: string;
+  code: string;
+  title: string;
+  department?: string;
+  totalDays: number;
+  doneDays: number;
+  finalControl?: { type: string; date: string; confirmed: boolean };
+}
+
+interface MockPM {
+  id: string;
+  code: string;
+  title: string;
+  department?: string;
+  mdks: MockMDK[];
+  practices: MockPractice[];
+  finalControl?: { type: string; date: string; confirmed: boolean };
+}
+
+const MOCK_SPO_LESSONS: MockLesson[] = [
+  { id: "sl1",  type: "lecture",  topic: "Введение в Python",              discipline: "МДК.01.01", date: d(-18, 9),  status: "done", score: 90, teacher: T_PETROV,  attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Тест", score: 90, maxScore: 100 }] }] },
+  { id: "sl2",  type: "practice", topic: "ООП: классы и объекты",          discipline: "МДК.01.01", date: d(-15, 11), status: "done", score: 75, teacher: T_SIDOROV, attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Практическая работа", score: 75, maxScore: 100 }] }] },
+  { id: "sl3",  type: "lab",      topic: "Разработка простого приложения", discipline: "МДК.01.01", date: d(-12, 13), status: "done", score: 88, teacher: T_SIDOROV, attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Лабораторная работа", score: 88, maxScore: 100 }] }] },
+  { id: "sl4",  type: "lecture",  topic: "Работа с файлами и исключениями", discipline: "МДК.01.01", date: d(-9, 9),  status: "done", score: 62, teacher: T_PETROV,  attendance: "absent_excused", events: [{ type: "Занятие", controls: [{ form: "Тест", score: 62, maxScore: 100 }] }] },
+  { id: "sl5",  type: "practice", topic: "Работа с БД из Python",          discipline: "МДК.01.01", date: d(-5, 11), status: "done", score: 80, teacher: T_SIDOROV, attendance: "worked_off", events: [{ type: "Занятие", controls: [{ form: "Практическая работа", score: 80, maxScore: 100 }] }] },
+  { id: "sl6",  type: "lab",      topic: "Создание REST API",               discipline: "МДК.01.01", date: d(0, 13),  status: "available", teacher: T_SIDOROV, events: [{ type: "Занятие", controls: [{ form: "Лабораторная работа", maxScore: 100 }] }] },
+  { id: "sl7",  type: "lecture",  topic: "Паттерны проектирования",         discipline: "МДК.01.01", date: d(3, 9),   status: "locked" },
+  { id: "sl8",  type: "practice", topic: "Финальный проект",                discipline: "МДК.01.01", date: d(7, 11),  status: "locked" },
+  { id: "sl9",  type: "lecture",  topic: "Виды тестирования ПО",            discipline: "МДК.01.02", date: d(-16, 9), status: "done", score: 70, teacher: T_PETROV,  attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Тест", score: 70, maxScore: 100 }] }] },
+  { id: "sl10", type: "practice", topic: "Unit-тестирование с pytest",      discipline: "МДК.01.02", date: d(-10, 11), status: "done", score: 85, teacher: T_PETROV, attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Практическая работа", score: 85, maxScore: 100 }] }] },
+  { id: "sl11", type: "practice", topic: "Интеграционное тестирование",     discipline: "МДК.01.02", date: d(-4, 11), status: "done", score: 60, teacher: T_PETROV,  attendance: "present",   events: [{ type: "Занятие", controls: [{ form: "Практическая работа", score: 60, maxScore: 100 }] }] },
+  { id: "sl12", type: "practice", topic: "Тестирование REST API",           discipline: "МДК.01.02", date: d(2, 11),  status: "available", teacher: T_PETROV, events: [{ type: "Занятие", controls: [{ form: "Практическая работа", maxScore: 100 }] }] },
+  { id: "sl13", type: "lecture",  topic: "Нагрузочное тестирование",        discipline: "МДК.01.02", date: d(6, 9),   status: "locked" },
+  { id: "sl14", type: "practice", topic: "Автоматизация тестирования",      discipline: "МДК.01.02", date: d(10, 11), status: "locked" },
+];
+
+const DEPT_PCT = "ПЦК информационных технологий";
+
+const MOCK_SPO_PMS: MockPM[] = [
+  {
+    id: "pm1",
+    code: "ПМ.01",
+    title: "Разработка программного обеспечения",
+    department: DEPT_PCT,
+    mdks: [
+      {
+        id: "mdk0101", code: "МДК.01.01",
+        title: "Разработка ПО на языках высокого уровня",
+        department: DEPT_PCT,
+        lessonCounts: { lec: 4, prac: 6, lab: 4 },
+        brs: { current: 55, max: 100 },
+        finalControl: { type: "Дифференцированный зачёт", date: "15 апр 2026", confirmed: true },
+        totalLessons: 8, doneLessons: 5,
+        lessons: MOCK_SPO_LESSONS.filter(l => l.discipline === "МДК.01.01"),
+      },
+      {
+        id: "mdk0102", code: "МДК.01.02",
+        title: "Тестирование программных модулей",
+        department: DEPT_PCT,
+        lessonCounts: { lec: 2, prac: 4 },
+        brs: { current: 38, max: 100 },
+        finalControl: { type: "Зачёт с оценкой", date: "22 мая 2026", confirmed: false },
+        totalLessons: 6, doneLessons: 3,
+        lessons: MOCK_SPO_LESSONS.filter(l => l.discipline === "МДК.01.02"),
+      },
+    ],
+    practices: [
+      {
+        id: "up01", code: "УП.01", title: "Учебная практика",
+        department: DEPT_PCT,
+        totalDays: 12, doneDays: 4,
+        finalControl: { type: "Дифференцированный зачёт", date: "5 июн 2026", confirmed: false },
+      },
+    ],
+    finalControl: { type: "Экзамен квалификационный", date: "14 июн 2026", confirmed: false },
+  },
+  {
+    id: "pm2",
+    code: "ПМ.02",
+    title: "Сопровождение и обслуживание ПО",
+    department: DEPT_PCT,
+    mdks: [
+      {
+        id: "mdk0201", code: "МДК.02.01",
+        title: "Инструментальные средства разработки ПО",
+        department: DEPT_PCT,
+        lessonCounts: { lec: 2, prac: 4 },
+        brs: { current: 0, max: 100 },
+        finalControl: { type: "Дифференцированный зачёт", date: "10 янв 2027", confirmed: false },
+        totalLessons: 6, doneLessons: 0,
+        lessons: [],
+      },
+    ],
+    practices: [
+      {
+        id: "pp01", code: "ПП.01", title: "Производственная практика",
+        department: DEPT_PCT,
+        totalDays: 24, doneDays: 0,
+        finalControl: { type: "Дифференцированный зачёт", date: "18 янв 2027", confirmed: false },
+      },
+    ],
+    finalControl: { type: "Экзамен квалификационный", date: "18 янв 2027", confirmed: false },
+  },
+];
+
+// Быстрый поиск MDK и практики по id (для роутинга)
+function findMDK(id: string): MockMDK | null {
+  for (const pm of MOCK_SPO_PMS)
+    for (const mdk of pm.mdks)
+      if (mdk.id === id) return mdk;
+  return null;
+}
+function findPractice(id: string): MockPractice | null {
+  for (const pm of MOCK_SPO_PMS)
+    for (const p of pm.practices)
+      if (p.id === id) return p;
+  return null;
+}
+function findPM(id: string): MockPM | null {
+  return MOCK_SPO_PMS.find(p => p.id === id) ?? null;
+}
+
 // Мок зачётки — все дисциплины за все курсы (включая прошедшие)
 interface GradebookEntry {
   id: string;
@@ -239,13 +376,15 @@ interface LearnerContext {
   status: ContextStatus;
   completedAt?: string;
   periodsPerYear: number; // 2 = семестры, 3 = триместры
+  program?: "spo";        // если задано — показывать ПМ вместо дисциплин
 }
 
 const MOCK_CONTEXTS: LearnerContext[] = [
-  { id: "c1", name: "Информационные технологии",    type: "specialty", period: "IV курс · Весенний семестр 2026", status: "active",    periodsPerYear: 2 },
-  { id: "c2", name: "Маркетинг и реклама",          type: "specialty", period: "I курс · Осенний семестр 2026",   status: "active",    periodsPerYear: 2 },
-  { id: "c3", name: "Python для анализа данных",    type: "dpo",       period: "Курс ДПО · 72 часа",              status: "active",    periodsPerYear: 3 },
-  { id: "c4", name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", periodsPerYear: 2, completedAt: "2025" },
+  { id: "c1",  name: "Информационные технологии",    type: "specialty", period: "IV курс · Весенний семестр 2026", status: "active",    periodsPerYear: 2 },
+  { id: "c2",  name: "Маркетинг и реклама",          type: "specialty", period: "I курс · Осенний семестр 2026",   status: "active",    periodsPerYear: 2 },
+  { id: "c3",  name: "Python для анализа данных",    type: "dpo",       period: "Курс ДПО · 72 часа",              status: "active",    periodsPerYear: 3 },
+  { id: "c4",  name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", periodsPerYear: 2, completedAt: "2025" },
+  { id: "spo", name: "Разработка ПО и ВТ",          type: "specialty", period: "СПО · 3 семестр 2025–2026",       status: "active",    periodsPerYear: 2, program: "spo" },
 ];
 
 interface CompletedDiscipline {
@@ -407,9 +546,13 @@ export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { student
             : route.name === "profile"     ? "profile"
             : "schedule";
 
-  const lesson           = route.name === "lesson"       ? MOCK_LESSONS.find(l => l.id === route.id) ?? null : null;
+  const allLessons       = currentCtx.program === "spo" ? MOCK_SPO_LESSONS : MOCK_LESSONS;
+  const lesson           = route.name === "lesson"       ? allLessons.find(l => l.id === route.id) ?? null : null;
   const openDisciplineId = route.name === "discipline"   ? route.id : null;
   const discipline       = openDisciplineId ? MOCK_DISCIPLINES.find(d => d.id === openDisciplineId) ?? null : null;
+  const openMDK          = route.name === "discipline"   ? findMDK(route.id) : null;
+  const openPM           = route.name === "pm"           ? findPM(route.id) : null;
+  const openPractice     = route.name === "practice"     ? findPractice(route.id) : null;
   const openNotification = route.name === "notification" ? notifications.find(n => n.id === route.id) ?? null : null;
 
   let inner: React.ReactNode;
@@ -461,10 +604,38 @@ export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { student
         onReadAll={markAllRead}
       />
     );
+  } else if (openPM) {
+    inner = (
+      <PMScreen
+        pm={openPM}
+        onBack={() => history.back()}
+        onMDK={(id) => navigate({ name: "discipline", id })}
+        onPractice={(id) => navigate({ name: "practice", id })}
+        onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+      />
+    );
+  } else if (openPractice) {
+    inner = <PracticeScreen practice={openPractice} onBack={() => history.back()} />;
   } else if (discipline) {
     inner = (
       <DisciplineScreen
         discipline={discipline}
+        onBack={() => history.back()}
+        onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+      />
+    );
+  } else if (openMDK) {
+    inner = (
+      <DisciplineScreen
+        discipline={{
+          id: openMDK.id, title: `${openMDK.code} · ${openMDK.title}`,
+          totalLessons: openMDK.totalLessons, doneLessons: openMDK.doneLessons,
+          lessons: openMDK.lessons, course: 3, semester: 5,
+          department: openMDK.department,
+          lessonCounts: openMDK.lessonCounts,
+          brs: openMDK.brs,
+          finalControl: openMDK.finalControl,
+        }}
         onBack={() => history.back()}
         onLesson={(l) => navigate({ name: "lesson", id: l.id })}
       />
@@ -498,13 +669,16 @@ export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { student
               selectedDay={selectedDay}
               onDayChange={setSelectedDay}
               onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+              lessons={allLessons}
               t={t}
             />
           )}
           {tab === "disciplines" && (
             <DisciplinesTab
               periodsPerYear={currentCtx.periodsPerYear}
+              pms={currentCtx.program === "spo" ? MOCK_SPO_PMS : undefined}
               onDiscipline={(id) => navigate({ name: "discipline", id })}
+              onPM={(id) => navigate({ name: "pm", id })}
               onLesson={(l) => navigate({ name: "lesson", id: l.id })}
               t={t}
             />
@@ -634,14 +808,16 @@ function BottomNav({ tab, onChange, t }: { tab: string; onChange: (v: string) =>
 }
 
 // ── Расписание ────────────────────────────────────────────────────────────────
-function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson, t }: {
+function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson, lessons: lessonsProp, t }: {
   view: "day" | "week";
   onViewChange: (v: "day" | "week") => void;
   selectedDay: Date;
   onDayChange: (d: Date) => void;
   onLesson: (l: MockLesson) => void;
+  lessons?: MockLesson[];
   t: (k: StringKey) => string;
 }) {
+  const LESSONS = lessonsProp ?? MOCK_LESSONS;
   // Генерируем 14 дней от сегодня - 7 до сегодня + 7
   const days: Date[] = Array.from({ length: 14 }, (_, i) => {
     const dt = new Date(TODAY);
@@ -657,8 +833,8 @@ function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson, t
   });
 
   const visibleLessons = view === "day"
-    ? MOCK_LESSONS.filter(l => sameDay(l.date, selectedDay)).sort((a, b) => a.date.getTime() - b.date.getTime())
-    : MOCK_LESSONS.filter(l => weekDays.some(wd => sameDay(l.date, wd))).sort((a, b) => a.date.getTime() - b.date.getTime());
+    ? LESSONS.filter(l => sameDay(l.date, selectedDay)).sort((a, b) => a.date.getTime() - b.date.getTime())
+    : LESSONS.filter(l => weekDays.some(wd => sameDay(l.date, wd))).sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
     <div>
@@ -671,7 +847,7 @@ function ScheduleTab({ view, onViewChange, selectedDay, onDayChange, onLesson, t
       {/* Горизонтальная полоса дней */}
       <div style={s.dayStrip}>
         {days.map(day => {
-          const hasLessons = MOCK_LESSONS.some(l => sameDay(l.date, day));
+          const hasLessons = LESSONS.some(l => sameDay(l.date, day));
           const isSelected = sameDay(day, selectedDay);
           const isToday = sameDay(day, TODAY);
           return (
@@ -769,12 +945,101 @@ function fcChipStyle(type: string): React.CSSProperties {
   return { background: "color-mix(in srgb, var(--c-success) 15%, transparent)", color: "var(--c-success)" };
 }
 
-function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }: {
+function DisciplineCardContent({ d }: { d: MockDiscipline }) {
+  const pct = d.totalLessons > 0 ? Math.round((d.doneLessons / d.totalLessons) * 100) : 0;
+  return (
+    <>
+      <div style={{ ...s.disciplineHead, marginBottom: d.department ? 2 : 8 }}>
+        <span style={s.disciplineTitle}>{d.title}</span>
+        {d.grade
+          ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
+          : d.brs
+            ? <span style={s.brsBadge}>{d.brs.current}<span style={s.brsMax}> / 100 б.</span></span>
+            : null
+        }
+      </div>
+      {d.department && <div style={s.disciplineDept}>{d.department}</div>}
+      <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
+        <div style={{ ...s.disciplineFill, width: `${pct}%` }} />
+      </div>
+      <div style={s.disciplineFooter}>
+        {d.lessonCounts && (
+          <div style={s.lcRow}>
+            {[
+              d.lessonCounts.lec  != null ? `${d.lessonCounts.lec} Лек`  : null,
+              d.lessonCounts.prac != null ? `${d.lessonCounts.prac} Пр`  : null,
+              d.lessonCounts.lab  != null ? `${d.lessonCounts.lab} Лаб`  : null,
+            ].filter((x): x is string => x !== null).join(" · ")}
+          </div>
+        )}
+        {d.finalControl && <FinalControlChip fc={d.finalControl} />}
+      </div>
+    </>
+  );
+}
+
+function FinalControlChip({ fc }: { fc: { type: string; date: string; confirmed: boolean } }) {
+  return (
+    <div style={s.fcWrap}>
+      <span style={{ ...s.fcChip, ...fcChipStyle(fc.type) }}>{fc.type}</span>
+      <div style={fc.confirmed ? s.fcDate : s.fcDatePlan}>
+        {!fc.confirmed && <span style={s.fcPlanDot} />}
+        {!fc.confirmed && "~ "}{fc.date}
+      </div>
+      {!fc.confirmed && <div style={s.fcPlanLabel}>планируется</div>}
+    </div>
+  );
+}
+
+function PMCard({ pm, onClick }: { pm: MockPM; onClick: () => void }) {
+  const totalL = pm.mdks.reduce((s, m) => s + m.totalLessons, 0);
+  const doneL  = pm.mdks.reduce((s, m) => s + m.doneLessons, 0);
+  const pct    = totalL > 0 ? Math.round((doneL / totalL) * 100) : 0;
+  const comp   = [
+    pm.mdks.length > 0 ? `${pm.mdks.length} МДК` : null,
+    pm.practices.filter(p => p.code.startsWith("УП")).length > 0 ? "УП" : null,
+    pm.practices.filter(p => p.code.startsWith("ПП")).length > 0 ? "ПП" : null,
+  ].filter(Boolean).join(" · ");
+
+  return (
+    <button style={s.pmCard} onClick={onClick}>
+      <div style={s.pmHead}>
+        <div style={{ minWidth: 0 }}>
+          <div style={s.pmCode}>{pm.code}</div>
+          <div style={s.pmTitle}>{pm.title}</div>
+        </div>
+        <span style={s.pmFolderIcon}>▸</span>
+      </div>
+      {pm.department && <div style={s.disciplineDept}>{pm.department}</div>}
+      <div style={s.pmComposition}>{comp}</div>
+      <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
+        <div style={{ ...s.disciplineFill, width: `${pct}%` }} />
+      </div>
+      <div style={{ ...s.disciplineFooter, justifyContent: "flex-end" }}>
+        {pm.finalControl && <FinalControlChip fc={pm.finalControl} />}
+      </div>
+    </button>
+  );
+}
+
+function DisciplinesTab({ periodsPerYear, pms, onDiscipline, onPM, onLesson: _onLesson, t }: {
   periodsPerYear: number;
+  pms?: MockPM[];
   onDiscipline: (id: string) => void;
+  onPM: (id: string) => void;
   onLesson: (l: MockLesson) => void;
   t: (k: StringKey) => string;
 }) {
+  // СПО-режим: показываем ПМ
+  if (pms) {
+    return (
+      <div>
+        {pms.map(pm => <PMCard key={pm.id} pm={pm} onClick={() => onPM(pm.id)} />)}
+      </div>
+    );
+  }
+
+  // ВУЗ-режим: дисциплины по курсам/семестрам
   type Group = Record<number, Record<number, MockDiscipline[]>>;
   const byCourse = MOCK_DISCIPLINES.reduce<Group>((acc, d) => {
     if (!acc[d.course]) acc[d.course] = {};
@@ -799,40 +1064,7 @@ function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }
           <div style={s.sectionLabel}>{semLabel(selectedCourse, sem)}</div>
           {byCourse[selectedCourse][sem].map(d => (
             <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
-              <div style={{ ...s.disciplineHead, marginBottom: d.department ? 2 : 8 }}>
-                <span style={s.disciplineTitle}>{d.title}</span>
-                {d.grade
-                  ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
-                  : d.brs
-                    ? <span style={s.brsBadge}>{d.brs.current}<span style={s.brsMax}> / 100 б.</span></span>
-                    : null
-                }
-              </div>
-              {d.department && <div style={s.disciplineDept}>{d.department}</div>}
-              <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
-                <div style={{ ...s.disciplineFill, width: `${Math.round((d.doneLessons / d.totalLessons) * 100)}%` }} />
-              </div>
-              <div style={s.disciplineFooter}>
-                {d.lessonCounts && (
-                  <div style={s.lcRow}>
-                    {[
-                      d.lessonCounts.lec  != null ? `${d.lessonCounts.lec} Лек`  : null,
-                      d.lessonCounts.prac != null ? `${d.lessonCounts.prac} Пр`  : null,
-                      d.lessonCounts.lab  != null ? `${d.lessonCounts.lab} Лаб`  : null,
-                    ].filter((x): x is string => x !== null).join(" · ")}
-                  </div>
-                )}
-                {d.finalControl && (
-                  <div style={s.fcWrap}>
-                    <span style={{ ...s.fcChip, ...fcChipStyle(d.finalControl.type) }}>{d.finalControl.type}</span>
-                    <div style={d.finalControl.confirmed ? s.fcDate : s.fcDatePlan}>
-                      {!d.finalControl.confirmed && <span style={s.fcPlanDot} />}
-                      {!d.finalControl.confirmed && "~ "}{d.finalControl.date}
-                    </div>
-                    {!d.finalControl.confirmed && <div style={s.fcPlanLabel}>планируется</div>}
-                  </div>
-                )}
-              </div>
+              <DisciplineCardContent d={d} />
             </button>
           ))}
         </div>
@@ -860,6 +1092,136 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
         {discipline.lessons.map((l, i) => (
           <LessonCard key={l.id} lesson={l} showDate={true} onOpen={() => onLesson(l)} />
         ))}
+      </div>
+    </>
+  );
+}
+
+// ── Экран ПМ (список МДК + практик) ──────────────────────────────────────────
+function MDKCard({ mdk, onClick }: { mdk: MockMDK; onClick: () => void }) {
+  const pct = mdk.totalLessons > 0 ? Math.round((mdk.doneLessons / mdk.totalLessons) * 100) : 0;
+  return (
+    <button style={s.disciplineCard} onClick={onClick}>
+      <div style={{ ...s.disciplineHead, marginBottom: mdk.department ? 2 : 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={s.mdkCode}>{mdk.code}</div>
+          <span style={s.disciplineTitle}>{mdk.title}</span>
+        </div>
+        {mdk.brs
+          ? <span style={s.brsBadge}>{mdk.brs.current}<span style={s.brsMax}> / 100 б.</span></span>
+          : null
+        }
+      </div>
+      {mdk.department && <div style={s.disciplineDept}>{mdk.department}</div>}
+      <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
+        <div style={{ ...s.disciplineFill, width: `${pct}%` }} />
+      </div>
+      <div style={s.disciplineFooter}>
+        {mdk.lessonCounts && (
+          <div style={s.lcRow}>
+            {[
+              mdk.lessonCounts.lec  != null ? `${mdk.lessonCounts.lec} Лек`  : null,
+              mdk.lessonCounts.prac != null ? `${mdk.lessonCounts.prac} Пр`  : null,
+              mdk.lessonCounts.lab  != null ? `${mdk.lessonCounts.lab} Лаб`  : null,
+            ].filter((x): x is string => x !== null).join(" · ")}
+          </div>
+        )}
+        {mdk.finalControl && <FinalControlChip fc={mdk.finalControl} />}
+      </div>
+    </button>
+  );
+}
+
+function PracticeCard({ p, onClick }: { p: MockPractice; onClick: () => void }) {
+  const pct = p.totalDays > 0 ? Math.round((p.doneDays / p.totalDays) * 100) : 0;
+  return (
+    <button style={s.disciplineCard} onClick={onClick}>
+      <div style={{ ...s.disciplineHead, marginBottom: p.department ? 2 : 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={s.mdkCode}>{p.code}</div>
+          <span style={s.disciplineTitle}>{p.title}</span>
+        </div>
+      </div>
+      {p.department && <div style={s.disciplineDept}>{p.department}</div>}
+      <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
+        <div style={{ ...s.disciplineFill, width: `${pct}%` }} />
+      </div>
+      <div style={s.disciplineFooter}>
+        <div style={s.lcRow}>{p.totalDays} дней практики</div>
+        {p.finalControl && <FinalControlChip fc={p.finalControl} />}
+      </div>
+    </button>
+  );
+}
+
+function PMScreen({ pm, onBack, onMDK, onPractice, onLesson: _onLesson }: {
+  pm: MockPM;
+  onBack: () => void;
+  onMDK: (id: string) => void;
+  onPractice: (id: string) => void;
+  onLesson: (l: MockLesson) => void;
+}) {
+  return (
+    <>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onBack}>
+          <span style={{ fontSize: 20 }}>‹</span> Назад
+        </button>
+        <div style={s.subHeaderTitle}>{pm.code} · {pm.title}</div>
+      </div>
+      <div style={{ ...s.body, paddingTop: 16 }}>
+        {pm.mdks.map(mdk => <MDKCard key={mdk.id} mdk={mdk} onClick={() => onMDK(mdk.id)} />)}
+        {pm.practices.map(p => <PracticeCard key={p.id} p={p} onClick={() => onPractice(p.id)} />)}
+      </div>
+    </>
+  );
+}
+
+// ── Экран практики ────────────────────────────────────────────────────────────
+function PracticeScreen({ practice, onBack }: { practice: MockPractice; onBack: () => void }) {
+  const pct = practice.totalDays > 0 ? Math.round((practice.doneDays / practice.totalDays) * 100) : 0;
+  return (
+    <>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onBack}>
+          <span style={{ fontSize: 20 }}>‹</span> Назад
+        </button>
+        <div style={s.subHeaderTitle}>{practice.code} · {practice.title}</div>
+      </div>
+      <div style={{ ...s.body, paddingTop: 16 }}>
+        {practice.department && (
+          <div style={s.lsBlock}>
+            <div style={s.lsBlockLabel}>Подразделение</div>
+            <div style={{ color: "var(--c-text-secondary)", fontSize: "0.88rem" }}>{practice.department}</div>
+          </div>
+        )}
+        <div style={s.lsBlock}>
+          <div style={s.lsBlockLabel}>Прогресс</div>
+          <div style={{ color: "var(--c-text-primary)", fontSize: "0.95rem", fontWeight: 600, marginBottom: 8 }}>
+            {practice.doneDays} <span style={{ color: "var(--c-text-muted)", fontWeight: 400, fontSize: "0.8rem" }}>/ {practice.totalDays} дней</span>
+          </div>
+          <div style={s.disciplineBar}>
+            <div style={{ ...s.disciplineFill, width: `${pct}%` }} />
+          </div>
+        </div>
+        {practice.finalControl && (
+          <div style={s.lsBlock}>
+            <div style={s.lsBlockLabel}>Итоговый контроль</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+              <span style={{ ...s.fcChip, ...fcChipStyle(practice.finalControl.type) }}>
+                {practice.finalControl.type}
+              </span>
+              <div style={practice.finalControl.confirmed ? s.fcDate : s.fcDatePlan}>
+                {!practice.finalControl.confirmed && <span style={s.fcPlanDot} />}
+                {!practice.finalControl.confirmed && "~ "}{practice.finalControl.date}
+                {!practice.finalControl.confirmed && <span style={{ ...s.fcPlanLabel, marginLeft: 4 }}>планируется</span>}
+              </div>
+            </div>
+          </div>
+        )}
+        <div style={{ color: "var(--c-text-dim)", fontSize: "0.78rem", marginTop: 8, lineHeight: 1.5 }}>
+          Дни практики отображаются в расписании.
+        </div>
       </div>
     </>
   );
@@ -1598,4 +1960,13 @@ const s: Record<string, React.CSSProperties> = {
   ratingBtnNo:  { borderColor: "var(--c-danger)",  background: "color-mix(in srgb, var(--c-danger)  12%, transparent)" },
   ratingSubmitBtn: { width: "100%", marginTop: 12, border: "none", borderRadius: 10, background: "var(--c-accent)", color: "#fff", fontSize: "0.88rem", fontWeight: 600, padding: "12px 0", cursor: "pointer" },
   ratingDone: { color: "var(--c-success)", fontSize: "0.88rem", fontWeight: 500, textAlign: "center" as const, padding: "12px 0" },
+  // ПМ карточка
+  pmCard: { width: "100%", background: "var(--c-card)", borderRadius: 12, border: "0.5px solid var(--c-border)", padding: "14px 16px", marginBottom: 10, cursor: "pointer", textAlign: "left" as const },
+  pmHead: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 2 },
+  pmCode: { color: "var(--c-accent)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 2 },
+  pmTitle: { color: "var(--c-text-primary)", fontSize: "0.92rem", fontWeight: 600, lineHeight: 1.3 },
+  pmFolderIcon: { color: "var(--c-text-dim)", fontSize: "1rem", flexShrink: 0, marginTop: 2 },
+  pmComposition: { color: "var(--c-text-secondary)", fontSize: "0.75rem", fontWeight: 500, marginTop: 4 },
+  // МДК code label
+  mdkCode: { color: "var(--c-accent)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 2 },
 };
