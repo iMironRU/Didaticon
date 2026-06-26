@@ -622,6 +622,28 @@ function LessonCard({ lesson: l, showDate, onOpen }: { lesson: MockLesson; showD
   );
 }
 
+// ── Переключатель курсов ──────────────────────────────────────────────────────
+function CourseTabBar({ courses, selected, onSelect, t }: {
+  courses: number[];
+  selected: number;
+  onSelect: (c: number) => void;
+  t: (k: StringKey) => string;
+}) {
+  return (
+    <div style={s.courseTabBar}>
+      {courses.map(c => (
+        <button
+          key={c}
+          style={c === selected ? { ...s.courseTab, ...s.courseTabActive } : s.courseTab}
+          onClick={() => onSelect(c)}
+        >
+          {t("course")} {c}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Дисциплины ────────────────────────────────────────────────────────────────
 const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 
@@ -631,7 +653,6 @@ function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }
   onLesson: (l: MockLesson) => void;
   t: (k: StringKey) => string;
 }) {
-  // Группируем: course → semester → disciplines
   type Group = Record<number, Record<number, MockDiscipline[]>>;
   const byCourse = MOCK_DISCIPLINES.reduce<Group>((acc, d) => {
     if (!acc[d.course]) acc[d.course] = {};
@@ -639,6 +660,8 @@ function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }
     acc[d.course][d.semester].push(d);
     return acc;
   }, {});
+  const courses = Object.keys(byCourse).map(Number).sort((a, b) => a - b);
+  const [selectedCourse, setSelectedCourse] = useState(() => Math.max(...courses));
 
   function semLabel(course: number, semester: number): string {
     const withinCourse = ((semester - 1) % periodsPerYear) + 1;
@@ -648,27 +671,23 @@ function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }
 
   return (
     <div>
-      {Object.keys(byCourse).map(Number).sort((a, b) => a - b).map(course => (
-        <div key={course}>
-          <div style={s.courseLabel}>{t("course")} {course}</div>
-          {Object.keys(byCourse[course]).map(Number).sort((a, b) => a - b).map(sem => (
-            <div key={sem}>
-              <div style={s.sectionLabel}>{semLabel(course, sem)}</div>
-              {byCourse[course][sem].map(d => (
-                <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
-                  <div style={s.disciplineHead}>
-                    <span style={s.disciplineTitle}>{d.title}</span>
-                    {d.grade
-                      ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
-                      : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
-                    }
-                  </div>
-                  <div style={s.disciplineBar}>
-                    <div style={{ ...s.disciplineFill, width: `${(d.doneLessons / d.totalLessons) * 100}%` }} />
-                  </div>
-                </button>
-              ))}
-            </div>
+      <CourseTabBar courses={courses} selected={selectedCourse} onSelect={setSelectedCourse} t={t} />
+      {byCourse[selectedCourse] && Object.keys(byCourse[selectedCourse]).map(Number).sort((a, b) => a - b).map(sem => (
+        <div key={sem}>
+          <div style={s.sectionLabel}>{semLabel(selectedCourse, sem)}</div>
+          {byCourse[selectedCourse][sem].map(d => (
+            <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
+              <div style={s.disciplineHead}>
+                <span style={s.disciplineTitle}>{d.title}</span>
+                {d.grade
+                  ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
+                  : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
+                }
+              </div>
+              <div style={s.disciplineBar}>
+                <div style={{ ...s.disciplineFill, width: `${(d.doneLessons / d.totalLessons) * 100}%` }} />
+              </div>
+            </button>
           ))}
         </div>
       ))}
@@ -982,6 +1001,8 @@ function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: St
     acc[e.course][e.semester].push(e);
     return acc;
   }, {});
+  const courses = Object.keys(byCourse).map(Number).sort((a, b) => a - b);
+  const [selectedCourse, setSelectedCourse] = useState(() => Math.max(...courses));
 
   function gradeColor(v?: number) {
     if (!v) return "var(--c-text-muted)";
@@ -991,29 +1012,25 @@ function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: St
     return "var(--c-danger)";
   }
 
-  function semLabel(course: number, sem: number) {
+  function semLabel(sem: number) {
     const within = ((sem - 1) % periodsPerYear) + 1;
     return `${t("semester")} ${sem} (${ROMAN[within - 1] ?? within})`;
   }
 
   return (
     <div>
-      {Object.keys(byCourse).map(Number).sort((a, b) => a - b).map(course => (
-        <div key={course}>
-          <div style={s.courseLabel}>{t("course")} {course}</div>
-          {Object.keys(byCourse[course]).map(Number).sort((a, b) => a - b).map(sem => (
-            <div key={sem}>
-              <div style={s.sectionLabel}>{semLabel(course, sem)}</div>
-              {byCourse[course][sem].map(e => (
-                <div key={e.id} style={s.gbRow}>
-                  <div style={s.gbTypeTag}>{typeLabel[e.type]}</div>
-                  <div style={s.gbTitle}>{e.title}</div>
-                  <div style={s.gbHours}>{e.hours} {t("credits")}</div>
-                  <div style={{ ...s.gbGrade, color: gradeColor(e.gradeValue) }}>
-                    {e.grade ?? t("inProgress")}
-                  </div>
-                </div>
-              ))}
+      <CourseTabBar courses={courses} selected={selectedCourse} onSelect={setSelectedCourse} t={t} />
+      {byCourse[selectedCourse] && Object.keys(byCourse[selectedCourse]).map(Number).sort((a, b) => a - b).map(sem => (
+        <div key={sem}>
+          <div style={s.sectionLabel}>{semLabel(sem)}</div>
+          {byCourse[selectedCourse][sem].map(e => (
+            <div key={e.id} style={s.gbRow}>
+              <div style={s.gbTypeTag}>{typeLabel[e.type]}</div>
+              <div style={s.gbTitle}>{e.title}</div>
+              <div style={s.gbHours}>{e.hours} {t("credits")}</div>
+              <div style={{ ...s.gbGrade, color: gradeColor(e.gradeValue) }}>
+                {e.grade ?? t("inProgress")}
+              </div>
             </div>
           ))}
         </div>
@@ -1220,7 +1237,11 @@ const s: Record<string, React.CSSProperties> = {
   notifDetailBody: { color: "var(--c-text-secondary)", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 24px", whiteSpace: "pre-wrap" as const },
   notifLinks: { display: "flex", flexDirection: "column" as const, gap: 10 },
   notifLink: { display: "block", color: "var(--c-accent)", fontSize: "0.88rem", fontWeight: 500, padding: "12px 16px", background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 10, textDecoration: "none" },
-  // Иерархия дисциплин
+  // Таблы курсов
+  courseTabBar: { display: "flex", gap: 6, overflowX: "auto" as const, padding: "4px 0 12px", scrollbarWidth: "none" as const },
+  courseTab: { flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: "1px solid var(--c-border)", background: "transparent", color: "var(--c-text-secondary)", fontSize: "0.8rem", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" as const },
+  courseTabActive: { background: "var(--c-accent)", borderColor: "var(--c-accent)", color: "#fff", fontWeight: 600 },
+  // Иерархия дисциплин (теперь только заголовок семестра, без courseLabel)
   courseLabel: { color: "var(--c-text-primary)", fontSize: "0.82rem", fontWeight: 700, marginTop: 16, marginBottom: 8 },
   // Зачётка
   gbRow: { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-card)", borderRadius: 8, border: "0.5px solid var(--c-border)", marginBottom: 6 },
