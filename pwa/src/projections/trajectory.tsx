@@ -31,8 +31,12 @@ interface MockDiscipline {
   doneLessons: number;
   grade?: string;
   lessons: MockLesson[];
-  course: number;    // год обучения: 1, 2, 3…
-  semester: number;  // сквозная нумерация: 1, 2, 3, 4…
+  course: number;
+  semester: number;
+  department?: string;
+  lessonCounts?: { lec?: number; prac?: number; lab?: number };
+  brs?: { current: number; max: number };
+  finalControl?: { type: string; date: string; confirmed: boolean };
 }
 
 const TODAY = new Date(2026, 5, 26); // 26 июня 2026
@@ -69,16 +73,28 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
   {
     id: "d1", title: "Базы данных", totalLessons: 8, doneLessons: 4,
     course: 4, semester: 7,
+    department: "Кафедра прикладной информатики",
+    lessonCounts: { lec: 4, prac: 2, lab: 2 },
+    brs: { current: 42, max: 100 },
+    finalControl: { type: "Экзамен", date: "15 янв 2027", confirmed: false },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Базы данных"),
   },
   {
     id: "d2", title: "Математический анализ", totalLessons: 5, doneLessons: 2,
     course: 4, semester: 7,
+    department: "Кафедра высшей математики",
+    lessonCounts: { lec: 3, prac: 2 },
+    brs: { current: 28, max: 100 },
+    finalControl: { type: "Экзамен", date: "20 янв 2027", confirmed: true },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Математический анализ"),
   },
   {
     id: "d3", title: "Правовое регулирование в сфере ИТ", totalLessons: 3, doneLessons: 1,
     course: 4, semester: 8,
+    department: "Кафедра гражданского права",
+    lessonCounts: { lec: 2, prac: 1 },
+    brs: { current: 61, max: 100 },
+    finalControl: { type: "Зачёт", date: "10 янв 2027", confirmed: false },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Правовое регулирование"),
   },
 ];
@@ -90,9 +106,10 @@ interface GradebookEntry {
   course: number;
   semester: number;
   hours: number;
-  grade?: string;       // оценка от преподавателя
-  gradeValue?: number;  // числовое значение для цвета
-  type: "exam" | "test" | "coursework"; // экзамен / зачёт / курсовая
+  grade?: string;
+  gradeValue?: number;
+  type: "exam" | "test" | "coursework";
+  brs?: number;
 }
 
 const MOCK_GRADEBOOK: GradebookEntry[] = [
@@ -116,9 +133,9 @@ const MOCK_GRADEBOOK: GradebookEntry[] = [
   { id: "g15", course: 3, semester: 6, title: "Безопасность ИС",               hours: 72,  type: "exam",       grade: "4",        gradeValue: 4 },
   { id: "g16", course: 3, semester: 6, title: "Курсовой проект",               hours: 36,  type: "coursework", grade: "5",        gradeValue: 5 },
   // Курс 4 — текущий (оценки не выставлены)
-  { id: "g17", course: 4, semester: 7, title: "Базы данных",                   hours: 108, type: "exam"   },
-  { id: "g18", course: 4, semester: 7, title: "Математический анализ",         hours: 72,  type: "exam"   },
-  { id: "g19", course: 4, semester: 8, title: "Правовое регулирование в ИТ",   hours: 54,  type: "test"   },
+  { id: "g17", course: 4, semester: 7, title: "Базы данных",                   hours: 108, type: "exam", brs: 42 },
+  { id: "g18", course: 4, semester: 7, title: "Математический анализ",         hours: 72,  type: "exam", brs: 28 },
+  { id: "g19", course: 4, semester: 8, title: "Правовое регулирование в ИТ",   hours: 54,  type: "test", brs: 61 },
 ];
 
 // ── Контексты обучающегося ────────────────────────────────────────────────────
@@ -454,7 +471,7 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextL
             <div style={{ ...s.contextName, fontSize: "0.78rem", fontWeight: 600 }}>{contextLabel}</div>
           </div>
         : <button style={s.contextBtn} onClick={onContextTap}>
-            <div style={s.contextName}>{context.name}</div>
+            <div style={s.contextName}>{context.name} <span style={s.contextChevron}>▾</span></div>
             <div style={s.contextPeriod}>{context.period}</div>
           </button>
       }
@@ -650,6 +667,14 @@ function CourseTabBar({ courses, selected, onSelect, t }: {
 // ── Дисциплины ────────────────────────────────────────────────────────────────
 const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 
+function fcChipStyle(type: string): React.CSSProperties {
+  if (type === "Экзамен" || type.includes("квалификационный"))
+    return { background: "color-mix(in srgb, #7C5CBF 18%, transparent)", color: "#a97de8" };
+  if (type.startsWith("Зачёт с оценкой") || type.startsWith("Дифференцированный"))
+    return { background: "color-mix(in srgb, var(--c-accent) 15%, transparent)", color: "var(--c-accent)" };
+  return { background: "color-mix(in srgb, var(--c-success) 15%, transparent)", color: "var(--c-success)" };
+}
+
 function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }: {
   periodsPerYear: number;
   onDiscipline: (id: string) => void;
@@ -680,15 +705,39 @@ function DisciplinesTab({ periodsPerYear, onDiscipline, onLesson: _onLesson, t }
           <div style={s.sectionLabel}>{semLabel(selectedCourse, sem)}</div>
           {byCourse[selectedCourse][sem].map(d => (
             <button key={d.id} style={s.disciplineCard} onClick={() => onDiscipline(d.id)}>
-              <div style={s.disciplineHead}>
+              <div style={{ ...s.disciplineHead, marginBottom: d.department ? 2 : 8 }}>
                 <span style={s.disciplineTitle}>{d.title}</span>
                 {d.grade
                   ? <span style={{ ...s.gradeChip, background: "var(--c-success-bg)", color: "var(--c-success)" }}>{d.grade}</span>
-                  : <span style={s.progressChip}>{d.doneLessons}/{d.totalLessons}</span>
+                  : d.brs
+                    ? <span style={s.brsBadge}>{d.brs.current}<span style={s.brsMax}> / 100 б.</span></span>
+                    : null
                 }
               </div>
-              <div style={s.disciplineBar}>
-                <div style={{ ...s.disciplineFill, width: `${(d.doneLessons / d.totalLessons) * 100}%` }} />
+              {d.department && <div style={s.disciplineDept}>{d.department}</div>}
+              <div style={{ ...s.disciplineBar, margin: "8px 0 10px" }}>
+                <div style={{ ...s.disciplineFill, width: `${Math.round((d.doneLessons / d.totalLessons) * 100)}%` }} />
+              </div>
+              <div style={s.disciplineFooter}>
+                {d.lessonCounts && (
+                  <div style={s.lcRow}>
+                    {[
+                      d.lessonCounts.lec  != null ? `${d.lessonCounts.lec} Лек`  : null,
+                      d.lessonCounts.prac != null ? `${d.lessonCounts.prac} Пр`  : null,
+                      d.lessonCounts.lab  != null ? `${d.lessonCounts.lab} Лаб`  : null,
+                    ].filter((x): x is string => x !== null).join(" · ")}
+                  </div>
+                )}
+                {d.finalControl && (
+                  <div style={s.fcWrap}>
+                    <span style={{ ...s.fcChip, ...fcChipStyle(d.finalControl.type) }}>{d.finalControl.type}</span>
+                    <div style={d.finalControl.confirmed ? s.fcDate : s.fcDatePlan}>
+                      {!d.finalControl.confirmed && <span style={s.fcPlanDot} />}
+                      {!d.finalControl.confirmed && "~ "}{d.finalControl.date}
+                    </div>
+                    {!d.finalControl.confirmed && <div style={s.fcPlanLabel}>планируется</div>}
+                  </div>
+                )}
               </div>
             </button>
           ))}
@@ -1031,8 +1080,13 @@ function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: St
               <div style={s.gbTypeTag}>{typeLabel[e.type]}</div>
               <div style={s.gbTitle}>{e.title}</div>
               <div style={s.gbHours}>{e.hours} {t("credits")}</div>
-              <div style={{ ...s.gbGrade, color: gradeColor(e.gradeValue) }}>
-                {e.grade ?? t("inProgress")}
+              <div style={{ ...s.gbGrade, color: e.grade ? gradeColor(e.gradeValue) : e.brs != null ? "var(--c-accent)" : "var(--c-text-muted)" }}>
+                {e.grade
+                  ? e.grade
+                  : e.brs != null
+                    ? <>{e.brs}<span style={{ fontSize: "0.6rem", fontWeight: 400 }}> /100</span></>
+                    : t("inProgress")
+                }
               </div>
             </div>
           ))}
@@ -1292,4 +1346,19 @@ const s: Record<string, React.CSSProperties> = {
   optionBtn: { border: "1px solid var(--c-border)", borderRadius: 8, padding: "8px 16px", background: "var(--c-card)", color: "var(--c-text-secondary)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 500 },
   optionBtnActive: { borderColor: "var(--c-accent)", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 10%, transparent)" },
   logoutFullBtn: { width: "100%", border: "1px solid var(--c-danger)", borderRadius: 10, padding: "13px 0", background: "none", color: "var(--c-danger)", fontSize: "0.95rem", cursor: "pointer", fontWeight: 600 },
+  // Шеврон контекста
+  contextChevron: { opacity: 0.45, fontSize: "0.6rem", verticalAlign: "middle" },
+  // Карточка дисциплины — расширенная
+  disciplineDept: { color: "var(--c-text-muted)", fontSize: "0.7rem", marginTop: 1, marginBottom: 4 },
+  brsBadge: { fontSize: "0.82rem", fontWeight: 700, color: "var(--c-accent)", flexShrink: 0 },
+  brsMax: { fontSize: "0.68rem", fontWeight: 400, color: "var(--c-text-muted)" },
+  disciplineFooter: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 8 },
+  lcRow: { color: "var(--c-text-secondary)", fontSize: "0.72rem", fontWeight: 500 },
+  // Итоговый контроль
+  fcWrap: { display: "flex", flexDirection: "column" as const, alignItems: "flex-end", gap: 2, flexShrink: 0 },
+  fcChip: { fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.02em", padding: "2px 7px", borderRadius: 5 },
+  fcDate: { fontSize: "0.67rem", color: "var(--c-text-secondary)" },
+  fcDatePlan: { fontSize: "0.67rem", color: "var(--c-text-muted)", display: "flex", alignItems: "center", gap: 3 },
+  fcPlanDot: { width: 5, height: 5, borderRadius: "50%", border: "1.5px solid currentColor", display: "inline-block", flexShrink: 0 },
+  fcPlanLabel: { fontSize: "0.58rem", color: "var(--c-text-dim)" },
 };
