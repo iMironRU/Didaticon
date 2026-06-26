@@ -27,7 +27,7 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
 }
 :root[data-theme="light"] {
   --c-bg:#F0F5FB;
-  --c-header:#1E3A5F;
+  --c-header:#FFFFFF;
   --c-card:#FFFFFF;
   --c-border:#C2D4E8;
   --c-accent:#1A69B5;
@@ -35,9 +35,9 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
   --c-text-secondary:#2A4A6A;
   --c-text-muted:#4A6888;
   --c-text-dim:#8AABBC;
-  --c-status-bg:#162C4A;
-  --c-status-border:#2A4A6A;
-  --c-status-text:#4D7BA8;
+  --c-status-bg:#E2EDF7;
+  --c-status-border:#C2D4E8;
+  --c-status-text:#7090A8;
   --c-success:#16A34A;
   --c-success-bg:#D1FAE5;
   --c-danger:#DC2626;
