@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-s", "pwa/public", "-p", "5174"],
+      "port": 5174
+    },
+    {
+      "name": "pwa-dist",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-s", "pwa/dist", "-p", "5175"],
+      "port": 5175
+    },
+    {
+      "name": "pwa-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=pwa", "--", "--port", "5176"],
+      "port": 5176
+    }
+  ]
+}

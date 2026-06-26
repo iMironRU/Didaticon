@@ -11,11 +11,16 @@ type AuthState =
   | { phase: "error"; message: string }
   | { phase: "authenticated"; studentId: StudentId };
 
+const USE_MOCK = import.meta.env.DEV;
+
 export function App() {
-  const [auth, setAuth] = useState<AuthState>({ phase: "checking" });
+  const [auth, setAuth] = useState<AuthState>(
+    USE_MOCK ? { phase: "authenticated", studentId: "s-mock" as StudentId } : { phase: "checking" }
+  );
   const [remoteBranding, setRemoteBranding] = useState<Partial<Branding>>({});
 
   useEffect(() => {
+    if (USE_MOCK) return;
     fetch("/api/branding")
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d?.accessInfo) setRemoteBranding({ accessInfo: d.accessInfo }); })
