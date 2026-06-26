@@ -488,16 +488,16 @@ function BookIcon() {
 
 // ── Стили ─────────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
-  root: { minHeight: "100vh", background: "#091629", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
-  header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", position: "sticky", top: 0, zIndex: 10 },
+  root: { maxWidth: 480, margin: "0 auto", height: "100vh", background: "#091629", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", boxShadow: "0 0 60px rgba(0,0,0,0.7)" },
+  header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", flexShrink: 0 },
   headerLogo: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
   headerTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.06em" },
   contextBtn: { flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "2px 8px", minWidth: 0 },
   contextName: { color: "#7FA4CC", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   contextPeriod: { color: "#4D7BA8", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   avatar: { width: 30, height: 30, borderRadius: "50%", background: "#1A3560", color: "#4B9EE5", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  body: { flex: 1, padding: "12px 16px 104px", overflowY: "auto" },
-  bottomNav: { position: "fixed", bottom: 24, left: 0, right: 0, background: "#0A1E3B", borderTop: "0.5px solid #1A3560", display: "flex", padding: "6px 0 10px", zIndex: 10 },
+  body: { flex: 1, padding: "12px 16px 12px", overflowY: "auto" },
+  bottomNav: { background: "#0A1E3B", borderTop: "0.5px solid #1A3560", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem: { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel: { fontSize: "0.62rem", fontWeight: 500 },
   toggle: { display: "flex", background: "#0F2545", borderRadius: 8, padding: 3, marginBottom: 12 },
@@ -527,7 +527,7 @@ const s: Record<string, React.CSSProperties> = {
   gradeChip: { borderRadius: 4, padding: "2px 7px", fontSize: "0.72rem", fontWeight: 700, flexShrink: 0 },
   disciplineBar: { height: 2, background: "#152A4A", borderRadius: 1 },
   disciplineFill: { height: "100%", background: "#4B9EE5", borderRadius: 1 },
-  subHeader: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", position: "sticky", top: 0, zIndex: 10 },
+  subHeader: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#0A1E3B", borderBottom: "0.5px solid #1A3560", flexShrink: 0 },
   backBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
   subHeaderTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   launchBtn: { width: "100%", maxWidth: 320, border: "none", borderRadius: 10, color: "#fff", fontSize: "0.95rem", fontWeight: 500, padding: "14px 20px", cursor: "pointer" },
@@ -535,7 +535,7 @@ const s: Record<string, React.CSSProperties> = {
   bellBtn: { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "#4D7BA8", padding: "2px", display: "flex", flexShrink: 0 },
   bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "#E05555", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
   // Статусная строка
-  statusBar: { position: "fixed" as const, bottom: 0, left: 0, right: 0, height: 24, background: "#060F1E", borderTop: "0.5px solid #0F2030", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", zIndex: 11 },
+  statusBar: { height: 24, background: "#060F1E", borderTop: "0.5px solid #0F2030", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 },
   versionLabel: { color: "#1E3A5F", fontSize: "0.6rem", letterSpacing: "0.04em" },
   updateBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
   // Уведомления
