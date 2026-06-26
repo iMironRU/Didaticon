@@ -150,6 +150,10 @@ function LoginScreen({
         </button>
 
         <p style={r.footer}>{footer}</p>
+        <p style={r.versionLabel}>
+          v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"}
+          {typeof __COMMIT_HASH__ !== "undefined" && __COMMIT_HASH__ ? ` · ${__COMMIT_HASH__}` : ""}
+        </p>
       </div>
     </div>
   );
@@ -428,5 +432,12 @@ const r: Record<string, React.CSSProperties> = {
     fontSize: "0.65rem",
     textAlign: "center",
     lineHeight: 1.6,
+  },
+  versionLabel: {
+    marginTop: 12,
+    color: "#1E3A5F",
+    fontSize: "0.6rem",
+    textAlign: "center",
+    letterSpacing: "0.04em",
   },
 };

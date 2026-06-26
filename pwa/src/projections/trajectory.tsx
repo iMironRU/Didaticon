@@ -237,23 +237,16 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  if (openLesson) {
-    return <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
-  }
-
   const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
+  const discipline  = openDiscipline ? MOCK_DISCIPLINES.find(d => d.id === openDiscipline) : null;
 
-  if (currentCtx.status === "completed" && !showContextSwitcher) {
-    return (
-      <CompletedContextScreen
-        context={currentCtx}
-        onSwitchContext={() => setShowContextSwitcher(true)}
-      />
-    );
-  }
-
-  if (showContextSwitcher) {
-    return (
+  let inner: React.ReactNode;
+  if (openLesson) {
+    inner = <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
+  } else if (currentCtx.status === "completed" && !showContextSwitcher) {
+    inner = <CompletedContextScreen context={currentCtx} onSwitchContext={() => setShowContextSwitcher(true)} />;
+  } else if (showContextSwitcher) {
+    inner = (
       <ContextSwitcherScreen
         contexts={MOCK_CONTEXTS}
         currentId={currentContextId}
@@ -263,19 +256,10 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
         onBack={() => setShowContextSwitcher(false)}
       />
     );
-  }
-
-  if (openNotification) {
-    return (
-      <NotificationDetailScreen
-        notification={openNotification}
-        onBack={() => setOpenNotification(null)}
-      />
-    );
-  }
-
-  if (showNotifications) {
-    return (
+  } else if (openNotification) {
+    inner = <NotificationDetailScreen notification={openNotification} onBack={() => setOpenNotification(null)} />;
+  } else if (showNotifications) {
+    inner = (
       <NotificationsScreen
         notifications={notifications}
         onBack={() => setShowNotifications(false)}
@@ -284,56 +268,53 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
         onReadAll={markAllRead}
       />
     );
-  }
-
-  const discipline = openDiscipline ? MOCK_DISCIPLINES.find(d => d.id === openDiscipline) : null;
-  if (discipline) {
-    return (
-      <DisciplineScreen
-        discipline={discipline}
-        onBack={() => setOpenDiscipline(null)}
-        onLesson={setOpenLesson}
-      />
+  } else if (discipline) {
+    inner = <DisciplineScreen discipline={discipline} onBack={() => setOpenDiscipline(null)} onLesson={setOpenLesson} />;
+  } else {
+    inner = (
+      <>
+        <Header
+          context={currentCtx}
+          unreadCount={unreadCount}
+          onContextTap={() => setShowContextSwitcher(true)}
+          onBell={() => setShowNotifications(true)}
+          onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
+        />
+        {showLogoutConfirm && (
+          <ConfirmModal
+            title="Выйти из ЭИОС?"
+            message="Сессия будет завершена на этом устройстве."
+            confirmLabel="Выйти"
+            onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
+            onCancel={() => setShowLogoutConfirm(false)}
+            danger
+          />
+        )}
+        <div style={s.body}>
+          {tab === "schedule" && (
+            <ScheduleTab
+              view={scheduleView}
+              onViewChange={setScheduleView}
+              selectedDay={selectedDay}
+              onDayChange={setSelectedDay}
+              onLesson={setOpenLesson}
+            />
+          )}
+          {tab === "disciplines" && (
+            <DisciplinesTab
+              onDiscipline={setOpenDiscipline}
+              onLesson={setOpenLesson}
+            />
+          )}
+        </div>
+        <BottomNav tab={tab} onChange={setTab} />
+      </>
     );
   }
 
   return (
     <div style={s.root}>
-      <Header
-        context={currentCtx}
-        unreadCount={unreadCount}
-        onContextTap={() => setShowContextSwitcher(true)}
-        onBell={() => setShowNotifications(true)}
-        onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
-      />
-      {showLogoutConfirm && (
-        <ConfirmModal
-          title="Выйти из ЭИОС?"
-          message="Сессия будет завершена на этом устройстве."
-          confirmLabel="Выйти"
-          onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
-          onCancel={() => setShowLogoutConfirm(false)}
-          danger
-        />
-      )}
-      <div style={s.body}>
-        {tab === "schedule" && (
-          <ScheduleTab
-            view={scheduleView}
-            onViewChange={setScheduleView}
-            selectedDay={selectedDay}
-            onDayChange={setSelectedDay}
-            onLesson={setOpenLesson}
-          />
-        )}
-        {tab === "disciplines" && (
-          <DisciplinesTab
-            onDiscipline={setOpenDiscipline}
-            onLesson={setOpenLesson}
-          />
-        )}
-      </div>
-      <BottomNav tab={tab} onChange={setTab} />
+      {inner}
       <StatusBar swUpdate={swUpdate} />
     </div>
   );
@@ -542,7 +523,7 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
   onLesson: (l: MockLesson) => void;
 }) {
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onBack}>
           <span style={{ fontSize: 20 }}>‹</span> Назад
@@ -555,7 +536,7 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
           <LessonCard key={l.id} lesson={l} showDate={true} onOpen={() => onLesson(l)} />
         ))}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -594,7 +575,7 @@ function CompletedContextScreen({ context, onSwitchContext }: {
     s === "passed" ? "var(--c-success)" : s === "failed" ? "var(--c-danger)" : "var(--c-text-muted)";
 
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onSwitchContext}>
           <span style={{ fontSize: 20 }}>‹</span> Профили
@@ -602,7 +583,7 @@ function CompletedContextScreen({ context, onSwitchContext }: {
         <div style={s.subHeaderTitle}>Итоги обучения</div>
       </div>
 
-      <div style={{ ...s.body, paddingTop: 16 }}>
+      <div style={{ ...s.body, paddingTop: 16, flex: 1 }}>
         <div style={s.ctxCompletedMeta}>
           <div style={s.ctxName}>{context.name}</div>
           <div style={s.ctxPeriod}>{context.period} · Завершено {context.completedAt}</div>
@@ -626,7 +607,7 @@ function CompletedContextScreen({ context, onSwitchContext }: {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -643,14 +624,14 @@ function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSet
   const completed = contexts.filter(c => c.status === "completed");
 
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onBack}>
           <span style={{ fontSize: 20 }}>‹</span> Назад
         </button>
         <div style={s.subHeaderTitle}>Профиль обучающегося</div>
       </div>
-      <div style={{ ...s.body, paddingTop: 16 }}>
+      <div style={{ ...s.body, paddingTop: 16, flex: 1 }}>
 
         <div style={s.sectionLabel}>Активные</div>
         {active.map(ctx => {
@@ -703,7 +684,7 @@ function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSet
         )}
 
       </div>
-    </div>
+    </>
   );
 }
 
@@ -717,7 +698,7 @@ function NotificationsScreen({ notifications, onBack, onOpen, onRead, onReadAll 
 }) {
   const hasUnread = notifications.some(n => !n.read);
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onBack}>
           <span style={{ fontSize: 20 }}>‹</span> Назад
@@ -757,7 +738,7 @@ function NotificationsScreen({ notifications, onBack, onOpen, onRead, onReadAll 
           })
         }
       </div>
-    </div>
+    </>
   );
 }
 
@@ -767,14 +748,14 @@ function NotificationDetailScreen({ notification: n, onBack }: {
   onBack: () => void;
 }) {
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onBack}>
           <span style={{ fontSize: 20 }}>‹</span> Назад
         </button>
         <div style={s.subHeaderTitle}>{n.title}</div>
       </div>
-      <div style={{ ...s.body, paddingTop: 20 }}>
+      <div style={{ ...s.body, paddingTop: 20, flex: 1 }}>
         <div style={s.notifDetailMeta}>
           <span style={{ ...s.notifType, color: n.type === "system" ? "var(--c-purple)" : "var(--c-accent)" }}>
             {n.type === "system" ? "Система" : "Univerkon"}
@@ -793,7 +774,7 @@ function NotificationDetailScreen({ notification: n, onBack }: {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -801,7 +782,7 @@ function NotificationDetailScreen({ notification: n, onBack }: {
 function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => void }) {
   const typeColor = LESSON_TYPE_COLOR[lesson.type];
   return (
-    <div style={s.root}>
+    <>
       <div style={s.subHeader}>
         <button style={s.backBtn} onClick={onBack}>
           <span style={{ fontSize: 20 }}>‹</span> Назад
@@ -827,7 +808,7 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -868,7 +849,7 @@ function ThemeIcon({ mode }: { mode: ThemeMode }) {
 
 // ── Стили ─────────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
-  root: { maxWidth: 480, margin: "0 auto", height: "100vh", background: "var(--c-bg)", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", boxShadow: "0 0 60px rgba(0,0,0,0.7)" },
+  root: { maxWidth: 480, width: "100%", margin: "0 auto", height: "100vh", background: "var(--c-bg)", display: "flex", flexDirection: "column", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", boxShadow: "0 0 60px rgba(0,0,0,0.7)" },
   header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
   headerLogo: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
   headerTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.06em" },
