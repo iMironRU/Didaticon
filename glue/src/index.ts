@@ -41,7 +41,7 @@ app.get("/branding", async () => {
   return { accessInfo: accessInfo ?? null };
 });
 
-app.get("/healthz", async () => ({ ok: true, role: cfg.role }));
+app.get("/healthz", async () => ({ ok: true, role: cfg.role, version: process.env.npm_package_version ?? "0.1.0" }));
 
 app.listen({ port: cfg.port, host: "0.0.0.0" }).then(() => {
   outbox.startDraining(); // фоновая проводка с ретраями

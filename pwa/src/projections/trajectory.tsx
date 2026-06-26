@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { StudentId } from "@eios/contracts";
+import { onSwUpdate, applySwUpdate } from "../sw-update.js";
 
 // ── Мок-данные ────────────────────────────────────────────────────────────────
 type LessonType = "lecture" | "practice" | "lab";
@@ -72,6 +73,22 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
 
 const MOCK_CONTEXT = { name: "Информационные технологии", period: "IV курс · Весенний семестр 2026" };
 
+// ── Мок-уведомления ───────────────────────────────────────────────────────────
+interface Notification {
+  id: string;
+  type: "univerkon" | "system";
+  title: string;
+  body: string;
+  date: Date;
+  read: boolean;
+}
+
+const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: "n1", type: "univerkon", title: "Новое занятие доступно", body: "Открылось занятие «Транзакции и блокировки» по дисциплине Базы данных", date: d(0, 8), read: false },
+  { id: "n2", type: "univerkon", title: "Оценка выставлена", body: "По дисциплине «Математический анализ» выставлена оценка за тему «Производные»", date: d(-1, 14), read: false },
+  { id: "n3", type: "system",    title: "Плановые работы", body: "26 июня с 23:00 до 01:00 будут проводиться технические работы. ЭИОС будет недоступна.", date: d(-2, 10), read: true },
+];
+
 // ── Вспомогательные функции ───────────────────────────────────────────────────
 const LESSON_TYPE_LABEL: Record<LessonType, string> = { lecture: "Лек", practice: "Пр", lab: "Лаб" };
 const LESSON_TYPE_COLOR: Record<LessonType, string> = { lecture: "#4B9EE5", practice: "#7C5CBF", lab: "#2EA05A" };
@@ -111,9 +128,28 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const [openDiscipline, setOpenDiscipline] = useState<string | null>(null);
   const [openLesson, setOpenLesson] = useState<MockLesson | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [swUpdate, setSwUpdate] = useState(false);
+
+  useEffect(() => {
+    onSwUpdate((s) => setSwUpdate(s === "available"));
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   if (openLesson) {
     return <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
+  }
+
+  if (showNotifications) {
+    return (
+      <NotificationsScreen
+        notifications={notifications}
+        onBack={() => setShowNotifications(false)}
+        onRead={(id) => setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))}
+      />
+    );
   }
 
   const discipline = openDiscipline ? MOCK_DISCIPLINES.find(d => d.id === openDiscipline) : null;
@@ -129,7 +165,7 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
 
   return (
     <div style={s.root}>
-      <Header />
+      <Header unreadCount={unreadCount} onBell={() => setShowNotifications(true)} />
       <div style={s.body}>
         {tab === "schedule" && (
           <ScheduleTab
@@ -148,12 +184,13 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
         )}
       </div>
       <BottomNav tab={tab} onChange={setTab} />
+      <StatusBar swUpdate={swUpdate} />
     </div>
   );
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header() {
+function Header({ unreadCount, onBell }: { unreadCount: number; onBell: () => void }) {
   return (
     <header style={s.header}>
       <div style={s.headerLogo}>
@@ -164,8 +201,26 @@ function Header() {
         <div style={s.contextName}>{MOCK_CONTEXT.name}</div>
         <div style={s.contextPeriod}>{MOCK_CONTEXT.period}</div>
       </button>
+      <button style={s.bellBtn} onClick={onBell}>
+        <BellIcon />
+        {unreadCount > 0 && <span style={s.bellBadge}>{unreadCount}</span>}
+      </button>
       <div style={s.avatar}>АМ</div>
     </header>
+  );
+}
+
+// ── Статусная строка ──────────────────────────────────────────────────────────
+function StatusBar({ swUpdate }: { swUpdate: boolean }) {
+  const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
+  return (
+    <div style={s.statusBar}>
+      {swUpdate
+        ? <button style={s.updateBtn} onClick={applySwUpdate}>↑ Обновить приложение</button>
+        : <span />
+      }
+      <span style={s.versionLabel}>v{version}</span>
+    </div>
   );
 }
 
@@ -339,6 +394,46 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
   );
 }
 
+// ── Экран уведомлений ─────────────────────────────────────────────────────────
+function NotificationsScreen({ notifications, onBack, onRead }: {
+  notifications: Notification[];
+  onBack: () => void;
+  onRead: (id: string) => void;
+}) {
+  return (
+    <div style={s.root}>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onBack}>
+          <span style={{ fontSize: 20 }}>‹</span> Назад
+        </button>
+        <div style={s.subHeaderTitle}>Уведомления</div>
+      </div>
+      <div style={{ ...s.body, paddingTop: 16 }}>
+        {notifications.length === 0
+          ? <div style={s.empty}>Нет уведомлений</div>
+          : notifications.map(n => (
+            <div
+              key={n.id}
+              style={{ ...s.notifCard, opacity: n.read ? 0.55 : 1 }}
+              onClick={() => onRead(n.id)}
+            >
+              <div style={s.notifHead}>
+                <span style={{ ...s.notifType, color: n.type === "system" ? "#7C5CBF" : "#4B9EE5" }}>
+                  {n.type === "system" ? "Система" : "Univerkon"}
+                </span>
+                <span style={s.notifDate}>{formatDay(n.date)}</span>
+                {!n.read && <span style={s.notifDot} />}
+              </div>
+              <div style={s.notifTitle}>{n.title}</div>
+              <div style={s.notifBody}>{n.body}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
 // ── Экран занятия (заглушка) ──────────────────────────────────────────────────
 function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => void }) {
   const typeColor = LESSON_TYPE_COLOR[lesson.type];
@@ -381,6 +476,9 @@ function LogoIcon() {
     </svg>
   );
 }
+function BellIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+}
 function CalIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
 }
@@ -398,8 +496,8 @@ const s: Record<string, React.CSSProperties> = {
   contextName: { color: "#7FA4CC", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   contextPeriod: { color: "#4D7BA8", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   avatar: { width: 30, height: 30, borderRadius: "50%", background: "#1A3560", color: "#4B9EE5", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  body: { flex: 1, padding: "12px 16px 80px", overflowY: "auto" },
-  bottomNav: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#0A1E3B", borderTop: "0.5px solid #1A3560", display: "flex", padding: "6px 0 10px", zIndex: 10 },
+  body: { flex: 1, padding: "12px 16px 104px", overflowY: "auto" },
+  bottomNav: { position: "fixed", bottom: 24, left: 0, right: 0, background: "#0A1E3B", borderTop: "0.5px solid #1A3560", display: "flex", padding: "6px 0 10px", zIndex: 10 },
   navItem: { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel: { fontSize: "0.62rem", fontWeight: 500 },
   toggle: { display: "flex", background: "#0F2545", borderRadius: 8, padding: 3, marginBottom: 12 },
@@ -433,4 +531,19 @@ const s: Record<string, React.CSSProperties> = {
   backBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.9rem", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 },
   subHeaderTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   launchBtn: { width: "100%", maxWidth: 320, border: "none", borderRadius: 10, color: "#fff", fontSize: "0.95rem", fontWeight: 500, padding: "14px 20px", cursor: "pointer" },
+  // Колокольчик
+  bellBtn: { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "#4D7BA8", padding: "2px", display: "flex", flexShrink: 0 },
+  bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "#E05555", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
+  // Статусная строка
+  statusBar: { position: "fixed" as const, bottom: 0, left: 0, right: 0, height: 24, background: "#060F1E", borderTop: "0.5px solid #0F2030", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", zIndex: 11 },
+  versionLabel: { color: "#1E3A5F", fontSize: "0.6rem", letterSpacing: "0.04em" },
+  updateBtn: { background: "none", border: "none", color: "#4B9EE5", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
+  // Уведомления
+  notifCard: { background: "#0F2545", borderRadius: 10, border: "0.5px solid #1A3560", padding: "12px 14px", marginBottom: 8, cursor: "pointer" },
+  notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 5 },
+  notifType: { fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.04em" },
+  notifDate: { color: "#2A4A6A", fontSize: "0.65rem", flex: 1 },
+  notifDot: { width: 6, height: 6, borderRadius: "50%", background: "#4B9EE5", flexShrink: 0 },
+  notifTitle: { color: "#C8DEF4", fontSize: "0.85rem", fontWeight: 500, marginBottom: 4 },
+  notifBody: { color: "#4D7BA8", fontSize: "0.78rem", lineHeight: 1.5 },
 };

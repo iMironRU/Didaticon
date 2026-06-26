@@ -162,7 +162,15 @@
   </main>
 </div>
 
-<footer><a href="/">← Студенческий кабинет</a></footer>
+<footer>
+  <a href="/">← Студенческий кабинет</a>
+  <div id="admin-status-bar" style="margin-top:8px;font-size:.72rem;color:#9ca3af;display:flex;align-items:center;justify-content:center;gap:12px">
+    <span id="admin-update-btn" style="display:none">
+      <button onclick="applyAdminUpdate()" style="background:#1a56db;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:.72rem;cursor:pointer">↑ Обновить страницу</button>
+    </span>
+    <span id="admin-version">v—</span>
+  </div>
+</footer>
 
 <script>
 let TOKEN = sessionStorage.getItem("eios_admin_token") || "";
@@ -347,6 +355,41 @@ function showErr(id, msg) {
 
 // Автологин если токен уже в sessionStorage
 if (TOKEN) doLogin();
+
+// ── Версия и SW-обновление ────────────────────────────────────────────────
+(async function() {
+  // Версия из glue /healthz
+  try {
+    const r = await fetch("/api/healthz");
+    if (r.ok) {
+      const d = await r.json();
+      document.getElementById("admin-version").textContent = "glue " + (d.version || "—");
+    }
+  } catch(_) {}
+
+  // SW-обновление
+  if (!("serviceWorker" in navigator)) return;
+  const reg = await navigator.serviceWorker.ready.catch(() => null);
+  if (!reg) return;
+  function onWaiting() {
+    document.getElementById("admin-update-btn").style.display = "";
+  }
+  if (reg.waiting) { onWaiting(); return; }
+  reg.addEventListener("updatefound", () => {
+    const w = reg.installing;
+    if (!w) return;
+    w.addEventListener("statechange", () => {
+      if (w.state === "installed" && navigator.serviceWorker.controller) onWaiting();
+    });
+  });
+})();
+
+function applyAdminUpdate() {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => { if (r.waiting) r.waiting.postMessage({ type: "SKIP_WAITING" }); });
+    window.location.reload();
+  });
+}
 </script>
 </body>
 </html>

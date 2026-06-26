@@ -1,8 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { readFileSync } from "fs";
+const { version } = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   // es2019 = до ES2020, где появились ?? и ?. — esbuild транспилирует их в совместимый код.
   // Покрывает Safari 12+ (iOS 12), Chrome 69+. Async/await остаётся нативным.
   build: {
