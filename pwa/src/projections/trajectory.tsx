@@ -55,6 +55,13 @@ const LESSON_RATING_CRITERIA = [
   "Было интересно",
 ];
 
+interface BRSItem {
+  label: string;
+  earned: number | null;  // null = ещё не проводился
+  max: number;
+  note?: string;
+}
+
 interface MockDiscipline {
   id: string;
   title: string;
@@ -67,6 +74,7 @@ interface MockDiscipline {
   department?: string;
   lessonCounts?: { lec?: number; prac?: number; lab?: number };
   brs?: { current: number; max: number };
+  brsBreakdown?: BRSItem[];
   finalControl?: { type: string; date: string; confirmed: boolean };
 }
 
@@ -165,6 +173,11 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
     department: "Кафедра прикладной информатики",
     lessonCounts: { lec: 4, prac: 2, lab: 2 },
     brs: { current: 42, max: 100 },
+    brsBreakdown: [
+      { label: "Текущий контроль",  earned: 18, max: 40 },
+      { label: "Рубежный контроль", earned: 24, max: 50 },
+      { label: "Итоговый контроль", earned: null, max: 10, note: "Экзамен · 15 янв 2027" },
+    ],
     finalControl: { type: "Экзамен", date: "15 янв 2027", confirmed: false },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Базы данных"),
   },
@@ -174,6 +187,11 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
     department: "Кафедра высшей математики",
     lessonCounts: { lec: 3, prac: 2 },
     brs: { current: 28, max: 100 },
+    brsBreakdown: [
+      { label: "Текущий контроль",  earned: 14, max: 40 },
+      { label: "Рубежный контроль", earned: 14, max: 50 },
+      { label: "Итоговый контроль", earned: null, max: 10, note: "Экзамен · 20 янв 2027" },
+    ],
     finalControl: { type: "Экзамен", date: "20 янв 2027", confirmed: true },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Математический анализ"),
   },
@@ -183,6 +201,11 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
     department: "Кафедра гражданского права",
     lessonCounts: { lec: 2, prac: 1 },
     brs: { current: 61, max: 100 },
+    brsBreakdown: [
+      { label: "Текущий контроль",  earned: 36, max: 40 },
+      { label: "Рубежный контроль", earned: 25, max: 50 },
+      { label: "Итоговый контроль", earned: null, max: 10, note: "Зачёт · 10 янв 2027" },
+    ],
     finalControl: { type: "Зачёт", date: "10 янв 2027", confirmed: false },
     lessons: MOCK_LESSONS.filter(l => l.discipline === "Правовое регулирование"),
   },
@@ -196,6 +219,7 @@ interface MockMDK {
   department?: string;
   lessonCounts?: { lec?: number; prac?: number; lab?: number };
   brs?: { current: number; max: number };
+  brsBreakdown?: BRSItem[];
   finalControl?: { type: string; date: string; confirmed: boolean };
   totalLessons: number;
   doneLessons: number;
@@ -254,6 +278,11 @@ const MOCK_SPO_PMS: MockPM[] = [
         department: DEPT_PCT,
         lessonCounts: { lec: 4, prac: 6, lab: 4 },
         brs: { current: 55, max: 100 },
+        brsBreakdown: [
+          { label: "Текущий контроль",  earned: 25, max: 40 },
+          { label: "Рубежный контроль", earned: 30, max: 50 },
+          { label: "Итоговый контроль", earned: null, max: 10, note: "Диф. зачёт · 15 апр 2026" },
+        ],
         finalControl: { type: "Дифференцированный зачёт", date: "15 апр 2026", confirmed: true },
         totalLessons: 8, doneLessons: 5,
         lessons: MOCK_SPO_LESSONS.filter(l => l.discipline === "МДК.01.01"),
@@ -264,6 +293,11 @@ const MOCK_SPO_PMS: MockPM[] = [
         department: DEPT_PCT,
         lessonCounts: { lec: 2, prac: 4 },
         brs: { current: 38, max: 100 },
+        brsBreakdown: [
+          { label: "Текущий контроль",  earned: 18, max: 40 },
+          { label: "Рубежный контроль", earned: 20, max: 50 },
+          { label: "Итоговый контроль", earned: null, max: 10, note: "Зачёт с оценкой · 22 мая 2026" },
+        ],
         finalControl: { type: "Зачёт с оценкой", date: "22 мая 2026", confirmed: false },
         totalLessons: 6, doneLessons: 3,
         lessons: MOCK_SPO_LESSONS.filter(l => l.discipline === "МДК.01.02"),
@@ -634,6 +668,7 @@ export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { student
           department: openMDK.department,
           lessonCounts: openMDK.lessonCounts,
           brs: openMDK.brs,
+          brsBreakdown: openMDK.brsBreakdown,
           finalControl: openMDK.finalControl,
         }}
         onBack={() => history.back()}
@@ -1073,6 +1108,51 @@ function DisciplinesTab({ periodsPerYear, pms, onDiscipline, onPM, onLesson: _on
   );
 }
 
+// ── БРС-детализация ───────────────────────────────────────────────────────────
+function BRSBreakdownBlock({ brs, items }: { brs?: { current: number; max: number }; items: BRSItem[] }) {
+  const totalPct = brs ? Math.round((brs.current / brs.max) * 100) : 0;
+  return (
+    <div style={s.brsBlock}>
+      {brs && (
+        <div style={s.brsTotalRow}>
+          <span style={s.brsTotalLabel}>БРС</span>
+          <div style={{ ...s.disciplineBar, flex: 1 }}>
+            <div style={{ ...s.disciplineFill, width: `${totalPct}%` }} />
+          </div>
+          <span style={s.brsTotalScore}>
+            {brs.current} <span style={s.brsMax}>/ {brs.max} б.</span>
+          </span>
+        </div>
+      )}
+      <div style={s.brsGrid}>
+        {items.map((item, i) => {
+          const pct = item.earned !== null ? Math.round((item.earned / item.max) * 100) : 0;
+          const isEmpty = item.earned === null;
+          return (
+            <div key={i} style={s.brsGridItem}>
+              <div style={s.brsItemRow}>
+                <span style={{ ...s.brsItemLabel, color: isEmpty ? "var(--c-text-dim)" : "var(--c-text-secondary)" }}>
+                  {item.label}
+                </span>
+                <span style={s.brsItemScore}>
+                  {isEmpty
+                    ? <span style={{ color: "var(--c-text-dim)" }}>— / {item.max}</span>
+                    : <><span style={{ color: "var(--c-accent)", fontWeight: 700 }}>{item.earned}</span><span style={{ color: "var(--c-text-muted)", fontSize: "0.7rem" }}> / {item.max}</span></>
+                  }
+                </span>
+              </div>
+              <div style={{ ...s.disciplineBar, marginTop: 5 }}>
+                {!isEmpty && <div style={{ ...s.disciplineFill, width: `${pct}%` }} />}
+              </div>
+              {item.note && <div style={s.brsItemNote}>{item.note}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Экран дисциплины ──────────────────────────────────────────────────────────
 function DisciplineScreen({ discipline, onBack, onLesson }: {
   discipline: MockDiscipline;
@@ -1088,8 +1168,11 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
         <div style={s.subHeaderTitle}>{discipline.title}</div>
       </div>
       <div style={{ ...s.body, paddingTop: 16 }}>
+        {discipline.brsBreakdown && (
+          <BRSBreakdownBlock brs={discipline.brs} items={discipline.brsBreakdown} />
+        )}
         <div style={s.sectionLabel}>Все занятия</div>
-        {discipline.lessons.map((l, i) => (
+        {discipline.lessons.map(l => (
           <LessonCard key={l.id} lesson={l} showDate={true} onOpen={() => onLesson(l)} />
         ))}
       </div>
@@ -1969,4 +2052,15 @@ const s: Record<string, React.CSSProperties> = {
   pmComposition: { color: "var(--c-text-secondary)", fontSize: "0.75rem", fontWeight: 500, marginTop: 4 },
   // МДК code label
   mdkCode: { color: "var(--c-accent)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 2 },
+  // БРС-детализация
+  brsBlock: { background: "var(--c-card)", borderRadius: 12, border: "0.5px solid var(--c-border)", padding: "14px 16px", marginBottom: 16 },
+  brsTotalRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 },
+  brsTotalLabel: { color: "var(--c-text-dim)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, flexShrink: 0 },
+  brsTotalScore: { color: "var(--c-text-primary)", fontSize: "0.88rem", fontWeight: 700, flexShrink: 0 },
+  brsGrid: { display: "flex", flexDirection: "column" as const, gap: 10 },
+  brsGridItem: { paddingTop: 10, borderTop: "0.5px solid var(--c-border)" },
+  brsItemRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  brsItemLabel: { fontSize: "0.82rem" },
+  brsItemScore: { fontSize: "0.85rem", flexShrink: 0 },
+  brsItemNote: { color: "var(--c-text-dim)", fontSize: "0.67rem", marginTop: 4 },
 };
