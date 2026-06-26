@@ -13,6 +13,27 @@ const MOCK_STUDENT = { lastName: "Иванов", firstName: "Иван", patronym
 type LessonType = "lecture" | "practice" | "lab";
 type LessonStatus = "done" | "available" | "locked";
 
+interface MockTeacher {
+  name: string;
+  title: string;
+  degree?: string;
+}
+
+type AttendanceStatus = "present" | "absent_excused" | "absent" | "worked_off";
+
+interface MockControl {
+  form: string;
+  score?: number;
+  maxScore?: number;
+  result?: string;
+}
+
+interface MockEvent {
+  type: string;
+  label?: string;
+  controls: MockControl[];
+}
+
 interface MockLesson {
   id: string;
   type: LessonType;
@@ -20,9 +41,19 @@ interface MockLesson {
   discipline: string;
   date: Date;
   status: LessonStatus;
-  score?: number;       // 0–100 если пройдено
-  grade?: string;       // оценка от преподавателя если есть
+  score?: number;
+  grade?: string;
+  teacher?: MockTeacher;
+  attendance?: AttendanceStatus;
+  events?: MockEvent[];
 }
+
+const MOCK_LESSON_RATING_ENABLED = true;
+const LESSON_RATING_CRITERIA = [
+  "Материал понятен и доступен",
+  "Занятие хорошо структурировано",
+  "Было интересно",
+];
 
 interface MockDiscipline {
   id: string;
@@ -48,25 +79,83 @@ function d(offsetDays: number, h = 10, m = 0) {
   return dt;
 }
 
+const T_PETROV:   MockTeacher = { name: "Петров Иван Сергеевич",      title: "Доцент",                 degree: "к.т.н."     };
+const T_SIDOROV:  MockTeacher = { name: "Сидоров Алексей Юрьевич",   title: "Старший преподаватель"                        };
+const T_SMIRNOVA: MockTeacher = { name: "Смирнова Анна Викторовна",  title: "Профессор",              degree: "д.ф.-м.н."  };
+const T_KOZLOV:   MockTeacher = { name: "Козлов Пётр Дмитриевич",    title: "Доцент",                 degree: "к.ю.н."     };
+
 const MOCK_LESSONS: MockLesson[] = [
-  { id: "l1",  type: "lecture",  topic: "Реляционная модель данных",         discipline: "Базы данных",             date: d(-7, 9),  status: "done",      score: 88  },
-  { id: "l2",  type: "practice", topic: "SQL: SELECT и JOIN",                 discipline: "Базы данных",             date: d(-5, 11), status: "done",      score: 74  },
-  { id: "l3",  type: "lecture",  topic: "Нормализация и денормализация",      discipline: "Базы данных",             date: d(-3, 9),  status: "done",      score: 91  },
-  { id: "l4",  type: "lab",      topic: "Проектирование схемы БД",            discipline: "Базы данных",             date: d(-1, 13), status: "done",      score: 65  },
-  { id: "l5",  type: "lecture",  topic: "Индексы и оптимизация запросов",     discipline: "Базы данных",             date: d(0, 9),   status: "available"  },
-  { id: "l6",  type: "practice", topic: "Транзакции и блокировки",            discipline: "Базы данных",             date: d(2, 11),  status: "locked"     },
-  { id: "l7",  type: "lab",      topic: "Работа с PostgreSQL",                discipline: "Базы данных",             date: d(5, 13),  status: "locked"     },
-  { id: "l8",  type: "lecture",  topic: "NoSQL: MongoDB",                     discipline: "Базы данных",             date: d(7, 9),   status: "locked"     },
+  {
+    id: "l1", type: "lecture", topic: "Реляционная модель данных",
+    discipline: "Базы данных", date: d(-7, 9), status: "done", score: 88,
+    teacher: T_PETROV, attendance: "present",
+    events: [{ type: "занятие", controls: [{ form: "Тест по теме", score: 88, maxScore: 100 }] }],
+  },
+  {
+    id: "l2", type: "practice", topic: "SQL: SELECT и JOIN",
+    discipline: "Базы данных", date: d(-5, 11), status: "done", score: 74,
+    teacher: T_SIDOROV, attendance: "present",
+    events: [{ type: "занятие", controls: [{ form: "Практическое задание", score: 74, maxScore: 100 }] }],
+  },
+  {
+    id: "l3", type: "lecture", topic: "Нормализация и денормализация",
+    discipline: "Базы данных", date: d(-3, 9), status: "done", score: 91,
+    teacher: T_PETROV, attendance: "present",
+    events: [
+      { type: "Занятие", controls: [{ form: "Тест по теме", score: 18, maxScore: 20 }] },
+      { type: "Модульный контроль", label: "Модуль 1", controls: [{ form: "Контрольная работа", score: 42, maxScore: 50 }] },
+    ],
+  },
+  {
+    id: "l4", type: "lab", topic: "Проектирование схемы БД",
+    discipline: "Базы данных", date: d(-1, 13), status: "done", score: 65,
+    teacher: T_SIDOROV, attendance: "worked_off",
+    events: [{ type: "занятие", controls: [{ form: "Лабораторная работа", score: 65, maxScore: 100 }] }],
+  },
+  {
+    id: "l5", type: "lecture", topic: "Индексы и оптимизация запросов",
+    discipline: "Базы данных", date: d(0, 9), status: "available",
+    teacher: T_PETROV,
+    events: [{ type: "занятие", controls: [{ form: "Тест по теме", maxScore: 100 }] }],
+  },
+  { id: "l6",  type: "practice", topic: "Транзакции и блокировки",          discipline: "Базы данных",           date: d(2, 11),  status: "locked"  },
+  { id: "l7",  type: "lab",      topic: "Работа с PostgreSQL",               discipline: "Базы данных",           date: d(5, 13),  status: "locked"  },
+  { id: "l8",  type: "lecture",  topic: "NoSQL: MongoDB",                    discipline: "Базы данных",           date: d(7, 9),   status: "locked"  },
 
-  { id: "l9",  type: "lecture",  topic: "Производные и их применение",        discipline: "Математический анализ",   date: d(-6, 11), status: "done",      score: 55  },
-  { id: "l10", type: "practice", topic: "Интегрирование по частям",           discipline: "Математический анализ",   date: d(-2, 9),  status: "done",      score: 82  },
-  { id: "l11", type: "lecture",  topic: "Ряды Фурье",                         discipline: "Математический анализ",   date: d(1, 11),  status: "available"  },
-  { id: "l12", type: "practice", topic: "Дифференциальные уравнения",         discipline: "Математический анализ",   date: d(4, 9),   status: "locked"     },
-  { id: "l13", type: "lecture",  topic: "Функции комплексного переменного",   discipline: "Математический анализ",   date: d(8, 11),  status: "locked"     },
+  {
+    id: "l9", type: "lecture", topic: "Производные и их применение",
+    discipline: "Математический анализ", date: d(-6, 11), status: "done", score: 55,
+    teacher: T_SMIRNOVA, attendance: "absent_excused",
+    events: [{ type: "занятие", controls: [{ form: "Тест по теме", score: 55, maxScore: 100 }] }],
+  },
+  {
+    id: "l10", type: "practice", topic: "Интегрирование по частям",
+    discipline: "Математический анализ", date: d(-2, 9), status: "done", score: 82,
+    teacher: T_SMIRNOVA, attendance: "present",
+    events: [{ type: "занятие", controls: [{ form: "Решение задач", score: 82, maxScore: 100 }] }],
+  },
+  {
+    id: "l11", type: "lecture", topic: "Ряды Фурье",
+    discipline: "Математический анализ", date: d(1, 11), status: "available",
+    teacher: T_SMIRNOVA,
+    events: [{ type: "занятие", controls: [{ form: "Тест по теме", maxScore: 100 }] }],
+  },
+  { id: "l12", type: "practice", topic: "Дифференциальные уравнения",        discipline: "Математический анализ", date: d(4, 9),   status: "locked"  },
+  { id: "l13", type: "lecture",  topic: "Функции комплексного переменного",   discipline: "Математический анализ", date: d(8, 11),  status: "locked"  },
 
-  { id: "l14", type: "lecture",  topic: "Гражданское право: основы",          discipline: "Правовое регулирование",  date: d(-4, 13), status: "done",      score: 70  },
-  { id: "l15", type: "practice", topic: "Составление договоров",              discipline: "Правовое регулирование",  date: d(3, 13),  status: "available"  },
-  { id: "l16", type: "lecture",  topic: "Интеллектуальная собственность",     discipline: "Правовое регулирование",  date: d(10, 13), status: "locked"     },
+  {
+    id: "l14", type: "lecture", topic: "Гражданское право: основы",
+    discipline: "Правовое регулирование", date: d(-4, 13), status: "done", score: 70,
+    teacher: T_KOZLOV, attendance: "present",
+    events: [{ type: "занятие", controls: [{ form: "Тест по теме", score: 70, maxScore: 100 }] }],
+  },
+  {
+    id: "l15", type: "practice", topic: "Составление договоров",
+    discipline: "Правовое регулирование", date: d(3, 13), status: "available",
+    teacher: T_KOZLOV,
+    events: [{ type: "занятие", controls: [{ form: "Практическая работа", maxScore: 100 }] }],
+  },
+  { id: "l16", type: "lecture", topic: "Интеллектуальная собственность",     discipline: "Правовое регулирование", date: d(10, 13), status: "locked" },
 ];
 
 const MOCK_DISCIPLINES: MockDiscipline[] = [
@@ -1005,9 +1094,23 @@ function NotificationDetailScreen({ notification: n, onBack }: {
   );
 }
 
-// ── Экран занятия (заглушка) ──────────────────────────────────────────────────
+// ── Экран занятия ─────────────────────────────────────────────────────────────
+const ATTENDANCE_INFO: Record<AttendanceStatus, { label: string; color: string; icon: string }> = {
+  present:        { label: "Присутствовал",                      color: "var(--c-success)", icon: "✓" },
+  absent_excused: { label: "Отсутствовал (уважительная причина)", color: "#E5A94B",          icon: "!" },
+  absent:         { label: "Отсутствовал",                       color: "var(--c-danger)",  icon: "✗" },
+  worked_off:     { label: "Отсутствовал · Отработка зачтена",   color: "#E5A94B",          icon: "○" },
+};
+
 function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => void }) {
   const typeColor = LESSON_TYPE_COLOR[lesson.type];
+  const [ratings, setRatings] = useState<Record<string, boolean | null>>(
+    () => Object.fromEntries(LESSON_RATING_CRITERIA.map(c => [c, null]))
+  );
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const allRated = Object.values(ratings).every(v => v !== null);
+  const att = lesson.attendance ? ATTENDANCE_INFO[lesson.attendance] : null;
+
   return (
     <>
       <div style={s.subHeader}>
@@ -1016,24 +1119,121 @@ function LessonScreen({ lesson, onBack }: { lesson: MockLesson; onBack: () => vo
         </button>
         <div style={s.subHeaderTitle}>{lesson.discipline}</div>
       </div>
-      <div style={{ ...s.body, paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ ...s.lessonTypeTag, background: hexToRgba(typeColor, 0.15), color: typeColor, marginBottom: 12 }}>
-          {LESSON_TYPE_LABEL[lesson.type]}
+      <div style={{ ...s.body, paddingTop: 16 }}>
+
+        {/* Шапка занятия */}
+        <div style={s.lessonHero}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ ...s.lessonTypeTag, background: hexToRgba(typeColor, 0.15), color: typeColor }}>
+              {LESSON_TYPE_LABEL[lesson.type]}
+            </span>
+            <span style={s.lessonHeroDate}>{formatDay(lesson.date)} · {formatTime(lesson.date)}</span>
+          </div>
+          <div style={s.lessonHeroTopic}>{lesson.topic}</div>
         </div>
-        <div style={{ color: "var(--c-text-primary)", fontSize: "1.05rem", fontWeight: 600, textAlign: "center", marginBottom: 6 }}>
-          {lesson.topic}
-        </div>
-        <div style={{ color: "var(--c-text-muted)", fontSize: "0.8rem", marginBottom: 32 }}>
-          {formatDay(lesson.date)} · {formatTime(lesson.date)}
-        </div>
-        <button style={{ ...s.launchBtn, background: "var(--c-accent)" }}>
-          ► Открыть занятие
-        </button>
-        {lesson.score !== undefined && (
-          <div style={{ color: "var(--c-success)", marginTop: 16, fontSize: "0.85rem" }}>
-            Пройдено · {lesson.score}%
+
+        {/* Кнопка «Открыть занятие» */}
+        {lesson.status !== "locked" && (
+          <button style={{
+            ...s.launchBtn,
+            background: lesson.status === "done" ? "var(--c-card)" : "var(--c-accent)",
+            color: lesson.status === "done" ? "var(--c-text-secondary)" : "#fff",
+            border: lesson.status === "done" ? "1px solid var(--c-border)" : "none",
+            marginBottom: 20,
+          }}>
+            {lesson.status === "done" ? "↺  Открыть занятие снова" : "►  Открыть занятие"}
+          </button>
+        )}
+
+        {/* Педагог */}
+        {lesson.teacher && (
+          <div style={s.lsBlock}>
+            <div style={s.lsBlockLabel}>Педагог</div>
+            <div style={s.teacherCard}>
+              <div style={s.teacherName}>{lesson.teacher.name}</div>
+              <div style={s.teacherMeta}>
+                {lesson.teacher.title}{lesson.teacher.degree ? ` · ${lesson.teacher.degree}` : ""}
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Посещаемость */}
+        <div style={s.lsBlock}>
+          <div style={s.lsBlockLabel}>Посещаемость</div>
+          {att ? (
+            <div style={{ ...s.attendanceChip, color: att.color, borderColor: att.color }}>
+              <span style={s.attendanceIcon}>{att.icon}</span> {att.label}
+            </div>
+          ) : (
+            <div style={{ ...s.attendanceChip, color: "var(--c-text-dim)", borderColor: "var(--c-border)" }}>
+              — Ожидается
+            </div>
+          )}
+        </div>
+
+        {/* Контроль */}
+        {lesson.events && lesson.events.length > 0 && (
+          <div style={s.lsBlock}>
+            <div style={s.lsBlockLabel}>Контроль</div>
+            {lesson.events.map((ev, i) => (
+              <div key={i} style={{ ...s.eventBlock, marginTop: i > 0 ? 8 : 0 }}>
+                {lesson.events!.length > 1 && (
+                  <div style={s.eventTypeLabel}>
+                    {ev.type}{ev.label ? ` · ${ev.label}` : ""}
+                  </div>
+                )}
+                {ev.controls.map((ctrl, j) => (
+                  <div key={j} style={s.controlRow}>
+                    <span style={s.controlForm}>{ctrl.form}</span>
+                    <span style={s.controlScore}>
+                      {ctrl.score != null
+                        ? <><span style={{ color: "var(--c-success)", fontWeight: 600 }}>{ctrl.score}</span><span style={{ color: "var(--c-text-muted)", fontSize: "0.7rem" }}>/{ctrl.maxScore}</span></>
+                        : ctrl.result
+                          ? <span style={{ color: "var(--c-text-secondary)" }}>{ctrl.result}</span>
+                          : <span style={{ color: "var(--c-text-dim)" }}>— ожидается</span>
+                      }
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Оценить занятие */}
+        {lesson.status === "done" && MOCK_LESSON_RATING_ENABLED && (
+          <div style={s.lsBlock}>
+            <div style={s.lsBlockLabel}>Оценить занятие</div>
+            {ratingSubmitted ? (
+              <div style={s.ratingDone}>✓ Спасибо за оценку!</div>
+            ) : (
+              <>
+                {LESSON_RATING_CRITERIA.map(c => (
+                  <div key={c} style={s.ratingRow}>
+                    <span style={s.ratingCriterion}>{c}</span>
+                    <div style={s.ratingBtns}>
+                      <button
+                        style={{ ...s.ratingBtn, ...(ratings[c] === true ? s.ratingBtnYes : {}) }}
+                        onClick={() => setRatings(r => ({ ...r, [c]: true }))}
+                      >👍</button>
+                      <button
+                        style={{ ...s.ratingBtn, ...(ratings[c] === false ? s.ratingBtnNo : {}) }}
+                        onClick={() => setRatings(r => ({ ...r, [c]: false }))}
+                      >👎</button>
+                    </div>
+                  </div>
+                ))}
+                {allRated && (
+                  <button style={s.ratingSubmitBtn} onClick={() => setRatingSubmitted(true)}>
+                    Отправить оценку
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
       </div>
     </>
   );
@@ -1374,4 +1574,28 @@ const s: Record<string, React.CSSProperties> = {
   fcDatePlan: { fontSize: "0.67rem", color: "var(--c-text-muted)", display: "flex", alignItems: "center", gap: 3 },
   fcPlanDot: { width: 5, height: 5, borderRadius: "50%", border: "1.5px solid currentColor", display: "inline-block", flexShrink: 0 },
   fcPlanLabel: { fontSize: "0.58rem", color: "var(--c-text-dim)" },
+  // Экран занятия
+  lessonHero: { marginBottom: 16, paddingBottom: 16, borderBottom: "0.5px solid var(--c-border)" },
+  lessonHeroDate: { color: "var(--c-text-muted)", fontSize: "0.78rem" },
+  lessonHeroTopic: { color: "var(--c-text-primary)", fontSize: "1.05rem", fontWeight: 600, lineHeight: 1.35 },
+  lsBlock: { marginBottom: 16 },
+  lsBlockLabel: { color: "var(--c-text-dim)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 },
+  teacherCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px" },
+  teacherName: { color: "var(--c-text-primary)", fontSize: "0.88rem", fontWeight: 600 },
+  teacherMeta: { color: "var(--c-text-muted)", fontSize: "0.75rem", marginTop: 3 },
+  attendanceChip: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.82rem", fontWeight: 500, padding: "7px 12px", borderRadius: 8, border: "1px solid", background: "transparent" },
+  attendanceIcon: { fontStyle: "normal", fontWeight: 700, fontSize: "0.85rem" },
+  eventBlock: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "10px 14px" },
+  eventTypeLabel: { color: "var(--c-text-muted)", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.03em", marginBottom: 8 },
+  controlRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingTop: 6, paddingBottom: 2 },
+  controlForm: { color: "var(--c-text-secondary)", fontSize: "0.82rem" },
+  controlScore: { fontSize: "0.88rem", fontWeight: 600, flexShrink: 0 },
+  ratingRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 0", borderBottom: "0.5px solid var(--c-border)" },
+  ratingCriterion: { color: "var(--c-text-secondary)", fontSize: "0.83rem", flex: 1 },
+  ratingBtns: { display: "flex", gap: 6, flexShrink: 0 },
+  ratingBtn: { background: "var(--c-card)", border: "1px solid var(--c-border)", borderRadius: 8, width: 36, height: 36, fontSize: "1rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color 0.15s" },
+  ratingBtnYes: { borderColor: "var(--c-success)", background: "color-mix(in srgb, var(--c-success) 12%, transparent)" },
+  ratingBtnNo:  { borderColor: "var(--c-danger)",  background: "color-mix(in srgb, var(--c-danger)  12%, transparent)" },
+  ratingSubmitBtn: { width: "100%", marginTop: 12, border: "none", borderRadius: 10, background: "var(--c-accent)", color: "#fff", fontSize: "0.88rem", fontWeight: 600, padding: "12px 0", cursor: "pointer" },
+  ratingDone: { color: "var(--c-success)", fontSize: "0.88rem", fontWeight: 500, textAlign: "center" as const, padding: "12px 0" },
 };
