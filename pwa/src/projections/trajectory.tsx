@@ -719,7 +719,11 @@ export function Trajectory({ studentId: _studentId, onLogout, lkUrl }: { student
             />
           )}
           {tab === "gradebook" && (
-            <GradebookTab periodsPerYear={currentCtx.periodsPerYear} t={t} />
+            <GradebookTab
+              periodsPerYear={currentCtx.periodsPerYear}
+              pms={currentCtx.program === "spo" ? MOCK_SPO_PMS : undefined}
+              t={t}
+            />
           )}
           {tab === "profile" && (
             <ProfileTab
@@ -1692,10 +1696,80 @@ const TYPE_LABEL_EN: Record<GradebookEntry["type"], string> = {
   exam: "Exam", test: "Test", coursework: "CW",
 };
 
-function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: StringKey) => string }) {
+function gradeColor(v?: number) {
+  if (!v) return "var(--c-text-muted)";
+  if (v >= 5) return "var(--c-success)";
+  if (v >= 4) return "var(--c-accent)";
+  if (v >= 3) return "#E5A94B";
+  return "var(--c-danger)";
+}
+
+function GradebookTab({ periodsPerYear, pms, t }: {
+  periodsPerYear: number;
+  pms?: MockPM[];
+  t: (k: StringKey) => string;
+}) {
   const isEn = t("gradebook") === "Grades";
   const typeLabel = isEn ? TYPE_LABEL_EN : TYPE_LABEL;
 
+  // ── СПО-режим ──
+  if (pms) {
+    return (
+      <div>
+        {pms.map(pm => (
+          <div key={pm.id} style={s.gbPmBlock}>
+            {/* PM-заголовок */}
+            <div style={s.gbPmHeader}>
+              <span style={s.gbPmCode}>{pm.code}</span>
+              <span style={s.gbPmTitle}>{pm.title}</span>
+            </div>
+            {/* МДК */}
+            {pm.mdks.map(mdk => (
+              <div key={mdk.id} style={s.gbRow}>
+                <div style={s.gbTypeTag}>МДК</div>
+                <div style={s.gbTitle}>
+                  <span style={s.gbItemCode}>{mdk.code}</span>
+                  {mdk.title}
+                </div>
+                <div style={{ ...s.gbGrade, color: mdk.brs != null && mdk.doneLessons > 0 ? "var(--c-accent)" : "var(--c-text-dim)" }}>
+                  {mdk.brs != null && mdk.doneLessons > 0
+                    ? <>{mdk.brs.current}<span style={{ fontSize: "0.6rem", fontWeight: 400 }}> /100</span></>
+                    : "—"
+                  }
+                </div>
+              </div>
+            ))}
+            {/* Практики */}
+            {pm.practices.map(p => (
+              <div key={p.id} style={s.gbRow}>
+                <div style={s.gbTypeTag}>{p.code.startsWith("УП") ? "УП" : "ПП"}</div>
+                <div style={s.gbTitle}>
+                  <span style={s.gbItemCode}>{p.code}</span>
+                  {p.title}
+                </div>
+                <div style={{ ...s.gbGrade, color: p.doneDays > 0 ? "var(--c-accent)" : "var(--c-text-dim)" }}>
+                  {p.doneDays > 0
+                    ? <>{p.doneDays}<span style={{ fontSize: "0.6rem", fontWeight: 400 }}> /{p.totalDays} дн</span></>
+                    : "—"
+                  }
+                </div>
+              </div>
+            ))}
+            {/* Итоговый контроль ПМ */}
+            {pm.finalControl && (
+              <div style={{ ...s.gbRow, ...s.gbPmFinal }}>
+                <div style={{ ...s.gbTypeTag, background: "color-mix(in srgb, #7C5CBF 20%, transparent)", color: "#a97de8" }}>ЭК</div>
+                <div style={s.gbTitle}>{pm.finalControl.type}</div>
+                <div style={{ ...s.gbGrade, color: "var(--c-text-dim)" }}>—</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ── ВУЗ-режим ──
   type Group = Record<number, Record<number, GradebookEntry[]>>;
   const byCourse = MOCK_GRADEBOOK.reduce<Group>((acc, e) => {
     if (!acc[e.course]) acc[e.course] = {};
@@ -1705,14 +1779,6 @@ function GradebookTab({ periodsPerYear, t }: { periodsPerYear: number; t: (k: St
   }, {});
   const courses = Object.keys(byCourse).map(Number).sort((a, b) => a - b);
   const [selectedCourse, setSelectedCourse] = useState(() => Math.max(...courses));
-
-  function gradeColor(v?: number) {
-    if (!v) return "var(--c-text-muted)";
-    if (v >= 5) return "var(--c-success)";
-    if (v >= 4) return "var(--c-accent)";
-    if (v >= 3) return "#E5A94B";
-    return "var(--c-danger)";
-  }
 
   function semLabel(sem: number) {
     const within = ((sem - 1) % periodsPerYear) + 1;
@@ -2063,4 +2129,11 @@ const s: Record<string, React.CSSProperties> = {
   brsItemLabel: { fontSize: "0.82rem" },
   brsItemScore: { fontSize: "0.85rem", flexShrink: 0 },
   brsItemNote: { color: "var(--c-text-dim)", fontSize: "0.67rem", marginTop: 4 },
+  // Зачётка СПО
+  gbPmBlock: { marginBottom: 16, background: "var(--c-card)", borderRadius: 12, border: "0.5px solid var(--c-border)", overflow: "hidden" as const },
+  gbPmHeader: { display: "flex", alignItems: "baseline", gap: 8, padding: "10px 14px", background: "color-mix(in srgb, var(--c-accent) 8%, transparent)", borderBottom: "0.5px solid var(--c-border)" },
+  gbPmCode: { color: "var(--c-accent)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.04em", flexShrink: 0 },
+  gbPmTitle: { color: "var(--c-text-primary)", fontSize: "0.82rem", fontWeight: 600, lineHeight: 1.3 },
+  gbPmFinal: { borderTop: "0.5px solid var(--c-border)", background: "color-mix(in srgb, #7C5CBF 5%, transparent)" },
+  gbItemCode: { display: "block", color: "var(--c-accent)", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.03em", marginBottom: 1 },
 };
