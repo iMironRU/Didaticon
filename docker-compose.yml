@@ -37,7 +37,8 @@ services:
   # Статика: SCORM-пакеты + собранный PWA. Один origin (важно для scorm-again).
   static:
     build:
-      context: ./pwa
+      context: .
+      dockerfile: pwa/Dockerfile
       args:
         COMMIT_HASH: ${COMMIT_HASH:-dev}
     volumes:
