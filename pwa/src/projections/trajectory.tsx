@@ -258,14 +258,33 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
     inner = <CompletedContextScreen context={completedCtx} onSwitchContext={() => navigate({ name: "profiles" })} />;
   } else if (route.name === "profiles") {
     inner = (
-      <ContextSwitcherScreen
-        contexts={MOCK_CONTEXTS}
-        currentId={currentContextId}
-        defaultId={defaultContextId}
-        onSelect={switchContext}
-        onSetDefault={setDefault}
-        onBack={() => history.back()}
-      />
+      <>
+        <Header
+          context={currentCtx}
+          unreadCount={unreadCount}
+          onContextTap={() => history.back()}
+          onBell={() => navigate({ name: "notifications" })}
+          onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
+          contextLabel="Профиль обучающегося"
+        />
+        {showLogoutConfirm && (
+          <ConfirmModal
+            title="Выйти из ЭИОС?"
+            message="Сессия будет завершена на этом устройстве."
+            confirmLabel="Выйти"
+            onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
+            onCancel={() => setShowLogoutConfirm(false)}
+            danger
+          />
+        )}
+        <ContextSwitcherScreen
+          contexts={MOCK_CONTEXTS}
+          currentId={currentContextId}
+          defaultId={defaultContextId}
+          onSelect={switchContext}
+          onSetDefault={setDefault}
+        />
+      </>
     );
   } else if (openNotification) {
     inner = <NotificationDetailScreen notification={openNotification} onBack={() => history.back()} />;
@@ -338,12 +357,13 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ context, unreadCount, onContextTap, onBell, onLogout }: {
+function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextLabel }: {
   context: LearnerContext;
   unreadCount: number;
   onContextTap: () => void;
   onBell: () => void;
   onLogout?: () => void;
+  contextLabel?: string; // когда задан — заменяет кнопку профиля простым текстом
 }) {
   return (
     <header style={s.header}>
@@ -351,10 +371,15 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout }: {
         <LogoIcon />
         <span style={s.headerTitle}>ЭИОС</span>
       </div>
-      <button style={s.contextBtn} onClick={onContextTap}>
-        <div style={s.contextName}>{context.name}</div>
-        <div style={s.contextPeriod}>{context.period}</div>
-      </button>
+      {contextLabel
+        ? <div style={{ ...s.contextBtn as React.CSSProperties, cursor: "default" }}>
+            <div style={{ ...s.contextName, fontSize: "0.78rem", fontWeight: 600 }}>{contextLabel}</div>
+          </div>
+        : <button style={s.contextBtn} onClick={onContextTap}>
+            <div style={s.contextName}>{context.name}</div>
+            <div style={s.contextPeriod}>{context.period}</div>
+          </button>
+      }
       <button style={s.bellBtn} onClick={onBell}>
         <BellIcon />
         {unreadCount > 0 && <span style={s.bellBadge}>{unreadCount}</span>}
@@ -645,25 +670,18 @@ function CompletedContextScreen({ context, onSwitchContext }: {
 }
 
 // ── Переключатель контекста ───────────────────────────────────────────────────
-function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSetDefault, onBack }: {
+function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSetDefault }: {
   contexts: LearnerContext[];
   currentId: string;
   defaultId: string;
   onSelect: (id: string) => void;
   onSetDefault: (id: string) => void;
-  onBack: () => void;
 }) {
   const active    = contexts.filter(c => c.status === "active");
   const completed = contexts.filter(c => c.status === "completed");
 
   return (
     <>
-      <div style={s.subHeader}>
-        <button style={s.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
-        </button>
-        <div style={s.subHeaderTitle}>Профиль обучающегося</div>
-      </div>
       <div style={{ ...s.body, paddingTop: 16, flex: 1 }}>
 
         <div style={s.sectionLabel}>Активные</div>
@@ -683,14 +701,12 @@ function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSet
               </div>
               <div style={s.ctxName}>{ctx.name}</div>
               <div style={s.ctxPeriod}>{ctx.period}</div>
-              {!isDefault && (
-                <button
-                  style={s.ctxSetDefaultBtn}
-                  onClick={e => { e.stopPropagation(); onSetDefault(ctx.id); }}
-                >
-                  Сделать основным
-                </button>
-              )}
+              <button
+                style={{ ...s.ctxSetDefaultBtn, ...(isDefault ? { visibility: "hidden" as const, cursor: "default" } : {}) }}
+                onClick={isDefault ? undefined : e => { e.stopPropagation(); onSetDefault(ctx.id); }}
+              >
+                Сделать основным
+              </button>
             </div>
           );
         })}
