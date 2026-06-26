@@ -471,8 +471,13 @@ function Header({ context, unreadCount, onContextTap, onBell, onLogout, contextL
             <div style={{ ...s.contextName, fontSize: "0.78rem", fontWeight: 600 }}>{contextLabel}</div>
           </div>
         : <button style={s.contextBtn} onClick={onContextTap}>
-            <div style={s.contextName}>{context.name} <span style={s.contextChevron}>▾</span></div>
-            <div style={s.contextPeriod}>{context.period}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={s.contextName}>{context.name}</div>
+                <div style={s.contextPeriod}>{context.period}</div>
+              </div>
+              <span style={s.contextChevron}><SwitchIcon /></span>
+            </div>
           </button>
       }
       <button style={s.bellBtn} onClick={onBell}>
@@ -1217,6 +1222,14 @@ function PersonIcon() {
 function LogoutIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
 }
+function SwitchIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="18 8 12 2 6 8"/>
+      <polyline points="6 16 12 22 18 16"/>
+    </svg>
+  );
+}
 function MoonIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
 }
@@ -1238,7 +1251,7 @@ const s: Record<string, React.CSSProperties> = {
   header: { display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
   headerLogo: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
   headerTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.06em" },
-  contextBtn: { flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: "2px 8px", minWidth: 0 },
+  contextBtn: { flex: 1, background: "color-mix(in srgb, var(--c-border) 40%, transparent)", border: "0.5px solid var(--c-border)", borderRadius: 8, cursor: "pointer", textAlign: "left", padding: "4px 8px", minWidth: 0 },
   contextName: { color: "var(--c-text-secondary)", fontSize: "0.72rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   contextPeriod: { color: "var(--c-text-muted)", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   avatar: { width: 30, height: 30, borderRadius: "50%", background: "var(--c-border)", color: "var(--c-accent)", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
@@ -1347,7 +1360,7 @@ const s: Record<string, React.CSSProperties> = {
   optionBtnActive: { borderColor: "var(--c-accent)", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 10%, transparent)" },
   logoutFullBtn: { width: "100%", border: "1px solid var(--c-danger)", borderRadius: 10, padding: "13px 0", background: "none", color: "var(--c-danger)", fontSize: "0.95rem", cursor: "pointer", fontWeight: 600 },
   // Шеврон контекста
-  contextChevron: { opacity: 0.45, fontSize: "0.6rem", verticalAlign: "middle" },
+  contextChevron: { opacity: 0.5, flexShrink: 0, display: "flex", color: "var(--c-text-muted)" },
   // Карточка дисциплины — расширенная
   disciplineDept: { color: "var(--c-text-muted)", fontSize: "0.7rem", marginTop: 1, marginBottom: 4 },
   brsBadge: { fontSize: "0.82rem", fontWeight: 700, color: "var(--c-accent)", flexShrink: 0 },
