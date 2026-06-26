@@ -1062,6 +1062,14 @@ function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, stu
 
   return (
     <div>
+      {/* ЕИВ — выше личных данных */}
+      {eiv && (
+        <div style={s.profileBlock}>
+          <div style={s.profileFieldLabel}>{t("eivFull")}</div>
+          <div style={s.profileValue}>{eiv}</div>
+        </div>
+      )}
+
       {/* Личные данные */}
       {student && (
         <div style={s.profileBlock}>
@@ -1076,15 +1084,6 @@ function ProfileTab({ locale, onChangeLocale, themeMode, onThemeChange, eiv, stu
               <div style={s.profileFieldValue}>{value}</div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* ЕИВ */}
-      {eiv && (
-        <div style={s.profileBlock}>
-          <div style={s.sectionLabel}>{t("eivLabel")}</div>
-          <div style={s.profileFieldLabel}>{t("eivFull")}</div>
-          <div style={s.profileValue}>{eiv}</div>
         </div>
       )}
 
