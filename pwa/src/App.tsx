@@ -25,9 +25,15 @@ export function App() {
       .then((d) => {
         if (!d) return;
         const patch: Partial<Branding> = {};
-        if (d.accessInfo != null) patch.accessInfo = d.accessInfo;
+        if (d.accessInfo  != null) patch.accessInfo  = d.accessInfo;
         if (d.oidcEnabled != null) patch.oidcEnabled = d.oidcEnabled;
+        if (d.logoUrl     != null) patch.logoUrl     = d.logoUrl;
         setRemoteBranding(patch);
+        // Обновляем фавикон если организация задала свой логотип
+        if (d.logoUrl) {
+          const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+          if (link) link.href = d.logoUrl;
+        }
       })
       .catch(() => {});
     if (USE_MOCK) return;
