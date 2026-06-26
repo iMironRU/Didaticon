@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { StudentId } from "@eios/contracts";
 import { onSwUpdate, applySwUpdate } from "../sw-update.js";
 import { getThemeMode, cycleTheme, type ThemeMode } from "../theme.js";
+import { useRoute, navigate } from "../router.js";
 
 // ── Мок-данные ────────────────────────────────────────────────────────────────
 type LessonType = "lecture" | "practice" | "lab";
@@ -201,29 +202,36 @@ function hexToRgba(hex: string, alpha: number) {
 
 // ── Главный компонент ─────────────────────────────────────────────────────────
 export function Trajectory({ studentId: _studentId, onLogout }: { studentId: StudentId; onLogout?: () => void }) {
-  const [tab, setTab] = useState<"schedule" | "disciplines">("schedule");
+  const route = useRoute();
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [selectedDay, setSelectedDay] = useState(TODAY);
-  const [openDiscipline, setOpenDiscipline] = useState<string | null>(null);
-  const [openLesson, setOpenLesson] = useState<MockLesson | null>(null);
   const [currentContextId, setCurrentContextId] = useState(getDefaultContextId);
   const [defaultContextId, setDefaultContextId] = useState(getDefaultContextId);
-  const [showContextSwitcher, setShowContextSwitcher] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [openNotification, setOpenNotification] = useState<Notification | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [swUpdate, setSwUpdate] = useState(false);
+
+  useEffect(() => { onSwUpdate((s) => setSwUpdate(s === "available")); }, []);
+
+  const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
+
+  // Когда активен завершённый контекст и URL не на profiles/completed — редиректим
+  useEffect(() => {
+    if (currentCtx.status === "completed" && route.name !== "profiles" && route.name !== "completed") {
+      navigate({ name: "completed", contextId: currentCtx.id });
+    }
+  }, [currentCtx.id, currentCtx.status, route.name]);
 
   function switchContext(id: string) {
     setCurrentContextId(id);
-    setShowContextSwitcher(false);
+    const ctx = MOCK_CONTEXTS.find(c => c.id === id);
+    if (ctx?.status === "completed") navigate({ name: "completed", contextId: id });
+    else navigate({ name: "schedule" });
   }
   function setDefault(id: string) {
     localStorage.setItem(DEFAULT_CTX_KEY, id);
     setDefaultContextId(id);
   }
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [swUpdate, setSwUpdate] = useState(false);
-
   function markRead(id: string) {
     setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
   }
@@ -231,21 +239,21 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
     setNotifications(ns => ns.map(n => ({ ...n, read: true })));
   }
 
-  useEffect(() => {
-    onSwUpdate((s) => setSwUpdate(s === "available"));
-  }, []);
-
   const unreadCount = notifications.filter(n => !n.read).length;
+  const tab = route.name === "disciplines" ? "disciplines" : "schedule";
 
-  const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
-  const discipline  = openDiscipline ? MOCK_DISCIPLINES.find(d => d.id === openDiscipline) : null;
+  const lesson           = route.name === "lesson"       ? MOCK_LESSONS.find(l => l.id === route.id) ?? null : null;
+  const openDisciplineId = route.name === "discipline"   ? route.id : null;
+  const discipline       = openDisciplineId ? MOCK_DISCIPLINES.find(d => d.id === openDisciplineId) ?? null : null;
+  const openNotification = route.name === "notification" ? notifications.find(n => n.id === route.id) ?? null : null;
 
   let inner: React.ReactNode;
-  if (openLesson) {
-    inner = <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
-  } else if (currentCtx.status === "completed" && !showContextSwitcher) {
-    inner = <CompletedContextScreen context={currentCtx} onSwitchContext={() => setShowContextSwitcher(true)} />;
-  } else if (showContextSwitcher) {
+  if (lesson) {
+    inner = <LessonScreen lesson={lesson} onBack={() => history.back()} />;
+  } else if (route.name === "completed") {
+    const completedCtx = MOCK_CONTEXTS.find(c => c.id === route.contextId) ?? currentCtx;
+    inner = <CompletedContextScreen context={completedCtx} onSwitchContext={() => navigate({ name: "profiles" })} />;
+  } else if (route.name === "profiles") {
     inner = (
       <ContextSwitcherScreen
         contexts={MOCK_CONTEXTS}
@@ -253,31 +261,37 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
         defaultId={defaultContextId}
         onSelect={switchContext}
         onSetDefault={setDefault}
-        onBack={() => setShowContextSwitcher(false)}
+        onBack={() => history.back()}
       />
     );
   } else if (openNotification) {
-    inner = <NotificationDetailScreen notification={openNotification} onBack={() => setOpenNotification(null)} />;
-  } else if (showNotifications) {
+    inner = <NotificationDetailScreen notification={openNotification} onBack={() => history.back()} />;
+  } else if (route.name === "notifications") {
     inner = (
       <NotificationsScreen
         notifications={notifications}
-        onBack={() => setShowNotifications(false)}
-        onOpen={(n) => { markRead(n.id); setOpenNotification(n); }}
+        onBack={() => history.back()}
+        onOpen={(n) => { markRead(n.id); navigate({ name: "notification", id: n.id }); }}
         onRead={markRead}
         onReadAll={markAllRead}
       />
     );
   } else if (discipline) {
-    inner = <DisciplineScreen discipline={discipline} onBack={() => setOpenDiscipline(null)} onLesson={setOpenLesson} />;
+    inner = (
+      <DisciplineScreen
+        discipline={discipline}
+        onBack={() => history.back()}
+        onLesson={(l) => navigate({ name: "lesson", id: l.id })}
+      />
+    );
   } else {
     inner = (
       <>
         <Header
           context={currentCtx}
           unreadCount={unreadCount}
-          onContextTap={() => setShowContextSwitcher(true)}
-          onBell={() => setShowNotifications(true)}
+          onContextTap={() => navigate({ name: "profiles" })}
+          onBell={() => navigate({ name: "notifications" })}
           onLogout={onLogout ? () => setShowLogoutConfirm(true) : undefined}
         />
         {showLogoutConfirm && (
@@ -297,17 +311,17 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
               onViewChange={setScheduleView}
               selectedDay={selectedDay}
               onDayChange={setSelectedDay}
-              onLesson={setOpenLesson}
+              onLesson={(l) => navigate({ name: "lesson", id: l.id })}
             />
           )}
           {tab === "disciplines" && (
             <DisciplinesTab
-              onDiscipline={setOpenDiscipline}
-              onLesson={setOpenLesson}
+              onDiscipline={(id) => navigate({ name: "discipline", id })}
+              onLesson={(l) => navigate({ name: "lesson", id: l.id })}
             />
           )}
         </div>
-        <BottomNav tab={tab} onChange={setTab} />
+        <BottomNav tab={tab} onChange={(t: "schedule" | "disciplines") => navigate({ name: t })} />
       </>
     );
   }

@@ -32,7 +32,15 @@ export function App() {
       .catch(() => {});
     if (USE_MOCK) return;
     getStudent()
-      .then((s) => setAuth(s ? { phase: "authenticated", studentId: s.id } : { phase: "anonymous" }))
+      .then((s) => {
+        if (s) {
+          const returnHash = sessionStorage.getItem("eios_return_hash");
+          if (returnHash) { sessionStorage.removeItem("eios_return_hash"); window.location.hash = returnHash; }
+          setAuth({ phase: "authenticated", studentId: s.id });
+        } else {
+          setAuth({ phase: "anonymous" });
+        }
+      })
       .catch(() => setAuth({ phase: "anonymous" }));
   }, []);
 
@@ -43,6 +51,10 @@ export function App() {
 
   async function handleLogin() {
     setAuth({ phase: "logging_in" });
+    // Сохраняем хеш чтобы восстановить экран после OIDC-редиректа
+    if (window.location.hash && window.location.hash !== "#/") {
+      sessionStorage.setItem("eios_return_hash", window.location.hash);
+    }
     try {
       await login();
     } catch (e) {
