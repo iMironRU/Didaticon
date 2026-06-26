@@ -208,3 +208,4 @@ jobs:
           push: true
           tags: ${{ steps.meta-pwa.outputs.tags }}
           labels: ${{ steps.meta-pwa.outputs.labels }}
+          build-args: COMMIT_HASH=${{ github.sha }}
