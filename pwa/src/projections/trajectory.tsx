@@ -92,6 +92,23 @@ const MOCK_CONTEXTS: LearnerContext[] = [
   { id: "c4", name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", completedAt: "2025" },
 ];
 
+interface CompletedDiscipline {
+  id: string;
+  title: string;
+  totalLessons: number;
+  grade?: string; // итоговая оценка
+  status: "passed" | "failed" | "pending";
+}
+
+const MOCK_COMPLETED_DISCIPLINES: Record<string, CompletedDiscipline[]> = {
+  c4: [
+    { id: "cd1", title: "Основы управления проектами",    totalLessons: 6,  grade: "Отлично",  status: "passed" },
+    { id: "cd2", title: "Agile и Scrum на практике",      totalLessons: 8,  grade: "Хорошо",   status: "passed" },
+    { id: "cd3", title: "Управление рисками",             totalLessons: 4,  grade: "Отлично",  status: "passed" },
+    { id: "cd4", title: "Итоговая аттестация",            totalLessons: 1,  grade: "Зачтено",  status: "passed" },
+  ],
+};
+
 const CONTEXT_TYPE_LABEL: Record<ContextType, string> = {
   specialty: "Специальность",
   dpo:       "ДПО",
@@ -225,6 +242,15 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   }
 
   const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
+
+  if (currentCtx.status === "completed" && !showContextSwitcher) {
+    return (
+      <CompletedContextScreen
+        context={currentCtx}
+        onSwitchContext={() => setShowContextSwitcher(true)}
+      />
+    );
+  }
 
   if (showContextSwitcher) {
     return (
@@ -558,6 +584,52 @@ function ConfirmModal({ title, message, confirmLabel, onConfirm, onCancel, dange
   );
 }
 
+// ── Экран завершённого контекста ──────────────────────────────────────────────
+function CompletedContextScreen({ context, onSwitchContext }: {
+  context: LearnerContext;
+  onSwitchContext: () => void;
+}) {
+  const disciplines = MOCK_COMPLETED_DISCIPLINES[context.id] ?? [];
+  const gradeColor = (s: CompletedDiscipline["status"]) =>
+    s === "passed" ? "var(--c-success)" : s === "failed" ? "var(--c-danger)" : "var(--c-text-muted)";
+
+  return (
+    <div style={s.root}>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onSwitchContext}>
+          <span style={{ fontSize: 20 }}>‹</span> Профили
+        </button>
+        <div style={s.subHeaderTitle}>Итоги обучения</div>
+      </div>
+
+      <div style={{ ...s.body, paddingTop: 16 }}>
+        <div style={s.ctxCompletedMeta}>
+          <div style={s.ctxName}>{context.name}</div>
+          <div style={s.ctxPeriod}>{context.period} · Завершено {context.completedAt}</div>
+        </div>
+
+        <div style={{ ...s.sectionLabel, marginTop: 20 }}>Дисциплины и оценки</div>
+        {disciplines.map(d => (
+          <div key={d.id} style={s.completedDisciplineCard}>
+            <div style={s.completedDisciplineInfo}>
+              <div style={s.completedDisciplineTitle}>{d.title}</div>
+              <div style={s.completedDisciplineMeta}>{d.totalLessons} занятий</div>
+            </div>
+            {d.grade && (
+              <div style={{ ...s.completedGrade, color: gradeColor(d.status) }}>{d.grade}</div>
+            )}
+          </div>
+        ))}
+        {disciplines.length === 0 && (
+          <div style={{ color: "var(--c-text-muted)", fontSize: "0.85rem", marginTop: 20, textAlign: "center" as const }}>
+            Данные недоступны
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Переключатель контекста ───────────────────────────────────────────────────
 function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSetDefault, onBack }: {
   contexts: LearnerContext[];
@@ -611,18 +683,20 @@ function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSet
 
         {completed.length > 0 && (
           <>
-            <div style={{ ...s.sectionLabel, marginTop: 20 }}>Архив</div>
+            <div style={{ ...s.sectionLabel, marginTop: 20 }}>Завершено</div>
             {completed.map(ctx => (
-              <div key={ctx.id} style={{ ...s.ctxCard, opacity: 0.5 }}>
+              <div
+                key={ctx.id}
+                style={{ ...s.ctxCard, ...(ctx.id === currentId ? s.ctxCardActive : {}) }}
+                onClick={() => onSelect(ctx.id)}
+              >
                 <div style={s.ctxCardHead}>
                   <span style={s.ctxTypeBadge}>{CONTEXT_TYPE_LABEL[ctx.type]}</span>
-                  <span style={{ ...s.ctxDefaultBadge, color: "var(--c-text-dim)" }}>Завершено {ctx.completedAt}</span>
+                  <span style={{ ...s.ctxDefaultBadge, color: "var(--c-text-muted)" }}>Завершено {ctx.completedAt}</span>
+                  {ctx.id === currentId && <span style={s.ctxCheck}>✓</span>}
                 </div>
                 <div style={s.ctxName}>{ctx.name}</div>
                 <div style={s.ctxPeriod}>{ctx.period}</div>
-                <div style={{ ...s.ctxSetDefaultBtn, color: "var(--c-text-dim)", cursor: "default" }}>
-                  Итоги обучения →
-                </div>
               </div>
             ))}
           </>
@@ -844,6 +918,12 @@ const s: Record<string, React.CSSProperties> = {
   versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },
   updateBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
   themeBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-status-text)", padding: 0, display: "flex", alignItems: "center", lineHeight: 1 },
+  ctxCompletedMeta: { background: "var(--c-card)", borderRadius: 12, border: "1px solid var(--c-border)", padding: "14px 16px", marginBottom: 10 },
+  completedDisciplineCard: { background: "var(--c-card)", borderRadius: 10, border: "1px solid var(--c-border)", padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 },
+  completedDisciplineInfo: { flex: 1, minWidth: 0 },
+  completedDisciplineTitle: { color: "var(--c-text-primary)", fontSize: "0.88rem", fontWeight: 600 },
+  completedDisciplineMeta: { color: "var(--c-text-muted)", fontSize: "0.73rem", marginTop: 3 },
+  completedGrade: { fontSize: "0.82rem", fontWeight: 700, flexShrink: 0 },
   ctxCard: { background: "var(--c-card)", borderRadius: 12, border: "1px solid var(--c-border)", padding: "14px 16px", marginBottom: 10, cursor: "pointer" },
   ctxCardActive: { borderColor: "var(--c-accent)", boxShadow: "0 0 0 1px var(--c-accent)" },
   ctxCardHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
