@@ -72,7 +72,37 @@ const MOCK_DISCIPLINES: MockDiscipline[] = [
   },
 ];
 
-const MOCK_CONTEXT = { name: "Информационные технологии", period: "IV курс · Весенний семестр 2026" };
+// ── Контексты обучающегося ────────────────────────────────────────────────────
+type ContextStatus = "active" | "completed";
+type ContextType   = "specialty" | "dpo" | "course";
+
+interface LearnerContext {
+  id: string;
+  name: string;
+  type: ContextType;
+  period: string;
+  status: ContextStatus;
+  completedAt?: string; // год завершения, только для completed
+}
+
+const MOCK_CONTEXTS: LearnerContext[] = [
+  { id: "c1", name: "Информационные технологии",    type: "specialty", period: "IV курс · Весенний семестр 2026", status: "active" },
+  { id: "c2", name: "Маркетинг и реклама",          type: "specialty", period: "I курс · Осенний семестр 2026",   status: "active" },
+  { id: "c3", name: "Python для анализа данных",    type: "dpo",       period: "Курс ДПО · 72 часа",              status: "active" },
+  { id: "c4", name: "Основы проектного управления", type: "dpo",       period: "Курс ДПО · 36 часов",             status: "completed", completedAt: "2025" },
+];
+
+const CONTEXT_TYPE_LABEL: Record<ContextType, string> = {
+  specialty: "Специальность",
+  dpo:       "ДПО",
+  course:    "Курс",
+};
+
+const DEFAULT_CTX_KEY = "eios_default_context";
+
+function getDefaultContextId(): string {
+  return localStorage.getItem(DEFAULT_CTX_KEY) ?? MOCK_CONTEXTS.find(c => c.status === "active")?.id ?? MOCK_CONTEXTS[0].id;
+}
 
 // ── Мок-уведомления ───────────────────────────────────────────────────────────
 interface NotifLink { label: string; url: string; }
@@ -159,8 +189,20 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const [openDiscipline, setOpenDiscipline] = useState<string | null>(null);
   const [openLesson, setOpenLesson] = useState<MockLesson | null>(null);
+  const [currentContextId, setCurrentContextId] = useState(getDefaultContextId);
+  const [defaultContextId, setDefaultContextId] = useState(getDefaultContextId);
+  const [showContextSwitcher, setShowContextSwitcher] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [openNotification, setOpenNotification] = useState<Notification | null>(null);
+
+  function switchContext(id: string) {
+    setCurrentContextId(id);
+    setShowContextSwitcher(false);
+  }
+  function setDefault(id: string) {
+    localStorage.setItem(DEFAULT_CTX_KEY, id);
+    setDefaultContextId(id);
+  }
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [swUpdate, setSwUpdate] = useState(false);
 
@@ -179,6 +221,21 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 
   if (openLesson) {
     return <LessonScreen lesson={openLesson} onBack={() => setOpenLesson(null)} />;
+  }
+
+  const currentCtx = MOCK_CONTEXTS.find(c => c.id === currentContextId) ?? MOCK_CONTEXTS[0];
+
+  if (showContextSwitcher) {
+    return (
+      <ContextSwitcherScreen
+        contexts={MOCK_CONTEXTS}
+        currentId={currentContextId}
+        defaultId={defaultContextId}
+        onSelect={switchContext}
+        onSetDefault={setDefault}
+        onBack={() => setShowContextSwitcher(false)}
+      />
+    );
   }
 
   if (openNotification) {
@@ -215,7 +272,13 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 
   return (
     <div style={s.root}>
-      <Header unreadCount={unreadCount} onBell={() => setShowNotifications(true)} onLogout={onLogout} />
+      <Header
+        context={currentCtx}
+        unreadCount={unreadCount}
+        onContextTap={() => setShowContextSwitcher(true)}
+        onBell={() => setShowNotifications(true)}
+        onLogout={onLogout}
+      />
       <div style={s.body}>
         {tab === "schedule" && (
           <ScheduleTab
@@ -240,16 +303,22 @@ export function Trajectory({ studentId: _studentId, onLogout }: { studentId: Stu
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ unreadCount, onBell, onLogout }: { unreadCount: number; onBell: () => void; onLogout?: () => void }) {
+function Header({ context, unreadCount, onContextTap, onBell, onLogout }: {
+  context: LearnerContext;
+  unreadCount: number;
+  onContextTap: () => void;
+  onBell: () => void;
+  onLogout?: () => void;
+}) {
   return (
     <header style={s.header}>
       <div style={s.headerLogo}>
         <LogoIcon />
         <span style={s.headerTitle}>ЭИОС</span>
       </div>
-      <button style={s.contextBtn}>
-        <div style={s.contextName}>{MOCK_CONTEXT.name}</div>
-        <div style={s.contextPeriod}>{MOCK_CONTEXT.period}</div>
+      <button style={s.contextBtn} onClick={onContextTap}>
+        <div style={s.contextName}>{context.name}</div>
+        <div style={s.contextPeriod}>{context.period}</div>
       </button>
       <button style={s.bellBtn} onClick={onBell}>
         <BellIcon />
@@ -447,6 +516,81 @@ function DisciplineScreen({ discipline, onBack, onLesson }: {
         {discipline.lessons.map((l, i) => (
           <LessonCard key={l.id} lesson={l} showDate={true} onOpen={() => onLesson(l)} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Переключатель контекста ───────────────────────────────────────────────────
+function ContextSwitcherScreen({ contexts, currentId, defaultId, onSelect, onSetDefault, onBack }: {
+  contexts: LearnerContext[];
+  currentId: string;
+  defaultId: string;
+  onSelect: (id: string) => void;
+  onSetDefault: (id: string) => void;
+  onBack: () => void;
+}) {
+  const active    = contexts.filter(c => c.status === "active");
+  const completed = contexts.filter(c => c.status === "completed");
+
+  return (
+    <div style={s.root}>
+      <div style={s.subHeader}>
+        <button style={s.backBtn} onClick={onBack}>
+          <span style={{ fontSize: 20 }}>‹</span> Назад
+        </button>
+        <div style={s.subHeaderTitle}>Профиль обучающегося</div>
+      </div>
+      <div style={{ ...s.body, paddingTop: 16 }}>
+
+        <div style={s.sectionLabel}>Активные</div>
+        {active.map(ctx => {
+          const isCurrent = ctx.id === currentId;
+          const isDefault = ctx.id === defaultId;
+          return (
+            <div
+              key={ctx.id}
+              style={{ ...s.ctxCard, ...(isCurrent ? s.ctxCardActive : {}) }}
+              onClick={() => onSelect(ctx.id)}
+            >
+              <div style={s.ctxCardHead}>
+                <span style={s.ctxTypeBadge}>{CONTEXT_TYPE_LABEL[ctx.type]}</span>
+                {isDefault && <span style={s.ctxDefaultBadge}>По умолчанию</span>}
+                {isCurrent && <span style={s.ctxCheck}>✓</span>}
+              </div>
+              <div style={s.ctxName}>{ctx.name}</div>
+              <div style={s.ctxPeriod}>{ctx.period}</div>
+              {!isDefault && (
+                <button
+                  style={s.ctxSetDefaultBtn}
+                  onClick={e => { e.stopPropagation(); onSetDefault(ctx.id); }}
+                >
+                  Сделать основным
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {completed.length > 0 && (
+          <>
+            <div style={{ ...s.sectionLabel, marginTop: 20 }}>Архив</div>
+            {completed.map(ctx => (
+              <div key={ctx.id} style={{ ...s.ctxCard, opacity: 0.5 }}>
+                <div style={s.ctxCardHead}>
+                  <span style={s.ctxTypeBadge}>{CONTEXT_TYPE_LABEL[ctx.type]}</span>
+                  <span style={{ ...s.ctxDefaultBadge, color: "var(--c-text-dim)" }}>Завершено {ctx.completedAt}</span>
+                </div>
+                <div style={s.ctxName}>{ctx.name}</div>
+                <div style={s.ctxPeriod}>{ctx.period}</div>
+                <div style={{ ...s.ctxSetDefaultBtn, color: "var(--c-text-dim)", cursor: "default" }}>
+                  Итоги обучения →
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
       </div>
     </div>
   );
@@ -663,6 +807,15 @@ const s: Record<string, React.CSSProperties> = {
   versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },
   updateBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.6rem", cursor: "pointer", padding: 0, fontWeight: 600, letterSpacing: "0.02em" },
   themeBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-status-text)", padding: 0, display: "flex", alignItems: "center", lineHeight: 1 },
+  ctxCard: { background: "var(--c-card)", borderRadius: 12, border: "1px solid var(--c-border)", padding: "14px 16px", marginBottom: 10, cursor: "pointer" },
+  ctxCardActive: { borderColor: "var(--c-accent)", boxShadow: "0 0 0 1px var(--c-accent)" },
+  ctxCardHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 },
+  ctxTypeBadge: { fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 12%, transparent)", borderRadius: 4, padding: "2px 7px" },
+  ctxDefaultBadge: { fontSize: "0.62rem", fontWeight: 600, color: "var(--c-success)", letterSpacing: "0.02em" },
+  ctxCheck: { marginLeft: "auto", color: "var(--c-accent)", fontSize: "1rem", fontWeight: 700 },
+  ctxName: { color: "var(--c-text-primary)", fontSize: "0.92rem", fontWeight: 600, marginBottom: 3 },
+  ctxPeriod: { color: "var(--c-text-muted)", fontSize: "0.75rem" },
+  ctxSetDefaultBtn: { background: "none", border: "none", padding: "6px 0 0", fontSize: "0.73rem", color: "var(--c-accent)", cursor: "pointer", display: "block", fontWeight: 500 },
   readAllBtn: { background: "none", border: "none", color: "var(--c-accent)", fontSize: "0.75rem", cursor: "pointer", padding: "2px 0", fontWeight: 500, flexShrink: 0, marginLeft: "auto" },
   notifCard: { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px", marginBottom: 8 },
   notifHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 },
