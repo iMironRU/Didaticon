@@ -50,6 +50,15 @@ app.get("/branding", async () => {
 
 app.get("/healthz", async () => ({ ok: true, role: cfg.role, version: process.env.npm_package_version ?? "0.1.0" }));
 
+app.post("/admin/restart", async (req, reply) => {
+  const token = (req.headers["x-admin-token"] as string) ?? "";
+  if (!cfg.adminToken || token !== cfg.adminToken) {
+    return reply.status(401).send({ error: "unauthorized" });
+  }
+  reply.send({ ok: true, message: "Перезапуск через 300мс…" });
+  setTimeout(() => process.exit(0), 300);
+});
+
 app.listen({ port: cfg.port, host: "0.0.0.0" }).then(() => {
   outbox.startDraining(); // фоновая проводка с ретраями
 });

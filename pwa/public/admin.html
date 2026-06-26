@@ -106,6 +106,29 @@
         <div class="status-row"><div class="dot loading" id="d-glue"></div><div class="label">Клей (glue API)</div></div>
         <div class="status-row"><div class="dot loading" id="d-oidc"></div><div class="label">OIDC (Univerkon)</div></div>
         <div class="status-row"><div class="dot loading" id="d-rpc"></div><div class="label">JSON-RPC (Univerkon)</div></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="restartGlue()" id="restart-btn">⟳ Перезапустить сервис</button>
+          <span id="restart-status" style="font-size:.78rem;color:#6b7280"></span>
+        </div>
+        <div id="restart-fail" style="display:none;margin-top:14px;background:#fff8f0;border:1px solid #fcd4a0;border-radius:8px;padding:14px 16px;font-size:.82rem;line-height:1.7">
+          <div style="font-weight:600;color:#b45309;margin-bottom:8px">⚠ Сервис не запустился за 60 секунд</div>
+          <div style="color:#374151;margin-bottom:10px"><strong>Возможные причины:</strong>
+            <ul style="margin:4px 0 0 18px;padding:0">
+              <li>Неверные параметры OIDC (ISSUER, CLIENT_ID, CLIENT_SECRET)</li>
+              <li>Ошибка подключения к базе данных</li>
+              <li>Не хватает переменных окружения в <code>.env</code></li>
+            </ul>
+          </div>
+          <div style="color:#374151"><strong>Что делать:</strong>
+            <ol style="margin:4px 0 0 18px;padding:0">
+              <li>Посмотреть логи: <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">docker logs eios-glue-1 --tail 50</code></li>
+              <li>Исправить параметры выше и нажать «Сохранить»</li>
+              <li>Нажать «⟳ Перезапустить сервис» снова</li>
+              <li>Если не помогает — перезапустить вручную:<br><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px">docker compose restart glue</code></li>
+            </ol>
+          </div>
+          <div style="margin-top:10px;color:#6b7280;font-size:.75rem">Эта страница продолжает работать — она обслуживается nginx независимо от glue.</div>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -355,6 +378,45 @@ function showErr(id, msg) {
 
 // Автологин если токен уже в sessionStorage
 if (TOKEN) doLogin();
+
+// ── Перезапуск glue ────────────────────────────────────────────────────────
+async function restartGlue() {
+  if (!confirm('Перезапустить сервис glue?\n\nСоединение прервётся на ~3–5 секунд, затем восстановится автоматически.')) return;
+  const btn = document.getElementById('restart-btn');
+  const st  = document.getElementById('restart-status');
+  const TIMEOUT = 60; // секунд ожидания
+
+  btn.disabled = true;
+  st.style.color = '#6b7280';
+  st.textContent = 'Отправляем команду…';
+  document.getElementById('restart-fail').style.display = 'none';
+
+  try {
+    await fetch('/api/admin/restart', { method: 'POST', headers: { 'x-admin-token': TOKEN } });
+  } catch(_) { /* ожидаемо — соединение оборвётся */ }
+
+  // Поллинг healthz с обратным отсчётом
+  for (let i = 0; i < TIMEOUT; i++) {
+    st.textContent = `Ждём запуска… ${TIMEOUT - i}с`;
+    await new Promise(r => setTimeout(r, 1000));
+    try {
+      const r = await fetch('/api/healthz');
+      if (r.ok) {
+        st.textContent = '✓ Сервис запущен';
+        st.style.color = '#16a34a';
+        btn.disabled = false;
+        loadStatus();
+        return;
+      }
+    } catch(_) {}
+  }
+
+  // Таймаут — показываем блок диагностики
+  st.textContent = '';
+  btn.disabled = false;
+  document.getElementById('restart-fail').style.display = '';
+}
+
 
 // ── Версия и SW-обновление ────────────────────────────────────────────────
 (async function() {

@@ -17,6 +17,7 @@ services:
 
   glue:
     build: ./glue
+    restart: unless-stopped
     env_file: ./glue/.env
     environment:
       EIOS_STORE: sqlite
