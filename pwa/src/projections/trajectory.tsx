@@ -153,7 +153,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 // ── Главный компонент ─────────────────────────────────────────────────────────
-export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) {
+export function Trajectory({ studentId: _studentId, onLogout }: { studentId: StudentId; onLogout?: () => void }) {
   const [tab, setTab] = useState<"schedule" | "disciplines">("schedule");
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [selectedDay, setSelectedDay] = useState(TODAY);
@@ -215,7 +215,7 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
 
   return (
     <div style={s.root}>
-      <Header unreadCount={unreadCount} onBell={() => setShowNotifications(true)} />
+      <Header unreadCount={unreadCount} onBell={() => setShowNotifications(true)} onLogout={onLogout} />
       <div style={s.body}>
         {tab === "schedule" && (
           <ScheduleTab
@@ -240,7 +240,7 @@ export function Trajectory({ studentId: _studentId }: { studentId: StudentId }) 
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ unreadCount, onBell }: { unreadCount: number; onBell: () => void }) {
+function Header({ unreadCount, onBell, onLogout }: { unreadCount: number; onBell: () => void; onLogout?: () => void }) {
   return (
     <header style={s.header}>
       <div style={s.headerLogo}>
@@ -256,6 +256,11 @@ function Header({ unreadCount, onBell }: { unreadCount: number; onBell: () => vo
         {unreadCount > 0 && <span style={s.bellBadge}>{unreadCount}</span>}
       </button>
       <div style={s.avatar}>АМ</div>
+      {onLogout && (
+        <button style={s.logoutBtn} onClick={onLogout} title="Выйти">
+          <LogoutIcon />
+        </button>
+      )}
     </header>
   );
 }
@@ -588,6 +593,9 @@ function CalIcon() {
 function BookIcon() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>;
 }
+function LogoutIcon() {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+}
 function MoonIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
 }
@@ -649,6 +657,7 @@ const s: Record<string, React.CSSProperties> = {
   subHeaderTitle: { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const },
   launchBtn: { width: "100%", maxWidth: 320, border: "none", borderRadius: 10, color: "#fff", fontSize: "0.95rem", fontWeight: 500, padding: "14px 20px", cursor: "pointer" },
   bellBtn: { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "var(--c-text-muted)", padding: "2px", display: "flex", flexShrink: 0 },
+  logoutBtn: { background: "none", border: "none", cursor: "pointer", color: "var(--c-text-dim)", padding: "2px", display: "flex", flexShrink: 0 },
   bellBadge: { position: "absolute" as const, top: -2, right: -2, background: "var(--c-danger)", color: "#fff", fontSize: "0.55rem", fontWeight: 700, width: 14, height: 14, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" },
   statusBar: { height: 24, background: "var(--c-status-bg)", borderTop: "0.5px solid var(--c-status-border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", flexShrink: 0 },
   versionLabel: { color: "var(--c-status-text)", fontSize: "0.6rem", letterSpacing: "0.04em" },

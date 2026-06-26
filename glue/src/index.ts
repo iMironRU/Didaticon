@@ -37,8 +37,15 @@ registerAdmin(app, { cfg, settings });
 
 // Публичный эндпоинт — PWA читает без авторизации для рендера экрана входа.
 app.get("/branding", async () => {
-  const accessInfo = settings.get("BRANDING_ACCESS_INFO");
-  return { accessInfo: accessInfo ?? null };
+  const accessInfo  = settings.get("BRANDING_ACCESS_INFO");
+  const oidcIssuer  = settings.get("OIDC_ISSUER")       ?? cfg.oidcIssuer  ?? null;
+  const oidcClientId = settings.get("OIDC_CLIENT_ID")   ?? null;
+  const oidcRedirectUri = settings.get("OIDC_REDIRECT_URI") ?? null;
+  return {
+    accessInfo: accessInfo ?? null,
+    oidcEnabled: !!(oidcIssuer && oidcClientId),
+    oidc: oidcIssuer ? { issuer: oidcIssuer, clientId: oidcClientId, redirectUri: oidcRedirectUri } : null,
+  };
 });
 
 app.get("/healthz", async () => ({ ok: true, role: cfg.role, version: process.env.npm_package_version ?? "0.1.0" }));

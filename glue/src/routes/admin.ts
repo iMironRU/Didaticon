@@ -18,9 +18,12 @@ interface AdmZipInstance {
 // Ключи конфига которые можно менять через admin UI.
 // Метки для отображения и признак "требует рестарта".
 const CONFIG_KEYS: { key: string; label: string; secret?: boolean; restart?: boolean; html?: boolean }[] = [
-  { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)" },
-  { key: "OIDC_JWKS_URL",          label: "JWKS URL (обычно OIDC Issuer + /jwks)" },
-  { key: "OIDC_AUDIENCE",          label: "OIDC Audience" },
+  { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)", restart: true },
+  { key: "OIDC_CLIENT_ID",         label: "OIDC Client ID (для PWA)", restart: true },
+  { key: "OIDC_CLIENT_SECRET",     label: "OIDC Client Secret", secret: true, restart: true },
+  { key: "OIDC_REDIRECT_URI",      label: "OIDC Redirect URI (домен/callback)", restart: true },
+  { key: "OIDC_JWKS_URL",          label: "JWKS URL (обычно OIDC Issuer + /jwks)", restart: true },
+  { key: "OIDC_AUDIENCE",          label: "OIDC Audience", restart: true },
   { key: "UNIVERKON_RPC_URL",       label: "Univerkon JSON-RPC URL" },
   { key: "UNIVERKON_SERVICE_TOKEN", label: "Сервисный токен Univerkon", secret: true },
   { key: "EIOS_DOMAIN",            label: "Домен ЭИОС", restart: true },

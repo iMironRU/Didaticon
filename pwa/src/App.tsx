@@ -20,15 +20,27 @@ export function App() {
   const [remoteBranding, setRemoteBranding] = useState<Partial<Branding>>({});
 
   useEffect(() => {
-    if (USE_MOCK) return;
     fetch("/api/branding")
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.accessInfo) setRemoteBranding({ accessInfo: d.accessInfo }); })
+      .then((d) => {
+        if (!d) return;
+        const patch: Partial<Branding> = {};
+        if (d.accessInfo != null) patch.accessInfo = d.accessInfo;
+        if (d.oidcEnabled != null) patch.oidcEnabled = d.oidcEnabled;
+        setRemoteBranding(patch);
+      })
       .catch(() => {});
+    if (USE_MOCK) return;
     getStudent()
       .then((s) => setAuth(s ? { phase: "authenticated", studentId: s.id } : { phase: "anonymous" }))
       .catch(() => setAuth({ phase: "anonymous" }));
   }, []);
+
+  function handleLogout() {
+    if (!window.confirm("Выйти из ЭИОС?")) return;
+    sessionStorage.clear();
+    setAuth({ phase: "anonymous" });
+  }
 
   async function handleLogin() {
     setAuth({ phase: "logging_in" });
@@ -41,7 +53,7 @@ export function App() {
   }
 
   if (auth.phase === "authenticated") {
-    return <Trajectory studentId={auth.studentId} />;
+    return <Trajectory studentId={auth.studentId} onLogout={handleLogout} />;
   }
 
   const branding: Branding = {
@@ -66,6 +78,8 @@ function LoginScreen({
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
+  const oidcReady = branding.oidcEnabled;
+  const loginDisabled = isLoading || !oidcReady;
 
   if (screen === "access") {
     return <AccessScreen branding={branding} onBack={() => setScreen("login")} />;
@@ -89,15 +103,29 @@ function LoginScreen({
         <p style={r.subtitle}>Электронная информационно-образовательная среда</p>
 
         <button
-          style={{ ...r.btn, background: isLoading ? hex80(b) : b }}
-          onClick={onLogin}
-          disabled={isLoading}
+          style={{ ...r.btn, background: loginDisabled ? hex80(b) : b, cursor: loginDisabled ? "not-allowed" : "pointer" }}
+          onClick={loginDisabled ? undefined : onLogin}
+          disabled={loginDisabled}
+          title={!oidcReady ? "Авторизация не настроена — обратитесь к администратору" : undefined}
         >
           {isLoading
             ? <><span style={r.spin} />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
-            : <><LoginIcon />{auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
+            : <><LoginIcon />{!oidcReady ? "Войти (не настроено)" : auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
           }
         </button>
+
+        <button
+          style={{ ...r.demoBtn, borderColor: hex20(b), color: hex80(b) }}
+          onClick={() => { window.location.href = window.location.pathname + "?demo=1"; }}
+        >
+          <DemoIcon /> Демо-режим
+        </button>
+
+        {!oidcReady && (
+          <div style={r.warnBox}>
+            Авторизация через Univerkon не настроена. Войдите в <a href="/admin" style={{ color: "#E0A070" }}>админ-панель</a> и укажите OIDC-параметры.
+          </div>
+        )}
 
         {hasError && (
           <div style={r.errorBox}>
@@ -178,6 +206,12 @@ function ContactRow({ icon, children }: { icon: "mail" | "phone" | "clock"; chil
   );
 }
 
+function DemoIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: 7, verticalAlign: -2 }}><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+}
+function LogoutIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+}
 function SchoolIcon({ color }: { color: string }) {
   return (
     <svg width="44" height="44" viewBox="0 0 24 24" fill="none"
@@ -288,6 +322,32 @@ const r: Record<string, React.CSSProperties> = {
     display: "inline-block",
     marginRight: 10,
     flexShrink: 0,
+  },
+  demoBtn: {
+    marginTop: 10,
+    width: "100%",
+    background: "none",
+    border: "0.5px solid",
+    borderRadius: 10,
+    fontSize: "0.88rem",
+    fontWeight: 500,
+    padding: "11px 20px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    letterSpacing: "0.02em",
+  },
+  warnBox: {
+    marginTop: 12,
+    width: "100%",
+    background: "#1A1208",
+    border: "0.5px solid #4A3010",
+    borderRadius: 8,
+    padding: "10px 14px",
+    color: "#C09050",
+    fontSize: "0.78rem",
+    lineHeight: 1.5,
   },
   errorBox: {
     marginTop: 12,
