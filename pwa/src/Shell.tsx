@@ -118,6 +118,11 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   const lessonMap = collectLessons(learner?.units ?? []);
   const schedItems = buildScheduleItems(schedule, lessonMap);
   const unreadCount = notifs.filter(n => !n.read).length;
+  const debtCount   = gradebook
+    ? gradebook.semesters.flatMap(s => s.entries).filter(
+        e => e.finalControl.state === "failed_retake_pending" || e.finalControl.state === "failed_retake_scheduled"
+      ).length
+    : 0;
   const today = new Date().toISOString().slice(0, 10);
 
   const tab = route.name === "performance" ? "performance"
@@ -268,7 +273,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
             />
           )}
         </div>
-        <BottomNav tab={tab} />
+        <BottomNav tab={tab} debtCount={debtCount} />
       </>
     );
   }
@@ -328,7 +333,7 @@ function Header({ person, learner, unreadCount, onBell, onContextTap, contextLab
 // ── Нижняя навигация ──────────────────────────────────────────────────────────
 type TabId = "schedule" | "performance" | "gradebook" | "profile";
 
-function BottomNav({ tab }: { tab: TabId }) {
+function BottomNav({ tab, debtCount }: { tab: TabId; debtCount: number }) {
   const { t } = useLocale();
   const items: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
@@ -343,7 +348,12 @@ function BottomNav({ tab }: { tab: TabId }) {
         return (
           <button key={it.id} style={st.navItem}
             onClick={() => navigate({ name: it.id })}>
-            <span style={{ color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.icon}</span>
+            <span style={{ position: "relative", display: "inline-flex", color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>
+              {it.icon}
+              {it.id === "gradebook" && debtCount > 0 && (
+                <span style={st.navBadge}>{debtCount > 9 ? "9+" : debtCount}</span>
+              )}
+            </span>
             <span style={{ ...st.navLabel, color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.label}</span>
           </button>
         );
@@ -397,6 +407,7 @@ const st: Record<string, CSSProperties> = {
   contextPeriod:{ color: "var(--c-text-muted)", fontSize: "0.62rem", whiteSpace: "nowrap" as const, display: "block" },
   bellBtn:      { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "var(--c-text-secondary)", padding: 4, flexShrink: 0 },
   bellBadge:    { position: "absolute" as const, top: 0, right: 0, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
+  navBadge:     { position: "absolute" as const, top: -3, right: -6, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
   avatar:       { width: 28, height: 28, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   bottomNav:    { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem:      { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
