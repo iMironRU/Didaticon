@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, getStudent } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
+import { DemoShell } from "./DemoShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
 
 type AuthState =
@@ -87,6 +88,9 @@ export function App() {
   };
 
   if (auth.phase === "authenticated") {
+    if (USE_MOCK) {
+      return <DemoShell onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
+    }
     return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
   }
 

@@ -4,3 +4,7 @@ export * from "./boundary.js";
 export * from "./svidetelstvo.js";
 export * from "./pwa.js";
 export * from "./univerkon.js";
+export * from "./trajectory.js";
+export * from "./schedule.js";
+export * from "./gradebook.js";
+export * from "./notifications.js";

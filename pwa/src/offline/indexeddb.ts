@@ -2,7 +2,8 @@
 // устойчивости (docs/concept-eios.md §6.1, §7).
 // v2: добавлен store projections (stale-while-revalidate, §6.2).
 import { openDB, type IDBPDatabase } from "idb";
-import type { TrajectoryProjection, StudentId } from "@eios/contracts";
+import type { Person, PersonId } from "@eios/contracts";
+import type { StudentId } from "@eios/contracts";
 
 let dbp: Promise<IDBPDatabase> | null = null;
 function db() {
@@ -39,15 +40,15 @@ export async function ack(id: number): Promise<void> {
 
 // --- projections (stale-while-revalidate, §6.2) ---
 
-export async function getCachedProjection(
-  studentId: StudentId,
-): Promise<TrajectoryProjection | undefined> {
-  return (await db()).get("projections", studentId);
+export async function getCachedPerson(
+  personId: PersonId,
+): Promise<Person | undefined> {
+  return (await db()).get("projections", personId);
 }
 
-export async function putCachedProjection(
-  studentId: StudentId,
-  p: TrajectoryProjection,
+export async function putCachedPerson(
+  personId: PersonId,
+  p: Person,
 ): Promise<void> {
-  await (await db()).put("projections", p, studentId);
+  await (await db()).put("projections", p, personId);
 }
