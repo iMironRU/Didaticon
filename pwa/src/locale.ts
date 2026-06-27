@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, createElement } from "react";
 import type { ReactNode } from "react";
 
-export const LOCALES = ["ru", "en"] as const;
+export const LOCALES = ["ru", "en", "kk"] as const;
 export type Locale = typeof LOCALES[number];
 
 export const STRINGS = {
@@ -61,6 +61,7 @@ export const STRINGS = {
     switchProfile:     "Сменить профиль",
     langRu:            "Русский",
     langEn:            "English",
+    langKk:            "Қазақша",
     // Профиль / настройки
     language:          "Язык",
     theme:             "Тема оформления",
@@ -184,6 +185,7 @@ export const STRINGS = {
     switchProfile:     "Switch profile",
     langRu:            "Русский",
     langEn:            "English",
+    langKk:            "Қазақша",
     // Profile screen
     language:          "Language",
     theme:             "Appearance",
@@ -251,6 +253,130 @@ export const STRINGS = {
     notifSystem:       "System",
     deepLink:          "Open →",
   },
+  kk: {
+    // Навигация
+    schedule:          "Кесте",
+    disciplines:       "Пәндер",
+    gradebook:         "Оқу кітапшасы",
+    profile:           "Профиль",
+    // Экрандар / тақырыптар
+    notifications:     "Хабарландырулар",
+    allLessons:        "Барлық сабақтар",
+    learnerProfile:    "Оқушының профилі",
+    results:           "Оқу нәтижелері",
+    // Батырмалар
+    back:              "Артқа",
+    logout:            "Шығу",
+    readAll:           "Барлығын оқыдым",
+    setAsDefault:      "Негізгі ету",
+    openLesson:        "►  Сабақты ашу",
+    openLessonAgain:   "↺  Қайта ашу",
+    // Кесте
+    today:             "Бүгін",
+    day:               "Күн",
+    week:              "Апта",
+    noLessons:         "Сабақ жоқ",
+    notAvailable:      "Әлі қол жетімді емес",
+    passed:            "өтті",
+    // Пәндер / оқу кітапшасы
+    course:            "Курс",
+    semester:          "Семестр",
+    inProgress:        "Үдерісте",
+    credits:           "сағ.",
+    // Сабақ түрлері
+    lec:               "Дәр",
+    prac:              "Пр",
+    lab:               "Зерт",
+    // Хабарландырулар
+    noNotifications:   "Хабарландыру жоқ",
+    systemSource:      "Жүйе",
+    // Контекст ауыстырғыш / профильдер
+    active:            "Белсенді",
+    completedSection:  "Аяқталды",
+    completedYear:     "Аяқталды",
+    defaultBadge:      "Әдепкі",
+    disciplinesGrades: "Пәндер мен бағалар",
+    profiles:          "Профильдер",
+    learnersTitle:     "Оқу профильдері",
+    // Профиль / жеке деректер
+    personalInfo:      "Жеке деректер",
+    lastName:          "Тегі",
+    firstName:         "Аты",
+    patronymic:        "Әкесінің аты",
+    eivFull:           "Университеттің бірыңғай идентификаторы (БЖИ)",
+    goToLk:            "Жеке кабинетке өту ↗",
+    learnProfile:      "Оқу профилі",
+    switchProfile:     "Профильді ауыстыру",
+    langRu:            "Русский",
+    langEn:            "English",
+    langKk:            "Қазақша",
+    // Профиль / баптаулар
+    language:          "Тіл",
+    theme:             "Тақырып",
+    themeAuto:         "Авто",
+    themeLight:        "Ашық",
+    themeDark:         "Қара",
+    eivLabel:          "БЖИ",
+    // Басқа
+    update:            "↑ Жаңарту",
+    copied:            "Көшірілді",
+    dataUnavailable:   "Деректер қол жетімді емес",
+    lessonsCount:      "сабақ",
+    updateApp:         "Қосымшаны жаңарту",
+    copyForSupport:    "Қолдауға көшіру",
+    // Сабақ экраны
+    teacherSection:    "Оқытушы",
+    attendanceSection: "Қатысу",
+    tasksSection:      "Тапсырмалар",
+    controlSection:    "Бақылау",
+    ratingSection:     "Сабақты бағалау",
+    submitRating:      "Баға жіберу",
+    ratingDone:        "✓ Бағаңыз үшін рахмет!",
+    campusOnly:        "🏫 Тек кампус желісінен",
+    attPending:        "Күтілуде",
+    present:           "Қатысты",
+    absentExcused:     "Дәлелді себеппен болмады",
+    absent:            "Болмады",
+    onReview:          "Тексерілуде",
+    notDone:           "Орындалмаған",
+    doTask:            "Орындау →",
+    eventLesson:       "Сабақ",
+    eventModule:       "Модуль",
+    eventAttestation:  "Аттестация",
+    awaitingResult:    "— күтілуде",
+    // Тәжірибе / пәндер
+    practiceDays:      "тәжірибе күні",
+    practiceAllDays:   "Тәжірибе күндері",
+    planned:           "жоспарланған",
+    pointsUnit:        "б.",
+    // Қорытынды бақылау / оқу кітапшасы
+    finalControl:      "Қорытынды бақылау",
+    noLessonsUnit:     "Сабақ жоқ",
+    currentSemester:   "Ағымдағы",
+    spring:            "Көктем",
+    autumn:            "Күз",
+    debt:              "Қарыз",
+    creditsUnit:       "кр.",
+    noSlots:           "Бос орын жоқ",
+    spots:             "орын",
+    book:              "Жазылу",
+    retakeNum:         "Қайта тапсыру №",
+    commission:        "(комиссия)",
+    // Ата-ана режимі
+    myChildren:        "Менің балаларым",
+    demoAsStudent:     "Студент",
+    demoAsParent:      "Ата-ана",
+    viewingChild:      "Профильді қарау:",
+    // Хабарландыру санаттары
+    notifLesson:       "Сабақ",
+    notifGrade:        "Баға",
+    notifRetake:       "Қайта тапсыру",
+    notifBooking:      "Жазылу",
+    notifDebt:         "Қарыз",
+    notifAnnouncement: "Хабарландыру",
+    notifSystem:       "Жүйе",
+    deepLink:          "Өту →",
+  },
 } as const;
 
 export type StringKey = keyof typeof STRINGS.ru;
@@ -268,7 +394,9 @@ const LOCALE_KEY = "eios_locale";
 function detectLocale(): Locale {
   const saved = localStorage.getItem(LOCALE_KEY) as Locale | null;
   if (saved && LOCALES.includes(saved)) return saved;
-  return navigator.language.startsWith("ru") ? "ru" : "en";
+  const lang = navigator.language;
+  if (lang.startsWith("kk") || lang.startsWith("kz")) return "kk";
+  return lang.startsWith("ru") ? "ru" : "en";
 }
 
 const LocaleContext = createContext<LocaleCtx>({

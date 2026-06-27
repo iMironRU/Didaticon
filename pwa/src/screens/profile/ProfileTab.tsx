@@ -2,15 +2,15 @@ import type { CSSProperties } from "react";
 import type { Person, Learner } from "@eios/contracts";
 import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
-import { useLocale } from "../../locale.js";
+import { useLocale, LOCALES, type Locale } from "../../locale.js";
 
 interface Props {
   person:          Person;
   learner:         Learner;
   themeMode:       ThemeMode;
   onThemeChange:   (m: ThemeMode) => void;
-  locale:          "ru" | "en";
-  onLocaleChange:  (l: "ru" | "en") => void;
+  locale:          Locale;
+  onLocaleChange:  (l: Locale) => void;
   lkUrl?:          string;
   onSwitchContext?: () => void;
   onLogout?:        () => void;
@@ -75,13 +75,13 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
       <div style={st.block}>
         <div style={st.sectionLabel}>{t("language")}</div>
         <div style={st.optionsRow}>
-          {(["ru", "en"] as const).map(l => (
+          {LOCALES.map(l => (
             <button
               key={l}
               style={{ ...st.optionBtn, ...(locale === l ? st.optionActive : {}) }}
               onClick={() => onLocaleChange(l)}
             >
-              {l === "ru" ? t("langRu") : t("langEn")}
+              {l === "ru" ? t("langRu") : l === "en" ? t("langEn") : t("langKk")}
             </button>
           ))}
         </div>
