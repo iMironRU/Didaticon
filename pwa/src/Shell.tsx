@@ -93,10 +93,14 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  // Для родителя список "обучающихся" — это children, для студента — learners
+  const allLearners = person.personType === "parent" ? (person.children ?? []) : person.learners;
+
   const [currentLearnerId, setCurrentLearnerId] = useState(() =>
-    localStorage.getItem("eios_default_learner") ?? person.learners[0]?.learnerId ?? "");
+    localStorage.getItem("eios_default_learner") ?? allLearners[0]?.learnerId ?? "");
   const [defaultLearnerId, setDefaultLearnerId] = useState(() =>
-    localStorage.getItem("eios_default_learner") ?? person.learners[0]?.learnerId ?? "");
+    localStorage.getItem("eios_default_learner") ?? allLearners[0]?.learnerId ?? "");
   const [notifs, setNotifs] = useState(notifProp.notifications);
   const [swUpdate, setSwUpdate] = useState(false);
 
@@ -108,7 +112,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   function setDefault(lid: string) { localStorage.setItem("eios_default_learner", lid); setDefaultLearnerId(lid); }
   function switchLearner(lid: string) { setCurrentLearnerId(lid); navigate({ name: "schedule" }); }
 
-  const learner: Learner = person.learners.find(l => l.learnerId === currentLearnerId) ?? person.learners[0];
+  const learner: Learner = allLearners.find(l => l.learnerId === currentLearnerId) ?? allLearners[0];
   const schedule  = scheduleMap.get(learner?.learnerId ?? "");
   const gradebook = gradebookMap.get(learner?.learnerId ?? "");
   const lessonMap = collectLessons(learner?.units ?? []);
@@ -177,10 +181,11 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
         <Header person={person} learner={learner} unreadCount={unreadCount}
           onBell={() => navigate({ name: "notifications" })}
           onContextTap={() => history.back()}
-          contextLabel={t("learnersTitle")}
+          contextLabel={person.personType === "parent" ? t("myChildren") : t("learnersTitle")}
         />
         <ContextSwitcherScreen
           person={person}
+          learners={allLearners}
           currentId={currentLearnerId}
           defaultId={defaultLearnerId}
           onSelect={switchLearner}
@@ -218,7 +223,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
           learner={learner}
           unreadCount={unreadCount}
           onBell={() => navigate({ name: "notifications" })}
-          onContextTap={person.learners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+          onContextTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
         />
         <div style={st.body}>
           {tab === "schedule" && (
@@ -258,7 +263,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
               locale={locale}
               onLocaleChange={changeLocale}
               lkUrl={lkUrl}
-              onSwitchContext={person.learners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+              onSwitchContext={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
               onLogout={onLogout}
             />
           )}

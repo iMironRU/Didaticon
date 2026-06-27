@@ -12,7 +12,9 @@ type AuthState =
   | { phase: "error"; message: string }
   | { phase: "authenticated"; studentId: StudentId };
 
-const USE_MOCK = import.meta.env.DEV || new URLSearchParams(window.location.search).has("demo");
+const _searchParams = new URLSearchParams(window.location.search);
+const USE_MOCK = import.meta.env.DEV || _searchParams.has("demo");
+const DEMO_PERSONA: "student" | "parent" = _searchParams.get("demo") === "parent" ? "parent" : "student";
 
 export function App() {
   const [auth, setAuth] = useState<AuthState>(
@@ -89,7 +91,7 @@ export function App() {
 
   if (auth.phase === "authenticated") {
     if (USE_MOCK) {
-      return <DemoShell onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
+      return <DemoShell onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} persona={DEMO_PERSONA} />;
     }
     return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
   }
@@ -107,6 +109,7 @@ function LoginScreen({
   branding: Branding;
 }) {
   const [screen, setScreen] = useState<"login" | "access">("login");
+  const [demoExpanded, setDemoExpanded] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
@@ -146,12 +149,38 @@ function LoginScreen({
           }
         </button>
 
-        <button
-          style={{ ...r.demoBtn, borderColor: hex20(b), color: hex80(b) }}
-          onClick={() => { window.location.href = window.location.pathname + "?demo=1"; }}
-        >
-          <DemoIcon /> Демо-режим
-        </button>
+        {!demoExpanded ? (
+          <button
+            style={{ ...r.demoBtn, borderColor: hex20(b), color: hex80(b) }}
+            onClick={() => setDemoExpanded(true)}
+          >
+            <DemoIcon /> Демо-режим
+          </button>
+        ) : (
+          <div style={{ ...r.demoPicker, borderColor: hex20(b) }}>
+            <div style={{ ...r.demoPickerLabel, color: hex80(b) }}>Выберите роль для демо</div>
+            <div style={r.demoPickerRow}>
+              <button
+                style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+                onClick={() => { window.location.href = window.location.pathname + "?demo=student"; }}
+              >
+                👨‍🎓 Студент
+              </button>
+              <button
+                style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+                onClick={() => { window.location.href = window.location.pathname + "?demo=parent"; }}
+              >
+                👨‍👧 Родитель
+              </button>
+            </div>
+            <button
+              style={{ ...r.demoCancelBtn, color: hex80(b) }}
+              onClick={() => setDemoExpanded(false)}
+            >
+              Отмена
+            </button>
+          </div>
+        )}
 
         {!oidcReady && (
           <div style={r.warnBox}>
@@ -373,6 +402,47 @@ const r: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     letterSpacing: "0.02em",
+  },
+  demoPicker: {
+    marginTop: 10,
+    width: "100%",
+    background: "none",
+    border: "0.5px solid",
+    borderRadius: 10,
+    padding: "12px 14px",
+  },
+  demoPickerLabel: {
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase" as const,
+    marginBottom: 10,
+  },
+  demoPickerRow: {
+    display: "flex",
+    gap: 8,
+  },
+  demoRoleBtn: {
+    flex: 1,
+    background: "none",
+    border: "0.5px solid",
+    borderRadius: 8,
+    fontSize: "0.85rem",
+    fontWeight: 500,
+    padding: "10px 0",
+    cursor: "pointer",
+  },
+  demoCancelBtn: {
+    marginTop: 10,
+    background: "none",
+    border: "none",
+    fontSize: "0.75rem",
+    cursor: "pointer",
+    opacity: 0.6,
+    display: "block",
+    width: "100%",
+    textAlign: "center" as const,
+    padding: "4px 0",
   },
   warnBox: {
     marginTop: 12,

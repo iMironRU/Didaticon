@@ -113,6 +113,11 @@ export const STRINGS = {
     book:              "Записаться",
     retakeNum:         "Пересдача №",
     commission:        "(комиссия)",
+    // Родительский режим
+    myChildren:        "Мои дети",
+    demoAsStudent:     "Студент",
+    demoAsParent:      "Родитель",
+    viewingChild:      "Просмотр профиля:",
     // Категории уведомлений
     notifLesson:       "Занятие",
     notifGrade:        "Оценка",
@@ -231,6 +236,11 @@ export const STRINGS = {
     book:              "Book",
     retakeNum:         "Retake #",
     commission:        "(commission)",
+    // Parent mode
+    myChildren:        "My children",
+    demoAsStudent:     "Student",
+    demoAsParent:      "Parent",
+    viewingChild:      "Viewing profile:",
     // Notification categories
     notifLesson:       "Lesson",
     notifGrade:        "Grade",

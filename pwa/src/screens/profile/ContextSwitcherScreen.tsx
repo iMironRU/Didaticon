@@ -5,13 +5,14 @@ import type { Person, Learner } from "@eios/contracts";
 
 interface Props {
   person:      Person;
+  learners:    Learner[];
   currentId:   string;  // learnerId
   defaultId:   string;  // learnerId
   onSelect:    (learnerId: string) => void;
   onSetDefault:(learnerId: string) => void;
 }
 
-export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, onSetDefault }: Props) {
+export function ContextSwitcherScreen({ person, learners, currentId, defaultId, onSelect, onSetDefault }: Props) {
   const { t } = useLocale();
   const [localDefault, setLocalDefault] = useState(defaultId);
 
@@ -21,10 +22,12 @@ export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, 
     onSetDefault(id);
   }
 
+  const title = person.personType === "parent" ? t("myChildren") : t("learnersTitle");
+
   return (
     <div style={{ ...st.body, paddingTop: 16, flex: 1 }}>
-      <div style={st.sectionLabel}>{t("learnersTitle")}</div>
-      {person.learners.map(learner => {
+      <div style={st.sectionLabel}>{title}</div>
+      {learners.map(learner => {
         const isCurrent  = learner.learnerId === currentId;
         const isDefault  = learner.learnerId === localDefault;
         return (

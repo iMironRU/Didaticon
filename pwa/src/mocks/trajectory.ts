@@ -339,7 +339,7 @@ export const LEARNER_SPO: Learner = {
   units: [UNIT_PM01, UNIT_PM02],
 };
 
-// ── Person ────────────────────────────────────────────────────────────────────
+// ── Person: Студент ───────────────────────────────────────────────────────────
 export const MOCK_PERSON: Person = {
   personId: PersonId("person_001"),
   personType: "student",
@@ -348,4 +348,17 @@ export const MOCK_PERSON: Person = {
   patronymic: "Иванович",
   eiv: "260001",
   learners: [LEARNER_VO, LEARNER_SPO],
+};
+
+// ── Person: Родитель ──────────────────────────────────────────────────────────
+// Наблюдает за обучением дочери (LEARNER_VO)
+export const MOCK_PERSON_PARENT: Person = {
+  personId: PersonId("person_002"),
+  personType: "parent",
+  firstName: "Наталья",
+  lastName: "Иванова",
+  patronymic: "Александровна",
+  eiv: "260002",
+  learners: [],
+  children: [LEARNER_VO],
 };
