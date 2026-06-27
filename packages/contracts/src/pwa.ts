@@ -1,6 +1,6 @@
-// Контракт PWA ↔ клей: только SCORM-специфика (docs/glue-contracts.md §2).
+// Контракт PWA ↔ клей: SCORM-специфика + legacy-проекция для glue (docs/glue-contracts.md §2).
 // Полная иерархия траектории — в trajectory.ts, schedule.ts, gradebook.ts.
-import type { EventId, StudentId, AttemptId } from "./ids.js";
+import type { EventId, StudentId, AttemptId, DidacticUnitId } from "./ids.js";
 import type { Outcome, ClosureSemantics } from "./boundary.js";
 import type { CmiSnapshot } from "./cmi.js";
 
@@ -46,4 +46,26 @@ export interface ResumeRequest {
 
 export interface ResumeResponse {
   cmi: CmiSnapshot | null; // null = нет синхронизированного состояния
+}
+
+// ---------------------------------------------------------------------------
+// Legacy: проекция траектории (glue ↔ Univerkon, старая модель)
+// Новая иерархия — Person → Learner → CurriculumUnit в trajectory.ts
+// ---------------------------------------------------------------------------
+
+export interface TrajectoryNode {
+  unitId:       DidacticUnitId;
+  eventId:      EventId;
+  title:        string;
+  closure:      "completion" | "pass";
+  scormVersion: "1.2" | "2004";
+  packageUrl:   string;
+  state:        "open" | "in_progress" | "closed_positive" | "closed_negative";
+}
+
+export interface TrajectoryProjection {
+  studentId:       StudentId;
+  disciplineTitle: string;
+  nodes:           TrajectoryNode[];
+  projectedAt:     string; // ISO-8601
 }
