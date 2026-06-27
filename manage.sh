@@ -528,11 +528,19 @@ do_settings() {
     local rpc;     rpc="$(_env_get UNIVERKON_RPC_URL "$env")"
     local tok_set; [ -n "$(_env_get UNIVERKON_SERVICE_TOKEN "$env")" ] \
       && tok_set="${GREEN}задан${NC}" || tok_set="${YELLOW}не задан${NC}"
+    local adm;     adm="$(_env_get ADMIN_TOKEN "$env")"
+    local adm_show
+    if [ -n "$adm" ]; then
+      adm_show="${GREEN}${adm:0:8}…${adm: -4}${NC}"
+    else
+      adm_show="${YELLOW}не задан${NC}"
+    fi
 
     echo -e "  ${BOLD}1.${NC}  Домен              ${DIM}${domain}${NC}"
     echo -e "  ${BOLD}2.${NC}  OIDC Issuer        ${DIM}${oidc}${NC}"
     echo -e "  ${BOLD}3.${NC}  Univerkon RPC URL  ${DIM}${rpc}${NC}"
     echo -e "  ${BOLD}4.${NC}  Сервисный токен    $(echo -e "$tok_set")"
+    echo -e "  ${BOLD}5.${NC}  Admin-токен        $(echo -e "$adm_show")"
     echo
     echo -e "  ${BOLD}0.${NC}  Назад"
     echo
@@ -566,12 +574,69 @@ do_settings() {
         [ -z "$v" ] && { warn "Токен не может быть пустым."; settings_menu; return; }
         _env_set UNIVERKON_SERVICE_TOKEN "$v" "$env"
         log "Токен сохранён"; _apply_settings "$dir" "$DCC"; settings_menu ;;
+      5) _manage_admin_token "$dir" "$DCC" "$env"; settings_menu ;;
       0|"") main_menu ;;
       *) err "Неверный выбор."; settings_menu ;;
     esac
   }
 
   settings_menu
+}
+
+_manage_admin_token() {
+  local dir="$1" DCC="$2" env="$3"
+  local cur; cur="$(_env_get ADMIN_TOKEN "$env")"
+
+  echo
+  echo -e "${CYAN}${BOLD}  ▶  Admin-токен${NC}"
+  echo -e "${CYAN}  ──────────────────────────────────────────${NC}"
+  echo
+  if [ -n "$cur" ]; then
+    echo -e "  Текущий токен:"
+    echo -e "  ${BOLD}${cur}${NC}"
+  else
+    echo -e "  ${YELLOW}Токен не задан — панель администрирования отключена.${NC}"
+  fi
+  echo
+  echo -e "  ${BOLD}1.${NC}  Сгенерировать новый токен"
+  echo -e "  ${BOLD}2.${NC}  Задать вручную"
+  [ -n "$cur" ] && echo -e "  ${BOLD}3.${NC}  ${RED}Отключить панель (удалить токен)${NC}"
+  echo
+  echo -e "  ${BOLD}0.${NC}  Назад"
+  echo
+  echo -e "${CYAN}  ──────────────────────────────────────────${NC}"
+  echo
+
+  local ac
+  read -rp "  Введите номер: " ac
+  case "$ac" in
+    1)
+      local new_tok; new_tok="$(head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 44)"
+      _env_set ADMIN_TOKEN "$new_tok" "$env"
+      _apply_settings "$dir" "$DCC"
+      echo
+      echo -e "  ${GREEN}${BOLD}Новый токен:${NC}"
+      echo -e "  ${BOLD}${new_tok}${NC}"
+      echo
+      warn "Сохраните токен — он больше не будет показан в открытом виде." ;;
+    2)
+      read -rsp "  Введите токен: " v; echo
+      [ -z "$v" ] && { warn "Токен не может быть пустым."; return; }
+      _env_set ADMIN_TOKEN "$v" "$env"
+      _apply_settings "$dir" "$DCC"
+      log "Admin-токен сохранён." ;;
+    3)
+      if [ -n "$cur" ]; then
+        local confirm
+        read -rp "  Отключить панель администрирования? [y/N]: " confirm
+        [[ "${confirm:-n}" =~ ^[Yy] ]] || return
+        _env_set ADMIN_TOKEN "" "$env"
+        _apply_settings "$dir" "$DCC"
+        log "Admin-токен удалён. Панель отключена."
+      fi ;;
+    0|"") return ;;
+    *) err "Неверный выбор." ;;
+  esac
 }
 
 _apply_settings() {
