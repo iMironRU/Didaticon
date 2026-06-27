@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocale } from "../../locale.js";
 import type { CSSProperties } from "react";
 import type { Person, Learner } from "@eios/contracts";
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, onSetDefault }: Props) {
+  const { t } = useLocale();
   const [localDefault, setLocalDefault] = useState(defaultId);
 
   function handleSetDefault(id: string, e: React.MouseEvent) {
@@ -21,7 +23,7 @@ export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, 
 
   return (
     <div style={{ ...st.body, paddingTop: 16, flex: 1 }}>
-      <div style={st.sectionLabel}>Профили обучения</div>
+      <div style={st.sectionLabel}>{t("learnersTitle")}</div>
       {person.learners.map(learner => {
         const isCurrent  = learner.learnerId === currentId;
         const isDefault  = learner.learnerId === localDefault;
@@ -33,7 +35,7 @@ export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, 
           >
             <div style={st.ctxHead}>
               <span style={st.ctxTypeBadge}>{learner.programType}</span>
-              {isDefault  && <span style={st.ctxDefaultBadge}>По умолчанию</span>}
+              {isDefault  && <span style={st.ctxDefaultBadge}>{t("defaultBadge")}</span>}
               {isCurrent  && <span style={st.ctxCheck}>✓</span>}
             </div>
             <div style={st.ctxName}>{learner.programTitle}</div>
@@ -42,7 +44,7 @@ export function ContextSwitcherScreen({ person, currentId, defaultId, onSelect, 
               style={{ ...st.ctxSetDefaultBtn, ...(isDefault ? { visibility: "hidden" as const } : {}) }}
               onClick={e => handleSetDefault(learner.learnerId, e)}
             >
-              Сделать основным
+              {t("setAsDefault")}
             </button>
           </div>
         );

@@ -3,6 +3,7 @@ import type { UnitLeaf, TrajectoryLesson } from "@eios/contracts";
 import { BRSBlock, FinalControlChip } from "./PerformanceTab.js";
 import { LESSON_TYPE_LABEL, LESSON_TYPE_COLOR } from "../../utils/grade.js";
 import { hexToRgba } from "../../utils/color.js";
+import { useLocale } from "../../locale.js";
 
 interface Props {
   unit:     UnitLeaf;
@@ -11,13 +12,14 @@ interface Props {
 }
 
 export function UnitScreen({ unit, onBack, onLesson }: Props) {
+  const { t } = useLocale();
   const isPractice = unit.unitType === "practice";
 
   return (
     <>
       <div style={st.subHeader}>
         <button style={st.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
+          <span style={{ fontSize: 20 }}>‹</span> {t("back")}
         </button>
         <div style={st.subHeaderTitle}>{unit.title}</div>
       </div>
@@ -28,7 +30,7 @@ export function UnitScreen({ unit, onBack, onLesson }: Props) {
 
         {/* Итоговый контроль */}
         <div style={st.block}>
-          <div style={st.blockLabel}>Итоговый контроль</div>
+          <div style={st.blockLabel}>{t("finalControl")}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <FinalControlChip fc={unit.finalControl} />
           </div>
@@ -36,10 +38,10 @@ export function UnitScreen({ unit, onBack, onLesson }: Props) {
 
         {/* Занятия */}
         <div style={st.blockLabel}>
-          {isPractice ? "Дни практики" : "Все занятия"}
+          {isPractice ? t("practiceAllDays") : t("allLessons")}
         </div>
         {unit.lessons.length === 0 ? (
-          <div style={st.empty}>Нет занятий</div>
+          <div style={st.empty}>{t("noLessonsUnit")}</div>
         ) : (
           unit.lessons.map(lesson => (
             <LessonRow key={lesson.lessonId} lesson={lesson} onOpen={() => onLesson(lesson)} />

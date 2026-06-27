@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { GradebookResponse, GradebookSemester, GradebookEntry, GradebookFinalControl, BookingSlot } from "@eios/contracts";
 import { gradeColor } from "../../utils/grade.js";
+import { useLocale, type StringKey } from "../../locale.js";
 import { fcChipStyle } from "../../utils/color.js";
 import { formatIsoDate, ROMAN } from "../../utils/date.js";
 
@@ -12,11 +13,12 @@ interface Props {
 
 // GradebookTab — зачётная книжка ──────────────────────────────────────────────
 export function GradebookTab({ gradebook, onBookRetake }: Props) {
+  const { t } = useLocale();
   const semesters  = gradebook.semesters;
   const currentIdx = semesters.findIndex(s => s.isCurrent);
   const [selIdx, setSelIdx] = useState(currentIdx >= 0 ? currentIdx : semesters.length - 1);
   const sem = semesters[selIdx];
-  if (!sem) return <div style={st.empty}>Нет данных</div>;
+  if (!sem) return <div style={st.empty}>{t("dataUnavailable")}</div>;
 
   const isSpO = sem.entries.some(e => e.groupCode);
 
@@ -30,7 +32,7 @@ export function GradebookTab({ gradebook, onBookRetake }: Props) {
             style={{ ...st.semTab, ...(i === selIdx ? st.semTabActive : {}) }}
             onClick={() => setSelIdx(i)}
           >
-            {semShort(s, i + 1)}
+            {semShort(s, i + 1, t)}
           </button>
         ))}
       </div>
@@ -47,8 +49,8 @@ export function GradebookTab({ gradebook, onBookRetake }: Props) {
   );
 }
 
-function semShort(s: GradebookSemester, n: number): string {
-  return s.isCurrent ? "Текущий" : `${ROMAN[Math.floor((n - 1) / 2)] ?? n}к · ${n % 2 === 0 ? "Весна" : "Осень"}`;
+function semShort(s: GradebookSemester, n: number, t: (k: StringKey) => string): string {
+  return s.isCurrent ? t("currentSemester") : `${ROMAN[Math.floor((n - 1) / 2)] ?? n}к · ${n % 2 === 0 ? t("spring") : t("autumn")}`;
 }
 
 // ── ВО: записи без группировки ────────────────────────────────────────────────
@@ -96,6 +98,7 @@ function SpOGroupedEntries({ semester, onBook }: { semester: GradebookSemester; 
 
 // ── Строка записи ─────────────────────────────────────────────────────────────
 function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["onBookRetake"] }) {
+  const { t } = useLocale();
   const fc   = entry.finalControl;
   const [expanded, setExpanded] = useState(false);
 
@@ -107,7 +110,7 @@ function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["on
           {entry.code && <span style={st.entryCode}>{entry.code}</span>}
           {entry.title}
         </div>
-        <div style={st.credits}>{entry.credits} з.е.</div>
+        <div style={st.credits}>{entry.credits} {t("creditsUnit")}</div>
         <GradeCell fc={fc} />
       </div>
 
@@ -115,19 +118,19 @@ function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["on
       {expanded && fc.state === "failed_retake_scheduled" && (
         <div style={st.slotsBlock}>
           <div style={st.slotsLabel}>
-            Пересдача №{fc.attemptNumber}{fc.isCommission ? " (комиссия)" : ""}
+            {t("retakeNum")}{fc.attemptNumber}{fc.isCommission ? ` ${t("commission")}` : ""}
             {" · "}{formatIsoDate(fc.retakeDate)}
           </div>
           {fc.availableSlots.length === 0 ? (
-            <div style={st.slotsEmpty}>Нет доступных слотов</div>
+            <div style={st.slotsEmpty}>{t("noSlots")}</div>
           ) : (
             fc.availableSlots.map(slot => (
               <div key={slot.bookingSlotId} style={st.slotRow}>
                 <span style={st.slotTime}>{slot.timeStart}–{slot.timeEnd}{slot.room ? ` · ${slot.room}` : ""}</span>
-                <span style={st.slotSpots}>{slot.availableSpots} мест</span>
+                <span style={st.slotSpots}>{slot.availableSpots} {t("spots")}</span>
                 {onBook && slot.availableSpots > 0 && (
                   <button style={st.bookBtn} onClick={e => { e.stopPropagation(); onBook(entry, slot); }}>
-                    Записаться
+                    {t("book")}
                   </button>
                 )}
               </div>
@@ -141,6 +144,7 @@ function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["on
 
 // ── Ячейка оценки ─────────────────────────────────────────────────────────────
 function GradeCell({ fc }: { fc: GradebookFinalControl }) {
+  const { t } = useLocale();
   if (fc.state === "passed") {
     return (
       <div style={{ ...st.grade, color: gradeColor(fc.grade) }}>
@@ -155,12 +159,12 @@ function GradeCell({ fc }: { fc: GradebookFinalControl }) {
   if (fc.state === "failed_retake_scheduled") {
     return (
       <div style={{ ...st.grade, color: "var(--c-danger)" }}>
-        Долг <span style={{ fontSize: "0.6rem" }}>›</span>
+        {t("debt")} <span style={{ fontSize: "0.6rem" }}>›</span>
       </div>
     );
   }
   if (fc.state === "failed_retake_pending") {
-    return <div style={{ ...st.grade, color: "var(--c-danger)" }}>Долг</div>;
+    return <div style={{ ...st.grade, color: "var(--c-danger)" }}>{t("debt")}</div>;
   }
   // failed_final
   return <div style={{ ...st.grade, color: "var(--c-danger)" }}>✗</div>;

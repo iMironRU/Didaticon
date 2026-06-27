@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Person, Learner } from "@eios/contracts";
 import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
+import { useLocale } from "../../locale.js";
 
 interface Props {
   person:          Person;
@@ -16,27 +17,28 @@ interface Props {
 }
 
 export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, onLocaleChange, lkUrl, onSwitchContext, onLogout }: Props) {
+  const { t } = useLocale();
   const THEMES: { value: ThemeMode; label: string }[] = [
-    { value: "auto",  label: "Авто" },
-    { value: "light", label: "Светлая" },
-    { value: "dark",  label: "Тёмная" },
+    { value: "auto",  label: t("themeAuto") },
+    { value: "light", label: t("themeLight") },
+    { value: "dark",  label: t("themeDark") },
   ];
 
   return (
     <div>
       {/* ЕИВ */}
       <div style={st.block}>
-        <div style={st.fieldLabel}>Единый идентификатор вуза (ЕИВ)</div>
+        <div style={st.fieldLabel}>{t("eivFull")}</div>
         <div style={st.eivValue}>{person.eiv}</div>
       </div>
 
       {/* Личные данные */}
       <div style={st.block}>
-        <div style={st.sectionLabel}>Личные данные</div>
+        <div style={st.sectionLabel}>{t("personalInfo")}</div>
         {[
-          { label: "Фамилия",   value: person.lastName  },
-          { label: "Имя",       value: person.firstName  },
-          { label: "Отчество",  value: person.patronymic },
+          { label: t("lastName"),   value: person.lastName  },
+          { label: t("firstName"),  value: person.firstName  },
+          { label: t("patronymic"), value: person.patronymic },
         ].filter(f => f.value).map(f => (
           <div key={f.label} style={st.field}>
             <div style={st.fieldLabel}>{f.label}</div>
@@ -47,7 +49,7 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
 
       {/* Текущий профиль обучения */}
       <div style={st.block}>
-        <div style={st.sectionLabel}>Профиль обучения</div>
+        <div style={st.sectionLabel}>{t("learnProfile")}</div>
         <div style={st.learnerCard}>
           <div style={st.learnerProgram}>{learner.programType} · {learner.programTitle}</div>
           <div style={st.learnerMeta}>{learner.group} · {learner.course} курс · {learner.form}</div>
@@ -55,7 +57,7 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
         </div>
         {onSwitchContext && (
           <button style={st.switchBtn} onClick={onSwitchContext}>
-            Сменить профиль
+            {t("switchProfile")}
           </button>
         )}
       </div>
@@ -64,14 +66,14 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
       {lkUrl && (
         <div style={st.block}>
           <a href={lkUrl} target="_blank" rel="noopener noreferrer" style={st.lkBtn}>
-            Перейти в личный кабинет ↗
+            {t("goToLk")}
           </a>
         </div>
       )}
 
       {/* Язык */}
       <div style={st.block}>
-        <div style={st.sectionLabel}>Язык</div>
+        <div style={st.sectionLabel}>{t("language")}</div>
         <div style={st.optionsRow}>
           {(["ru", "en"] as const).map(l => (
             <button
@@ -79,7 +81,7 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
               style={{ ...st.optionBtn, ...(locale === l ? st.optionActive : {}) }}
               onClick={() => onLocaleChange(l)}
             >
-              {l === "ru" ? "Русский" : "English"}
+              {l === "ru" ? t("langRu") : t("langEn")}
             </button>
           ))}
         </div>
@@ -87,7 +89,7 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
 
       {/* Тема */}
       <div style={st.block}>
-        <div style={st.sectionLabel}>Тема оформления</div>
+        <div style={st.sectionLabel}>{t("theme")}</div>
         <div style={st.optionsRow}>
           {THEMES.map(({ value, label }) => (
             <button
@@ -104,7 +106,7 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
       {/* Выход */}
       {onLogout && (
         <div style={{ marginTop: 32 }}>
-          <button style={st.logoutBtn} onClick={onLogout}>Выйти из аккаунта</button>
+          <button style={st.logoutBtn} onClick={onLogout}>{t("logout")}</button>
         </div>
       )}
     </div>

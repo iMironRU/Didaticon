@@ -9,6 +9,7 @@ import type { GradebookResponse, GradebookEntry, BookingSlot } from "@eios/contr
 import type { NotificationsResponse } from "@eios/contracts";
 import { useRoute, navigate } from "./router.js";
 import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
+import { useLocale } from "./locale.js";
 import { onSwUpdate, applySwUpdate } from "./sw-update.js";
 import type { ScheduleItem } from "./screens/schedule/ScheduleTab.js";
 import { ScheduleTab } from "./screens/schedule/ScheduleTab.js";
@@ -88,8 +89,8 @@ function findGroupById(units: CurriculumUnit[], id: string): UnitGroup | null {
 // ── Главный компонент ─────────────────────────────────────────────────────────
 export function Shell({ person, scheduleMap, gradebookMap, notifications: notifProp, lkUrl, onLogout }: Props) {
   const route = useRoute();
+  const { t, locale, changeLocale } = useLocale();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
-  const [locale, setLocale]       = useState<"ru" | "en">("ru");
   const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [currentLearnerId, setCurrentLearnerId] = useState(() =>
@@ -176,7 +177,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
         <Header person={person} learner={learner} unreadCount={unreadCount}
           onBell={() => navigate({ name: "notifications" })}
           onContextTap={() => history.back()}
-          contextLabel="Профили обучения"
+          contextLabel={t("learnersTitle")}
         />
         <ContextSwitcherScreen
           person={person}
@@ -255,7 +256,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
               themeMode={themeMode}
               onThemeChange={handleThemeChange}
               locale={locale}
-              onLocaleChange={setLocale}
+              onLocaleChange={changeLocale}
               lkUrl={lkUrl}
               onSwitchContext={person.learners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
               onLogout={onLogout}
@@ -323,11 +324,12 @@ function Header({ person, learner, unreadCount, onBell, onContextTap, contextLab
 type TabId = "schedule" | "performance" | "gradebook" | "profile";
 
 function BottomNav({ tab }: { tab: TabId }) {
+  const { t } = useLocale();
   const items: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: "schedule",    label: "Расписание",  icon: <CalIcon /> },
-    { id: "performance", label: "Дисциплины",  icon: <BookIcon /> },
-    { id: "gradebook",   label: "Зачётка",     icon: <GradebookIcon /> },
-    { id: "profile",     label: "Профиль",     icon: <PersonIcon /> },
+    { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
+    { id: "performance", label: t("disciplines"), icon: <BookIcon /> },
+    { id: "gradebook",   label: t("gradebook"),   icon: <GradebookIcon /> },
+    { id: "profile",     label: t("profile"),     icon: <PersonIcon /> },
   ];
   return (
     <nav style={st.bottomNav}>
@@ -347,6 +349,7 @@ function BottomNav({ tab }: { tab: TabId }) {
 
 // ── Статусная строка ──────────────────────────────────────────────────────────
 function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv: string }) {
+  const { t } = useLocale();
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
   const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
   const [copied, setCopied] = useState(false);
@@ -364,12 +367,12 @@ function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv: string }) {
     <div style={st.statusBar}>
       <div>
         {swUpdate && (
-          <button style={st.updateBtn} onClick={applySwUpdate}>Обновить приложение</button>
+          <button style={st.updateBtn} onClick={applySwUpdate}>{t("updateApp")}</button>
         )}
       </div>
-      <button style={st.versionBtn} onClick={copySupportInfo} title="Скопировать для поддержки">
+      <button style={st.versionBtn} onClick={copySupportInfo} title={t("copyForSupport")}>
         {copied
-          ? <span style={{ color: "var(--c-success)" }}>✓ Скопировано</span>
+          ? <span style={{ color: "var(--c-success)" }}>✓ {t("copied")}</span>
           : <span style={st.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
         }
       </button>

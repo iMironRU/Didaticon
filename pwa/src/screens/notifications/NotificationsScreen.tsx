@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Notification, NotificationCategory } from "@eios/contracts";
 import { formatIsoDate } from "../../utils/date.js";
+import { useLocale } from "../../locale.js";
 
 interface Props {
   notifications: Notification[];
@@ -20,35 +21,35 @@ const CATEGORY_COLOR: Record<NotificationCategory, string> = {
   system:            "var(--c-purple, #7C5CBF)",
 };
 
-const CATEGORY_LABEL: Record<NotificationCategory, string> = {
-  lesson_available:  "Занятие",
-  grade_posted:      "Оценка",
-  retake_scheduled:  "Пересдача",
-  booking_confirmed: "Запись",
-  debt_deadline:     "Долг",
-  announcement:      "Объявление",
-  system:            "Система",
-};
-
 // ── NotificationsScreen ───────────────────────────────────────────────────────
 export function NotificationsScreen({ notifications, onBack, onOpen, onRead, onReadAll }: Props) {
+  const { t } = useLocale();
+  const CATEGORY_LABEL: Record<NotificationCategory, string> = {
+    lesson_available:  t("notifLesson"),
+    grade_posted:      t("notifGrade"),
+    retake_scheduled:  t("notifRetake"),
+    booking_confirmed: t("notifBooking"),
+    debt_deadline:     t("notifDebt"),
+    announcement:      t("notifAnnouncement"),
+    system:            t("notifSystem"),
+  };
   const hasUnread = notifications.some(n => !n.read);
 
   return (
     <>
       <div style={st.subHeader}>
         <button style={st.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
+          <span style={{ fontSize: 20 }}>‹</span> {t("back")}
         </button>
-        <div style={st.subHeaderTitle}>Уведомления</div>
+        <div style={st.subHeaderTitle}>{t("notifications")}</div>
         {hasUnread && (
-          <button style={st.readAllBtn} onClick={onReadAll}>Прочитать все</button>
+          <button style={st.readAllBtn} onClick={onReadAll}>{t("readAll")}</button>
         )}
       </div>
 
       <div style={{ ...st.body, paddingTop: 16 }}>
         {notifications.length === 0 ? (
-          <div style={st.empty}>Нет уведомлений</div>
+          <div style={st.empty}>{t("noNotifications")}</div>
         ) : (
           notifications.map(n => {
             const hasDetail = !!n.fullText;
@@ -70,7 +71,7 @@ export function NotificationsScreen({ notifications, onBack, onOpen, onRead, onR
                     <div style={st.cardTitle}>{n.title}</div>
                     <div style={st.cardBody}>{n.body}</div>
                     {n.deepLink && !hasDetail && (
-                      <div style={st.deepLink}>Перейти →</div>
+                      <div style={st.deepLink}>{t("deepLink")}</div>
                     )}
                   </div>
                   {hasDetail && <span style={st.chevron}>›</span>}
@@ -91,11 +92,21 @@ interface DetailProps {
 }
 
 export function NotificationDetailScreen({ notification: n, onBack }: DetailProps) {
+  const { t } = useLocale();
+  const CATEGORY_LABEL: Record<NotificationCategory, string> = {
+    lesson_available:  t("notifLesson"),
+    grade_posted:      t("notifGrade"),
+    retake_scheduled:  t("notifRetake"),
+    booking_confirmed: t("notifBooking"),
+    debt_deadline:     t("notifDebt"),
+    announcement:      t("notifAnnouncement"),
+    system:            t("notifSystem"),
+  };
   return (
     <>
       <div style={st.subHeader}>
         <button style={st.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
+          <span style={{ fontSize: 20 }}>‹</span> {t("back")}
         </button>
         <div style={st.subHeaderTitle}>{n.title}</div>
       </div>

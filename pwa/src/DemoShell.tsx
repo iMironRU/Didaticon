@@ -1,4 +1,5 @@
 import { Shell } from "./Shell.js";
+import { LocaleProvider } from "./locale.js";
 import {
   MOCK_PERSON, LEARNER_VO, LEARNER_SPO,
   MOCK_SCHEDULE_VO,
@@ -25,13 +26,15 @@ export function DemoShell({ lkUrl, onLogout }: Props) {
   ]);
 
   return (
-    <Shell
-      person={MOCK_PERSON}
-      scheduleMap={scheduleMap}
-      gradebookMap={gradebookMap}
-      notifications={MOCK_NOTIFICATIONS}
-      lkUrl={lkUrl}
-      onLogout={onLogout}
-    />
+    <LocaleProvider>
+      <Shell
+        person={MOCK_PERSON}
+        scheduleMap={scheduleMap}
+        gradebookMap={gradebookMap}
+        notifications={MOCK_NOTIFICATIONS}
+        lkUrl={lkUrl}
+        onLogout={onLogout}
+      />
+    </LocaleProvider>
   );
 }

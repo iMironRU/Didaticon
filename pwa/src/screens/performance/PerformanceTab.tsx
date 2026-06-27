@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Learner, UnitLeaf, UnitGroup, CurriculumUnit, PlannedControl, BRS } from "@eios/contracts";
 import { fcChipStyle } from "../../utils/color.js";
+import { useLocale } from "../../locale.js";
 import { progressColor } from "../../utils/grade.js";
 
 interface Props {
@@ -35,6 +36,7 @@ interface UnitCardProps {
 }
 
 export function UnitCard({ unit, onClick, showCode = false }: UnitCardProps) {
+  const { t } = useLocale();
   const isPractice = unit.unitType === "practice";
   const counts = unit.lessonCounts;
   const totalLessons = isPractice
@@ -65,11 +67,11 @@ export function UnitCard({ unit, onClick, showCode = false }: UnitCardProps) {
       <div style={st.footer}>
         <div style={st.lc}>
           {isPractice
-            ? `${(counts as { days: number }).days} дней практики`
+            ? `${(counts as { days: number }).days} ${t("practiceDays")}`
             : [
-                (counts as { lec: number }).lec  ? `${(counts as { lec: number }).lec} Лек`   : null,
-                (counts as { prac: number }).prac ? `${(counts as { prac: number }).prac} Пр`  : null,
-                (counts as { lab: number }).lab   ? `${(counts as { lab: number }).lab} Лаб`   : null,
+                (counts as { lec: number }).lec  ? `${(counts as { lec: number }).lec} ${t("lec")}`  : null,
+                (counts as { prac: number }).prac ? `${(counts as { prac: number }).prac} ${t("prac")}` : null,
+                (counts as { lab: number }).lab   ? `${(counts as { lab: number }).lab} ${t("lab")}`  : null,
               ].filter(Boolean).join(" · ")
           }
         </div>
@@ -112,6 +114,7 @@ export function GroupCard({ group, onClick }: GroupCardProps) {
 
 // ── FinalControlChip ──────────────────────────────────────────────────────────
 export function FinalControlChip({ fc }: { fc: PlannedControl }) {
+  const { t } = useLocale();
   const confirmed = fc.date?.confirmed ?? false;
   const dateStr   = fc.date?.value;
   return (
@@ -121,7 +124,7 @@ export function FinalControlChip({ fc }: { fc: PlannedControl }) {
         <div style={confirmed ? st.fcDate : st.fcDatePlan}>
           {!confirmed && <span style={st.fcPlanDot} />}
           {!confirmed && "~ "}{dateStr}
-          {!confirmed && <span style={st.fcPlanLabel}>планируется</span>}
+          {!confirmed && <span style={st.fcPlanLabel}>{t("planned")}</span>}
         </div>
       )}
     </div>

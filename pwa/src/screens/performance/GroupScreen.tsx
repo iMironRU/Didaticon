@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useLocale } from "../../locale.js";
 import type { UnitGroup, UnitLeaf } from "@eios/contracts";
 import { UnitCard } from "./PerformanceTab.js";
 
@@ -9,11 +10,12 @@ interface Props {
 }
 
 export function GroupScreen({ group, onBack, onUnit }: Props) {
+  const { t } = useLocale();
   return (
     <>
       <div style={st.subHeader}>
         <button style={st.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
+          <span style={{ fontSize: 20 }}>‹</span> {t("back")}
         </button>
         <div style={st.subHeaderTitle}>{group.code} · {group.title}</div>
       </div>

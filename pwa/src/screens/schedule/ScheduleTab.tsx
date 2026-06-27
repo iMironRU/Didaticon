@@ -3,6 +3,7 @@ import type { ScheduleSlot, TrajectoryLesson } from "@eios/contracts";
 import { LESSON_TYPE_LABEL, LESSON_TYPE_COLOR } from "../../utils/grade.js";
 import { hexToRgba, } from "../../utils/color.js";
 import { startOfWeek, sameDay, formatDay } from "../../utils/date.js";
+import { useLocale } from "../../locale.js";
 
 // ── Тип объединённого слота (расписание + траектория) ─────────────────────────
 export interface ScheduleItem {
@@ -60,6 +61,7 @@ function weekOf(selected: string): string[] {
 // ── Компоненты ────────────────────────────────────────────────────────────────
 
 export function ScheduleTab({ items, fromDate, toDate, today, view, onViewChange, selectedDate, onDateChange, onItem }: Props) {
+  const { t } = useLocale();
   const stripDates = dateRange(fromDate, toDate);
   const weekDates  = weekOf(selectedDate);
 
@@ -76,8 +78,8 @@ export function ScheduleTab({ items, fromDate, toDate, today, view, onViewChange
     <div>
       {/* Тоггл день/неделя */}
       <div style={st.toggle}>
-        <button style={{ ...st.toggleBtn, ...(view === "day"  ? st.toggleActive : {}) }} onClick={() => onViewChange("day")}>День</button>
-        <button style={{ ...st.toggleBtn, ...(view === "week" ? st.toggleActive : {}) }} onClick={() => onViewChange("week")}>Неделя</button>
+        <button style={{ ...st.toggleBtn, ...(view === "day"  ? st.toggleActive : {}) }} onClick={() => onViewChange("day")}>{t("day")}</button>
+        <button style={{ ...st.toggleBtn, ...(view === "week" ? st.toggleActive : {}) }} onClick={() => onViewChange("week")}>{t("week")}</button>
       </div>
 
       {/* Горизонтальная полоса дней */}
@@ -111,14 +113,14 @@ export function ScheduleTab({ items, fromDate, toDate, today, view, onViewChange
       {/* Заголовок периода */}
       <div style={st.sectionLabel}>
         {view === "day"
-          ? (selectedDate === today ? "Сегодня" : formatDay(selDt))
+          ? (selectedDate === today ? t("today") : formatDay(selDt))
           : `${formatDay(week0Dt)} — ${formatDay(week6Dt)}`
         }
       </div>
 
       {/* Карточки занятий */}
       {visibleItems.length === 0
-        ? <div style={st.empty}>Нет занятий</div>
+        ? <div style={st.empty}>{t("noLessons")}</div>
         : visibleItems.map(item => (
           <LessonCard
             key={item.slot.slotId}
@@ -143,6 +145,7 @@ interface CardProps {
 }
 
 export function LessonCard({ item, today, showDate, onOpen }: CardProps) {
+  const { t } = useLocale();
   const { date, slot, lesson } = item;
 
   const lessonType = lesson?.lessonType ?? "лекция";
@@ -174,9 +177,9 @@ export function LessonCard({ item, today, showDate, onOpen }: CardProps) {
           {topic}
         </div>
         {slot.hasControl && !isFuture && (
-          <div style={st.cardControl}>Контроль</div>
+          <div style={st.cardControl}>{t("controlSection")}</div>
         )}
-        {isFuture && <div style={st.cardLocked}>Ещё не доступно</div>}
+        {isFuture && <div style={st.cardLocked}>{t("notAvailable")}</div>}
       </div>
       {!isFuture && <div style={st.cardChevron}>›</div>}
       {isDone && <div style={st.doneDot} />}

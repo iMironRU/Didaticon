@@ -4,6 +4,7 @@ import type { TrajectoryLesson, ScheduleSlot, AttendanceResult } from "@eios/con
 import { LESSON_TYPE_LABEL, LESSON_TYPE_COLOR } from "../../utils/grade.js";
 import { hexToRgba } from "../../utils/color.js";
 import { formatIsoDate } from "../../utils/date.js";
+import { useLocale } from "../../locale.js";
 
 interface Props {
   lesson:    TrajectoryLesson;
@@ -15,13 +16,14 @@ interface Props {
   onRatingSubmit?: (criteria: { id: string; value: boolean }[]) => void;
 }
 
-const ATT_INFO: Record<AttendanceResult, { icon: string; label: string; color: string }> = {
-  "присутствовал":       { icon: "✓", label: "Присутствовал",           color: "var(--c-success)" },
-  "отсутствовал_уважит": { icon: "○", label: "Отсутствовал (уважит.)",  color: "var(--c-accent)"  },
-  "отсутствовал":        { icon: "✗", label: "Отсутствовал",            color: "var(--c-danger)"  },
-};
-
 export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaunch, onRatingSubmit }: Props) {
+  const { t } = useLocale();
+
+  const ATT_INFO: Record<AttendanceResult, { icon: string; label: string; color: string }> = {
+    "присутствовал":       { icon: "✓", label: t("present"),      color: "var(--c-success)" },
+    "отсутствовал_уважит": { icon: "○", label: t("absentExcused"), color: "var(--c-accent)"  },
+    "отсутствовал":        { icon: "✗", label: t("absent"),        color: "var(--c-danger)"  },
+  };
   const typeColor = LESSON_TYPE_COLOR[lesson.lessonType];
   const typeLabel = LESSON_TYPE_LABEL[lesson.lessonType];
 
@@ -64,7 +66,7 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
       {/* Sub-шапка */}
       <div style={st.subHeader}>
         <button style={st.backBtn} onClick={onBack}>
-          <span style={{ fontSize: 20 }}>‹</span> Назад
+          <span style={{ fontSize: 20 }}>‹</span> {t("back")}
         </button>
         <div style={st.subHeaderTitle}>{unitTitle}</div>
       </div>
@@ -82,7 +84,7 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
           </div>
           <div style={st.lessonTopic}>{lesson.topic}</div>
           {lesson.accessPolicy === "campus_only" && (
-            <div style={st.campusNote}>🏫 Только из сети вуза</div>
+            <div style={st.campusNote}>{t("campusOnly")}</div>
           )}
         </div>
 
@@ -100,14 +102,14 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
             }}
             onClick={lesson.packageUrl ? onLaunch : undefined}
           >
-            {lesson.status === "done" ? "↺  Открыть занятие снова" : "►  Открыть занятие"}
+            {lesson.status === "done" ? t("openLessonAgain") : t("openLesson")}
           </button>
         )}
 
         {/* Педагог */}
         {slot?.teacher && (
           <div style={st.block}>
-            <div style={st.blockLabel}>Педагог</div>
+            <div style={st.blockLabel}>{t("teacherSection")}</div>
             <div style={st.teacherCard}>
               <div style={st.teacherName}>{slot.teacher.name}</div>
               <div style={st.teacherMeta}>
@@ -119,14 +121,14 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
 
         {/* Посещаемость */}
         <div style={st.block}>
-          <div style={st.blockLabel}>Посещаемость</div>
+          <div style={st.blockLabel}>{t("attendanceSection")}</div>
           {attResult ? (
             <div style={{ ...st.attChip, color: ATT_INFO[attResult].color, borderColor: ATT_INFO[attResult].color }}>
               <span>{ATT_INFO[attResult].icon}</span> {ATT_INFO[attResult].label}
             </div>
           ) : (
             <div style={{ ...st.attChip, color: "var(--c-text-dim)", borderColor: "var(--c-border)" }}>
-              — Ожидается
+              — {t("attPending")}
             </div>
           )}
         </div>
@@ -134,7 +136,7 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
         {/* Задания (DeferredObligations) */}
         {openObligations.length > 0 && (
           <div style={st.block}>
-            <div style={st.blockLabel}>Задания</div>
+            <div style={st.blockLabel}>{t("tasksSection")}</div>
             {openObligations.map(o => (
               <div key={o.obligationId} style={st.obligationRow}>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -146,10 +148,10 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: 600,
                     color: o.status === "submitted" ? "var(--c-accent)" : "var(--c-danger)" }}>
-                    {o.status === "submitted" ? "На проверке" : "Не выполнено"}
+                    {o.status === "submitted" ? t("onReview") : t("notDone")}
                   </span>
                   {o.packageUrl && o.status === "open" && (
-                    <button style={st.obligationBtn}>Выполнить →</button>
+                    <button style={st.obligationBtn}>{t("doTask")}</button>
                   )}
                 </div>
               </div>
@@ -160,14 +162,14 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
         {/* Контроль по событиям */}
         {displayEvents.length > 0 && (
           <div style={st.block}>
-            <div style={st.blockLabel}>Контроль</div>
+            <div style={st.blockLabel}>{t("controlSection")}</div>
             {displayEvents.map((ev, i) => (
               <div key={ev.eventId} style={{ ...st.eventBlock, marginTop: i > 0 ? 8 : 0 }}>
                 {displayEvents.length > 1 && (
                   <div style={st.eventTypeLabel}>
-                    {ev.kind === "модуль"    ? (ev.label ?? "Модуль")
-                   : ev.kind === "аттестация" ? "Аттестация"
-                   : "Занятие"}
+                    {ev.kind === "модуль"    ? (ev.label ?? t("eventModule"))
+                   : ev.kind === "аттестация" ? t("eventAttestation")
+                   : t("eventLesson")}
                   </div>
                 )}
                 {ev.controls.map((ctrl, j) => (
@@ -179,7 +181,7 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
                              <span style={{ color: "var(--c-text-muted)", fontSize: "0.7rem" }}>/{ctrl.maxScore}</span></>
                         : ctrl.maxScore
                           ? <span style={{ color: "var(--c-text-dim)" }}>— / {ctrl.maxScore}</span>
-                          : <span style={{ color: "var(--c-text-dim)" }}>— ожидается</span>
+                          : <span style={{ color: "var(--c-text-dim)" }}>{t("awaitingResult")}</span>
                       }
                     </span>
                   </div>
@@ -192,9 +194,9 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
         {/* Оценить занятие */}
         {ratingCriteria && (
           <div style={st.block}>
-            <div style={st.blockLabel}>Оценить занятие</div>
+            <div style={st.blockLabel}>{t("ratingSection")}</div>
             {ratingDone ? (
-              <div style={st.ratingDone}>✓ Спасибо за оценку!</div>
+              <div style={st.ratingDone}>{t("ratingDone")}</div>
             ) : (
               <>
                 {ratingCriteria.map(c => (
@@ -214,7 +216,7 @@ export function LessonScreen({ lesson, slot, slotDate, unitTitle, onBack, onLaun
                 ))}
                 {allRated && (
                   <button style={st.ratingSubmit} onClick={submitRating}>
-                    Отправить оценку
+                    {t("submitRating")}
                   </button>
                 )}
               </>
