@@ -29,7 +29,17 @@ export function App() {
         if (d.oidcEnabled != null) patch.oidcEnabled = d.oidcEnabled;
         if (d.logoUrl     != null) patch.logoUrl     = d.logoUrl;
         if (d.lkUrl       != null) patch.lkUrl       = d.lkUrl;
+        if (d.orgName     != null) patch.orgName     = d.orgName;
+        if (d.brandColor  != null) patch.brandColor  = d.brandColor;
+        if (d.supportEmail != null) patch.supportEmail = d.supportEmail;
+        if (d.supportPhone != null) patch.supportPhone = d.supportPhone;
+        if (d.supportHours != null) patch.supportHours = d.supportHours;
+        if (d.footerText  != null) patch.footerText  = d.footerText;
         setRemoteBranding(patch);
+        // Применяем акцентный цвет как CSS-переменную
+        if (d.brandColor && /^#[0-9a-fA-F]{6}$/.test(d.brandColor)) {
+          document.documentElement.style.setProperty("--c-accent", d.brandColor);
+        }
         // Обновляем фавикон если организация задала свой логотип
         if (d.logoUrl) {
           const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');

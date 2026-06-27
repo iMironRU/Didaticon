@@ -39,12 +39,28 @@ registerAdmin(app, { cfg, settings });
 app.get("/branding", async () => {
   const accessInfo  = settings.get("BRANDING_ACCESS_INFO");
   const lkUrl       = settings.get("BRANDING_LK_URL");
+  const orgName     = settings.get("BRANDING_ORG_NAME");
+  const brandColor  = settings.get("BRANDING_COLOR");
+  const logoUrl     = settings.get("BRANDING_LOGO_URL");
+  const supportEmail = settings.get("BRANDING_SUPPORT_EMAIL");
+  const supportPhone = settings.get("BRANDING_SUPPORT_PHONE");
+  const supportHours = settings.get("BRANDING_SUPPORT_HOURS");
+  const footerText  = settings.get("BRANDING_FOOTER_TEXT");
+  const lessonRatingRaw = settings.get("LESSON_RATING_ENABLED");
   const oidcIssuer  = settings.get("OIDC_ISSUER")       ?? cfg.oidcIssuer  ?? null;
   const oidcClientId = settings.get("OIDC_CLIENT_ID")   ?? null;
   const oidcRedirectUri = settings.get("OIDC_REDIRECT_URI") ?? null;
   return {
-    accessInfo: accessInfo ?? null,
-    lkUrl: lkUrl ?? null,
+    accessInfo:   accessInfo   ?? null,
+    lkUrl:        lkUrl        ?? null,
+    orgName:      orgName      ?? null,
+    brandColor:   brandColor   ?? null,
+    logoUrl:      logoUrl      ?? null,
+    supportEmail: supportEmail ?? null,
+    supportPhone: supportPhone ?? null,
+    supportHours: supportHours ?? null,
+    footerText:   footerText   ?? null,
+    lessonRatingEnabled: lessonRatingRaw != null ? lessonRatingRaw !== "false" : null,
     oidcEnabled: !!(oidcIssuer && oidcClientId),
     oidc: oidcIssuer ? { issuer: oidcIssuer, clientId: oidcClientId, redirectUri: oidcRedirectUri } : null,
   };

@@ -16,19 +16,27 @@ interface AdmZipInstance {
 }
 
 // Ключи конфига которые можно менять через admin UI.
-// Метки для отображения и признак "требует рестарта".
-const CONFIG_KEYS: { key: string; label: string; secret?: boolean; restart?: boolean; html?: boolean }[] = [
-  { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)", restart: true },
-  { key: "OIDC_CLIENT_ID",         label: "OIDC Client ID (для PWA)", restart: true },
-  { key: "OIDC_CLIENT_SECRET",     label: "OIDC Client Secret", secret: true, restart: true },
-  { key: "OIDC_REDIRECT_URI",      label: "OIDC Redirect URI (домен/callback)", restart: true },
-  { key: "OIDC_JWKS_URL",          label: "JWKS URL (обычно OIDC Issuer + /jwks)", restart: true },
-  { key: "OIDC_AUDIENCE",          label: "OIDC Audience", restart: true },
-  { key: "UNIVERKON_RPC_URL",       label: "Univerkon JSON-RPC URL" },
-  { key: "UNIVERKON_SERVICE_TOKEN", label: "Сервисный токен Univerkon", secret: true },
-  { key: "EIOS_DOMAIN",            label: "Домен ЭИОС", restart: true },
-  { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)", html: true },
-  { key: "BRANDING_LK_URL",        label: "Ссылка на личный кабинет (ЛК)" },
+// tab: "connect" | "brand" | "settings" — для разбивки по вкладкам.
+const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; restart?: boolean; html?: boolean; note?: string }[] = [
+  { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)",          tab: "connect", restart: true },
+  { key: "OIDC_CLIENT_ID",         label: "OIDC Client ID (для PWA)",             tab: "connect", restart: true },
+  { key: "OIDC_CLIENT_SECRET",     label: "OIDC Client Secret",                   tab: "connect", secret: true, restart: true },
+  { key: "OIDC_REDIRECT_URI",      label: "OIDC Redirect URI (домен/callback)",   tab: "connect", restart: true },
+  { key: "OIDC_JWKS_URL",          label: "JWKS URL (обычно OIDC Issuer + /jwks)",tab: "connect", restart: true },
+  { key: "OIDC_AUDIENCE",          label: "OIDC Audience",                        tab: "connect", restart: true },
+  { key: "UNIVERKON_RPC_URL",       label: "Univerkon JSON-RPC URL",              tab: "connect" },
+  { key: "UNIVERKON_SERVICE_TOKEN", label: "Сервисный токен Univerkon",            tab: "connect", secret: true },
+  { key: "EIOS_DOMAIN",            label: "Домен ЭИОС",                           tab: "connect", restart: true },
+  { key: "BRANDING_ORG_NAME",      label: "Название организации",                 tab: "brand" },
+  { key: "BRANDING_COLOR",         label: "Акцентный цвет (hex, напр. #4B9EE5)", tab: "brand" },
+  { key: "BRANDING_LOGO_URL",      label: "URL логотипа (svg/png)",               tab: "brand" },
+  { key: "BRANDING_LK_URL",        label: "Ссылка на личный кабинет (ЛК)",        tab: "brand" },
+  { key: "BRANDING_SUPPORT_EMAIL", label: "Email поддержки",                      tab: "brand" },
+  { key: "BRANDING_SUPPORT_PHONE", label: "Телефон поддержки",                    tab: "brand" },
+  { key: "BRANDING_SUPPORT_HOURS", label: "Часы работы поддержки",                tab: "brand" },
+  { key: "BRANDING_FOOTER_TEXT",   label: "Текст подвала",                        tab: "brand" },
+  { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)",   tab: "brand", html: true },
+  { key: "LESSON_RATING_ENABLED",  label: "Оценка занятий",                       tab: "settings", note: "true / false" },
 ];
 
 function requireAdmin(cfg: Config, req: FastifyRequest, reply: FastifyReply): boolean {
@@ -80,9 +88,11 @@ export function registerAdmin(
     return CONFIG_KEYS.map((k) => ({
       key:     k.key,
       label:   k.label,
+      tab:     k.tab,
       secret:  k.secret ?? false,
       restart: k.restart ?? false,
       html:    k.html ?? false,
+      note:    k.note ?? null,
       envValue: k.secret ? "****" : (process.env[k.key] ?? ""),
       savedValue: saved[k.key] ?? null,
       effectiveValue: k.secret ? "****" : (saved[k.key] ?? process.env[k.key] ?? ""),
