@@ -109,7 +109,6 @@ function LoginScreen({
   branding: Branding;
 }) {
   const [screen, setScreen] = useState<"login" | "access">("login");
-  const [demoExpanded, setDemoExpanded] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
@@ -149,38 +148,20 @@ function LoginScreen({
           }
         </button>
 
-        {!demoExpanded ? (
+        <div style={r.demoRow}>
           <button
-            style={{ ...r.demoBtn, borderColor: hex20(b), color: hex80(b) }}
-            onClick={() => setDemoExpanded(true)}
+            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+            onClick={() => { window.location.href = window.location.pathname + "?demo=student"; }}
           >
-            <DemoIcon /> Демо-режим
+            👨‍🎓 Студент
           </button>
-        ) : (
-          <div style={{ ...r.demoPicker, borderColor: hex20(b) }}>
-            <div style={{ ...r.demoPickerLabel, color: hex80(b) }}>Выберите роль для демо</div>
-            <div style={r.demoPickerRow}>
-              <button
-                style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-                onClick={() => { window.location.href = window.location.pathname + "?demo=student"; }}
-              >
-                👨‍🎓 Студент
-              </button>
-              <button
-                style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-                onClick={() => { window.location.href = window.location.pathname + "?demo=parent"; }}
-              >
-                👨‍👧 Родитель
-              </button>
-            </div>
-            <button
-              style={{ ...r.demoCancelBtn, color: hex80(b) }}
-              onClick={() => setDemoExpanded(false)}
-            >
-              Отмена
-            </button>
-          </div>
-        )}
+          <button
+            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+            onClick={() => { window.location.href = window.location.pathname + "?demo=parent"; }}
+          >
+            👨‍👧 Родитель
+          </button>
+        </div>
 
         {!oidcReady && (
           <div style={r.warnBox}>
@@ -388,37 +369,8 @@ const r: Record<string, React.CSSProperties> = {
     marginRight: 10,
     flexShrink: 0,
   },
-  demoBtn: {
+  demoRow: {
     marginTop: 10,
-    width: "100%",
-    background: "none",
-    border: "0.5px solid",
-    borderRadius: 10,
-    fontSize: "0.88rem",
-    fontWeight: 500,
-    padding: "11px 20px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    letterSpacing: "0.02em",
-  },
-  demoPicker: {
-    marginTop: 10,
-    width: "100%",
-    background: "none",
-    border: "0.5px solid",
-    borderRadius: 10,
-    padding: "12px 14px",
-  },
-  demoPickerLabel: {
-    fontSize: "0.72rem",
-    fontWeight: 600,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase" as const,
-    marginBottom: 10,
-  },
-  demoPickerRow: {
     display: "flex",
     gap: 8,
   },
@@ -426,10 +378,10 @@ const r: Record<string, React.CSSProperties> = {
     flex: 1,
     background: "none",
     border: "0.5px solid",
-    borderRadius: 8,
-    fontSize: "0.85rem",
+    borderRadius: 10,
+    fontSize: "0.88rem",
     fontWeight: 500,
-    padding: "10px 0",
+    padding: "11px 0",
     cursor: "pointer",
   },
   demoCancelBtn: {
