@@ -131,6 +131,7 @@
   <h1>ЭИОС</h1><span class="sub">Панель администрирования</span>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="user-badge" style="font-size:.82rem;color:var(--text-2)"></span>
+    <a href="/" class="btn btn-secondary btn-sm" id="btn-cabinet">← Кабинет</a>
     <button class="btn btn-secondary btn-sm" id="btn-logout" style="display:none" onclick="logout()">Выйти</button>
   </div>
 </header>
@@ -272,7 +273,6 @@
 </div>
 
 <footer>
-  <a href="/">← Студенческий кабинет</a>
   <div id="admin-status-bar" style="margin-top:8px;font-size:.72rem;color:var(--text-3);display:flex;align-items:center;justify-content:center;gap:12px">
     <span id="admin-update-btn" style="display:none">
       <button onclick="applyAdminUpdate()" style="background:var(--accent);color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:.72rem;cursor:pointer">↑ Обновить страницу</button>
