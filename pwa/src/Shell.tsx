@@ -184,7 +184,8 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
     inner = (
       <>
         <Header person={person} learner={learner} unreadCount={unreadCount}
-          onBell={() => navigate({ name: "profile" })}
+          onBell={() => navigate({ name: "notifications" })}
+          onProfileTap={() => navigate({ name: "profile" })}
           onContextTap={() => history.back()}
           contextLabel={person.personType === "parent" ? t("myChildren") : t("learnersTitle")}
         />
@@ -227,7 +228,8 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
           person={person}
           learner={learner}
           unreadCount={unreadCount}
-          onBell={() => navigate({ name: "profile" })}
+          onBell={() => navigate({ name: "notifications" })}
+          onProfileTap={() => navigate({ name: "profile" })}
           onContextTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
         />
         <div style={st.body}>
@@ -287,12 +289,13 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
 }
 
 // ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ person, learner, unreadCount, onBell, onContextTap, contextLabel }: {
+function Header({ person, learner, unreadCount, onBell, onContextTap, onProfileTap, contextLabel }: {
   person:        Person;
   learner:       Learner;
   unreadCount:   number;
   onBell:        () => void;
   onContextTap?: () => void;
+  onProfileTap?: () => void;
   contextLabel?: string;
 }) {
   const initials = (person.lastName[0] ?? "") + (person.firstName[0] ?? "");
@@ -325,7 +328,9 @@ function Header({ person, learner, unreadCount, onBell, onContextTap, contextLab
         <BellIcon />
         {unreadCount > 0 && <span style={st.bellBadge}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
-      <div style={st.avatar}>{initials}</div>
+      <button style={st.avatarBtn} onClick={onProfileTap}>
+        <div style={st.avatar}>{initials}</div>
+      </button>
     </header>
   );
 }
@@ -408,7 +413,8 @@ const st: Record<string, CSSProperties> = {
   bellBtn:      { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "var(--c-text-secondary)", padding: 4, flexShrink: 0 },
   bellBadge:    { position: "absolute" as const, top: 0, right: 0, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
   navBadge:     { position: "absolute" as const, top: -3, right: -6, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
-  avatar:       { width: 28, height: 28, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  avatarBtn:    { background: "none", border: "none", padding: 0, cursor: "pointer", flexShrink: 0, borderRadius: "50%" },
+  avatar:       { width: 28, height: 28, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" },
   bottomNav:    { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem:      { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel:     { fontSize: "0.62rem", fontWeight: 500 },
