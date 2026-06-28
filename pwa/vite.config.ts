@@ -30,7 +30,7 @@ export default defineConfig({
       // manifest читается из public/manifest.webmanifest — не дублируем здесь.
       manifest: false,
       workbox: {
-        globPatterns: ["**/*.{js,css,html}"],
+        globPatterns: ["**/*.{js,css}"],
         runtimeCaching: [
           {
             // SCORM-пакеты: кешируем агрессивно (CacheFirst) — контент статичен.
