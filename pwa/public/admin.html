@@ -143,7 +143,7 @@
     <label>Токен администратора (ADMIN_TOKEN)</label>
     <input type="password" id="inp-token" placeholder="Введите токен…" onkeydown="if(event.key==='Enter')doLogin()">
   </div>
-  <div id="login-error" class="alert alert-err hidden"></div>
+  <div id="login-error" style="display:none" class="alert alert-err"></div>
   <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Войти</button>
 </div>
 
@@ -513,7 +513,9 @@ function esc(s) {
   return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 function showErr(id, msg) {
-  document.getElementById(id).innerHTML = `<div class="alert alert-err">${esc(msg)}</div>`;
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="alert alert-err">${esc(msg)}</div>`;
+  el.style.display = "";
 }
 
 if (TOKEN) doLogin();
