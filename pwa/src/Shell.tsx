@@ -25,14 +25,12 @@ import { NotificationsScreen, NotificationDetailScreen } from "./screens/notific
 import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "./components/icons/index.js";
 import { Header, ContextSwitcher, ContextLabel } from "./shell/Header.js";
 import { BottomNav } from "./shell/BottomNav.js";
+import * as source from "./data/source.js";
 
 interface Props {
-  person:        Person;
-  scheduleMap:   Map<string, ScheduleResponse>;    // learnerId → ScheduleResponse
-  gradebookMap:  Map<string, GradebookResponse>;   // learnerId → GradebookResponse
-  notifications: NotificationsResponse;
-  lkUrl?:        string;
-  onLogout?:     () => void;
+  role:      source.Role;     // "student" | "parent" — данные тянем из data/source
+  lkUrl?:    string;
+  onLogout?: () => void;
 }
 
 // ── Утилиты ───────────────────────────────────────────────────────────────────
@@ -90,7 +88,11 @@ function findGroupById(units: CurriculumUnit[], id: string): UnitGroup | null {
 }
 
 // ── Главный компонент ─────────────────────────────────────────────────────────
-export function Shell({ person, scheduleMap, gradebookMap, notifications: notifProp, lkUrl, onLogout }: Props) {
+export function Shell({ role, lkUrl, onLogout }: Props) {
+  const person        = source.getPerson(role);
+  const scheduleMap   = source.getScheduleMap();
+  const gradebookMap  = source.getGradebookMap();
+  const notifProp     = source.getNotifications();
   const route = useRoute();
   const { t, locale, changeLocale } = useLocale();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);

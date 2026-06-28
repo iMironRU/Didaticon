@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, loginAs, logout, getUser, type EiosRole } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
-import { DemoShell } from "./DemoShell.js";
-import { DEFAULT_BRANDING, type Branding } from "./config.js";
+import { Shell } from "./Shell.js";
 import { TeacherShell } from "./TeacherShell.js";
-import { MOCK_TEACHER_SCHEDULE, MOCK_ATTENDANCE } from "./mocks/index.js";
+import { LocaleProvider } from "./locale.js";
+import { DEFAULT_BRANDING, type Branding } from "./config.js";
 
 type AuthState =
   | { phase: "checking" }
@@ -101,22 +101,29 @@ export function App() {
   };
 
   if (auth.phase === "authenticated") {
-    if (USE_MOCK) {
-      return <DemoShell onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} persona={DEMO_PERSONA} />;
-    }
-    if (auth.role === "teacher") {
+    const role = USE_MOCK ? DEMO_PERSONA : auth.role;
+    const lkUrl = branding.lkUrl ?? undefined;
+
+    if (role === "teacher") {
       return (
         <TeacherShell
-          teacherName={auth.name}
-          schedule={MOCK_TEACHER_SCHEDULE}
-          attendance={MOCK_ATTENDANCE}
-          eiv="000000"
-          lkUrl={branding.lkUrl ?? undefined}
+          authName={USE_MOCK ? "" : auth.name}
+          lkUrl={lkUrl}
           onLogout={handleLogout}
         />
       );
     }
-    return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
+
+    // Реальный студент пока на legacy Trajectory (этап 7 закроет миграцию).
+    if (!USE_MOCK) {
+      return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={lkUrl} />;
+    }
+
+    return (
+      <LocaleProvider>
+        <Shell role={role} lkUrl={lkUrl} onLogout={handleLogout} />
+      </LocaleProvider>
+    );
   }
 
   return <LoginScreen auth={auth} onLogin={handleLogin} branding={branding} />;

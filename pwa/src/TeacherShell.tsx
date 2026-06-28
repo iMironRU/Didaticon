@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import type { TeacherScheduleResponse, TeacherScheduleSlot, AttendanceResponse } from "@eios/contracts";
+import type { TeacherScheduleSlot } from "@eios/contracts";
 import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
 import { CalIcon, PersonIcon } from "./components/icons/index.js";
 import { TeacherScheduleTab } from "./screens/teacher/TeacherScheduleTab.js";
@@ -9,20 +9,23 @@ import { onSwUpdate } from "./sw-update.js";
 import { StatusBar } from "./shell/StatusBar.js";
 import { Header, ContextLabel } from "./shell/Header.js";
 import { BottomNav } from "./shell/BottomNav.js";
+import * as source from "./data/source.js";
 import { useEffect } from "react";
 
 type TeacherTab = "schedule" | "tasks" | "profile";
 
 interface Props {
-  teacherName: string;
-  schedule:    TeacherScheduleResponse;
-  attendance:  Record<string, AttendanceResponse>;
-  eiv:         string;
-  lkUrl?:      string;
-  onLogout?:   () => void;
+  /** ФИО из auth; пустая строка → demo-режим, source подставит мок-педагога */
+  authName: string;
+  lkUrl?:   string;
+  onLogout?: () => void;
 }
 
-export function TeacherShell({ teacherName, schedule, attendance, eiv, lkUrl, onLogout }: Props) {
+export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
+  const { name: teacherName, eiv } = source.getTeacherIdentity(authName);
+  const schedule   = source.getTeacherSchedule();
+  const attendance = source.getAttendance();
+
   const [tab, setTab]           = useState<TeacherTab>("schedule");
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [swUpdate, setSwUpdate] = useState(false);
