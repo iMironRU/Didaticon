@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
-import type { TeacherScheduleSlot } from "@eios/contracts";
+import type { TeacherScheduleResponse, TeacherScheduleSlot } from "@eios/contracts";
 import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
 import { CalIcon, PersonIcon } from "./components/icons/index.js";
 import { TeacherScheduleTab } from "./screens/teacher/TeacherScheduleTab.js";
@@ -9,10 +9,18 @@ import { onSwUpdate } from "./sw-update.js";
 import { StatusBar } from "./shell/StatusBar.js";
 import { Header, ContextLabel } from "./shell/Header.js";
 import { BottomNav } from "./shell/BottomNav.js";
+import { useRoute, navigate } from "./router.js";
+import { canAccess, defaultRoute } from "./permissions.js";
 import * as source from "./data/source.js";
-import { useEffect } from "react";
 
-type TeacherTab = "schedule" | "tasks" | "profile";
+function findSlotById(schedule: TeacherScheduleResponse, slotId: string): { slot: TeacherScheduleSlot; date: string } | null {
+  for (const day of schedule.days) {
+    for (const slot of day.slots) {
+      if (slot.slotId === slotId) return { slot, date: day.date };
+    }
+  }
+  return null;
+}
 
 interface Props {
   /** ФИО из auth; пустая строка → demo-режим, source подставит мок-педагога */
@@ -26,37 +34,48 @@ export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
   const schedule   = source.getTeacherSchedule();
   const attendance = source.getAttendance();
 
-  const [tab, setTab]           = useState<TeacherTab>("schedule");
+  const route = useRoute();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
-  const [swUpdate, setSwUpdate] = useState(false);
-  const [lessonState, setLessonState] = useState<{ slot: TeacherScheduleSlot; date: string } | null>(null);
+  const [swUpdate, setSwUpdate]   = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => { onSwUpdate(s => setSwUpdate(s === "available")); }, []);
+  // Если педагог попал на чужой маршрут (например, набрал #/gradebook) — редиректим
+  useEffect(() => {
+    if (!canAccess("teacher", route)) navigate(defaultRoute("teacher"));
+  }, [route]);
+
   function handleThemeChange(mode: ThemeMode) { setTheme(mode); setThemeMode(mode); }
 
   const initials = teacherName.split(" ").map(w => w[0]).slice(0, 2).join("");
+  const tab: "schedule" | "tasks" | "profile" =
+    route.name === "tasks" || route.name === "profile" ? route.name : "schedule";
 
-  if (lessonState) {
-    const att = attendance[lessonState.slot.slotId]?.students ?? [];
-    return (
-      <div style={st.root}>
-        <TeacherLessonScreen
-          slot={lessonState.slot}
-          date={lessonState.date}
-          students={att}
-          onBack={() => setLessonState(null)}
-        />
-        <StatusBar swUpdate={swUpdate} eiv={eiv} />
-      </div>
-    );
+  // Экран урока (route.name === "lesson") берёт верх над основной разметкой
+  if (route.name === "lesson") {
+    const found = findSlotById(schedule, route.id);
+    if (found) {
+      const att = attendance[found.slot.slotId]?.students ?? [];
+      return (
+        <div style={st.root}>
+          <TeacherLessonScreen
+            slot={found.slot}
+            date={found.date}
+            students={att}
+            onBack={() => history.back()}
+          />
+          <StatusBar swUpdate={swUpdate} eiv={eiv} />
+        </div>
+      );
+    }
   }
 
   return (
     <div style={st.root}>
       <Header
         initials={initials}
+        onAvatarTap={() => navigate({ name: "profile" })}
         middle={<ContextLabel text="Педагог" />}
       />
 
@@ -66,7 +85,7 @@ export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
           <TeacherScheduleTab
             schedule={schedule}
             today={today}
-            onLesson={(slot, date) => setLessonState({ slot, date })}
+            onLesson={(slot) => navigate({ name: "lesson", id: slot.slotId })}
           />
         )}
         {tab === "tasks" && (
@@ -89,7 +108,7 @@ export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
 
       <BottomNav
         activeId={tab}
-        onTap={(id) => setTab(id as TeacherTab)}
+        onTap={(id) => navigate({ name: id as "schedule" | "tasks" | "profile" })}
         tabs={[
           { id: "schedule", label: "Расписание", icon: <CalIcon /> },
           { id: "tasks",    label: "Задания",    icon: <span style={{ fontSize: 20 }}>📋</span> },

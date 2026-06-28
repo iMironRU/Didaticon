@@ -5,6 +5,7 @@ export type Route =
   | { name: "schedule" }
   | { name: "performance" }
   | { name: "gradebook" }
+  | { name: "tasks" }          // педагог: очередь заданий на проверку
   | { name: "profile" }
   | { name: "contexts" }
   | { name: "notifications" }
@@ -28,6 +29,7 @@ export function parseHash(hash: string): Route {
   // новые маршруты
   if (seg0 === "performance")   return { name: "performance" };
   if (seg0 === "gradebook")     return { name: "gradebook" };
+  if (seg0 === "tasks")         return { name: "tasks" };
   if (seg0 === "profile")       return { name: "profile" };
   if (seg0 === "contexts")      return { name: "contexts" };
   if (seg0 === "notifications") return seg1 ? { name: "notification", id: seg1 } : { name: "notifications" };
@@ -48,6 +50,7 @@ export function routeToHash(route: Route): string {
     case "schedule":      return "#/";
     case "performance":   return "#/performance";
     case "gradebook":     return "#/gradebook";
+    case "tasks":         return "#/tasks";
     case "profile":       return "#/profile";
     case "contexts":      return "#/contexts";
     case "notifications": return "#/notifications";
