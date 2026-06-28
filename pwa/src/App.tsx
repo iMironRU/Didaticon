@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
-import { login, getStudent } from "./auth/oidc.js";
+import { login, getUser, type EiosRole } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
 import { DemoShell } from "./DemoShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
+import { TeacherShell } from "./TeacherShell.js";
+import { MOCK_TEACHER_SCHEDULE, MOCK_ATTENDANCE } from "./mocks/index.js";
 
 type AuthState =
   | { phase: "checking" }
   | { phase: "anonymous" }
   | { phase: "logging_in" }
   | { phase: "error"; message: string }
-  | { phase: "authenticated"; studentId: StudentId };
+  | { phase: "authenticated"; studentId: StudentId; role: EiosRole; name: string };
 
 const _searchParams = new URLSearchParams(window.location.search);
 const USE_MOCK = import.meta.env.DEV || _searchParams.has("demo");
@@ -20,7 +22,9 @@ const DEMO_PERSONA: "student" | "parent" | "teacher" =
 
 export function App() {
   const [auth, setAuth] = useState<AuthState>(
-    USE_MOCK ? { phase: "authenticated", studentId: "s-mock" as StudentId } : { phase: "checking" }
+    USE_MOCK
+      ? { phase: "authenticated", studentId: "s-mock" as StudentId, role: DEMO_PERSONA as EiosRole, name: "" }
+      : { phase: "checking" }
   );
   const [remoteBranding, setRemoteBranding] = useState<Partial<Branding>>({});
 
@@ -53,12 +57,12 @@ export function App() {
       })
       .catch(() => {});
     if (USE_MOCK) return;
-    getStudent()
-      .then((s) => {
-        if (s) {
+    getUser()
+      .then((u) => {
+        if (u) {
           const returnHash = sessionStorage.getItem("eios_return_hash");
           if (returnHash) { sessionStorage.removeItem("eios_return_hash"); window.location.hash = returnHash; }
-          setAuth({ phase: "authenticated", studentId: s.id });
+          setAuth({ phase: "authenticated", studentId: u.id, role: u.role, name: u.name });
         } else {
           setAuth({ phase: "anonymous" });
         }
@@ -94,6 +98,18 @@ export function App() {
   if (auth.phase === "authenticated") {
     if (USE_MOCK) {
       return <DemoShell onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} persona={DEMO_PERSONA} />;
+    }
+    if (auth.role === "teacher") {
+      return (
+        <TeacherShell
+          teacherName={auth.name}
+          schedule={MOCK_TEACHER_SCHEDULE}
+          attendance={MOCK_ATTENDANCE}
+          eiv="000000"
+          lkUrl={branding.lkUrl ?? undefined}
+          onLogout={handleLogout}
+        />
+      );
     }
     return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={branding.lkUrl ?? undefined} />;
   }

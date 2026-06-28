@@ -5,6 +5,8 @@ import { UserManager, WebStorageStateStore } from "oidc-client-ts";
 import { StudentId } from "@eios/contracts";
 import { config } from "../config.js";
 
+export type EiosRole = "student" | "parent" | "teacher";
+
 const mgr = new UserManager({
   authority: config.oidcIssuer,
   client_id: config.oidcClientId,
@@ -34,10 +36,18 @@ export async function handleCallback(): Promise<void> {
   window.history.replaceState({}, document.title, "/");
 }
 
-export async function getStudent(): Promise<{ id: StudentId } | null> {
+export async function getUser(): Promise<{ id: StudentId; role: EiosRole; name: string } | null> {
   const u = await mgr.getUser();
   if (!u || u.expired) return null;
-  return { id: StudentId(u.profile.sub) };
+  const role = (u.profile["https://eios/role"] as EiosRole | undefined) ?? "student";
+  const name = (u.profile.name as string | undefined) ?? "";
+  return { id: StudentId(u.profile.sub), role, name };
+}
+
+/** @deprecated use getUser() */
+export async function getStudent(): Promise<{ id: StudentId } | null> {
+  const u = await getUser();
+  return u ? { id: u.id } : null;
 }
 
 /** Свежий access_token (или null) для отправки клею в credential. */
