@@ -31,6 +31,9 @@ export default defineConfig({
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css}"],
+        // config.js генерируется nginx'ом из env vars при старте контейнера —
+        // его нельзя кешировать: хеш от placeholder'а не меняется между сборками.
+        globIgnores: ["config.js"],
         runtimeCaching: [
           {
             // SCORM-пакеты: кешируем агрессивно (CacheFirst) — контент статичен.

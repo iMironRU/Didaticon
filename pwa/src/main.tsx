@@ -8,10 +8,10 @@ import { initTheme } from "./theme.js";
 
 async function bootstrap() {
   initTheme();
+  initSwUpdateCheck(); // до любого await — иначе controllerchange может прийти раньше
   if (window.location.pathname === "/callback") {
     await handleCallback();
   }
-  initSwUpdateCheck();
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
       <App />

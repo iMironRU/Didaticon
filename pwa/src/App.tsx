@@ -129,6 +129,7 @@ function LoginScreen({
 }) {
   const [screen, setScreen] = useState<"login" | "access">("login");
   const [demoOpen, setDemoOpen] = useState(false);
+  const [pwCopied, setPwCopied] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
@@ -174,28 +175,6 @@ function LoginScreen({
           }
         </button>
 
-        {/* Демо-режим (анонимный, без Auth0) */}
-        <div style={r.demoRow}>
-          <button
-            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-            onClick={() => { window.location.href = window.location.pathname + "?demo=student"; }}
-          >
-            👨‍🎓 Студент
-          </button>
-          <button
-            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-            onClick={() => { window.location.href = window.location.pathname + "?demo=parent"; }}
-          >
-            👨‍👧 Родитель
-          </button>
-          <button
-            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-            onClick={() => { window.location.href = window.location.pathname + "?demo=teacher"; }}
-          >
-            👨‍🏫 Педагог
-          </button>
-        </div>
-
         {/* Тестовый вход через Auth0 (только если demoEnabled) */}
         {branding.demoEnabled && (
           <div style={r.demoLoginBlock}>
@@ -204,12 +183,26 @@ function LoginScreen({
             </button>
             {demoOpen && (
               <div style={r.demoLoginPanel}>
-                <p style={r.demoLoginHint}>Пароль для всех: <code style={{ color: b }}>Test1234!</code></p>
+                <p style={r.demoLoginHint}>
+                  Пароль для всех:{" "}
+                  <code style={{ color: b }}>Test1234!</code>
+                  <button
+                    style={r.copyBtn}
+                    onClick={() => {
+                      navigator.clipboard.writeText("Test1234!").then(() => {
+                        setPwCopied(true);
+                        setTimeout(() => setPwCopied(false), 1500);
+                      });
+                    }}
+                  >
+                    {pwCopied ? "✓" : "⧉"}
+                  </button>
+                </p>
                 <div style={r.demoLoginBtns}>
                   {DEMO_USERS.map(u => (
                     <button
                       key={u.email}
-                      style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b), flex: "none", width: "100%" }}
+                      style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
                       onClick={() => loginAs(u.email)}
                     >
                       {u.label}
@@ -427,11 +420,6 @@ const r: Record<string, React.CSSProperties> = {
     marginRight: 10,
     flexShrink: 0,
   },
-  demoRow: {
-    marginTop: 10,
-    display: "flex",
-    gap: 8,
-  },
   demoRoleBtn: {
     flex: 1,
     background: "none",
@@ -473,8 +461,17 @@ const r: Record<string, React.CSSProperties> = {
   },
   demoLoginBtns: {
     display: "flex",
-    flexDirection: "column" as const,
-    gap: 6,
+    flexDirection: "row" as const,
+    gap: 8,
+  },
+  copyBtn: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    opacity: 0.7,
+    padding: "0 4px",
+    verticalAlign: "middle",
   },
   demoCancelBtn: {
     marginTop: 10,

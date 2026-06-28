@@ -41,8 +41,11 @@ export function initSwUpdateCheck() {
     });
   });
 
-  // Когда новый SW активировался — перезагружаем страницу
+  // Когда SW СМЕНИЛСЯ (не первая установка) — перезагружаем страницу.
+  // wasControlled=false при первом визите: SW устанавливается впервые,
+  // controllerchange тоже придёт — но перезагрузка там не нужна.
+  const wasControlled = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    window.location.reload();
+    if (wasControlled) window.location.reload();
   });
 }
