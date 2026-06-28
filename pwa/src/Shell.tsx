@@ -22,7 +22,9 @@ import { GradebookTab } from "./screens/gradebook/GradebookTab.js";
 import { ProfileTab } from "./screens/profile/ProfileTab.js";
 import { ContextSwitcherScreen } from "./screens/profile/ContextSwitcherScreen.js";
 import { NotificationsScreen, NotificationDetailScreen } from "./screens/notifications/NotificationsScreen.js";
-import { LogoIcon, BellIcon, CalIcon, BookIcon, GradebookIcon, PersonIcon, SwitchIcon } from "./components/icons/index.js";
+import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "./components/icons/index.js";
+import { Header, ContextSwitcher, ContextLabel } from "./shell/Header.js";
+import { BottomNav } from "./shell/BottomNav.js";
 
 interface Props {
   person:        Person;
@@ -119,6 +121,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   const lessonMap = collectLessons(learner?.units ?? []);
   const schedItems = buildScheduleItems(schedule, lessonMap);
   const unreadCount = notifs.filter(n => !n.read).length;
+  const initials = (person.lastName[0] ?? "") + (person.firstName[0] ?? "");
   const debtCount   = gradebook
     ? gradebook.semesters.flatMap(s => s.entries).filter(
         e => e.finalControl.state === "failed_retake_pending" || e.finalControl.state === "failed_retake_scheduled"
@@ -184,11 +187,11 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   else if (route.name === "contexts") {
     inner = (
       <>
-        <Header person={person} learner={learner} unreadCount={unreadCount}
-          onBell={() => navigate({ name: "notifications" })}
-          onProfileTap={() => navigate({ name: "profile" })}
-          onContextTap={() => history.back()}
-          contextLabel={person.personType === "parent" ? t("myChildren") : t("learnersTitle")}
+        <Header
+          initials={initials}
+          onAvatarTap={() => navigate({ name: "profile" })}
+          bell={{ unreadCount, onTap: () => navigate({ name: "notifications" }) }}
+          middle={<ContextLabel text={person.personType === "parent" ? t("myChildren") : t("learnersTitle")} />}
         />
         <ContextSwitcherScreen
           person={person}
@@ -226,12 +229,17 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
     inner = (
       <>
         <Header
-          person={person}
-          learner={learner}
-          unreadCount={unreadCount}
-          onBell={() => navigate({ name: "notifications" })}
-          onProfileTap={() => navigate({ name: "profile" })}
-          onContextTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+          initials={initials}
+          onAvatarTap={() => navigate({ name: "profile" })}
+          bell={{ unreadCount, onTap: () => navigate({ name: "notifications" }) }}
+          middle={
+            <ContextSwitcher
+              programType={learner.programType}
+              group={learner.group}
+              periodLabel={learner.periodLabel}
+              onTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+            />
+          }
         />
         <div style={st.body}>
           {tab === "schedule" && (
@@ -276,7 +284,16 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
             />
           )}
         </div>
-        <BottomNav tab={tab} debtCount={debtCount} />
+        <BottomNav
+          activeId={tab}
+          onTap={(id) => navigate({ name: id as "schedule" | "performance" | "gradebook" | "profile" })}
+          tabs={[
+            { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
+            { id: "performance", label: t("disciplines"), icon: <BookIcon /> },
+            { id: "gradebook",   label: t("gradebook"),   icon: <GradebookIcon />, badge: debtCount },
+            { id: "profile",     label: t("profile"),     icon: <PersonIcon /> },
+          ]}
+        />
       </>
     );
   }
@@ -289,104 +306,10 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
   );
 }
 
-// ── Шапка ─────────────────────────────────────────────────────────────────────
-function Header({ person, learner, unreadCount, onBell, onContextTap, onProfileTap, contextLabel }: {
-  person:        Person;
-  learner:       Learner;
-  unreadCount:   number;
-  onBell:        () => void;
-  onContextTap?: () => void;
-  onProfileTap?: () => void;
-  contextLabel?: string;
-}) {
-  const initials = (person.lastName[0] ?? "") + (person.firstName[0] ?? "");
-  return (
-    <header style={st.header}>
-      <div style={st.headerLogo}>
-        <LogoIcon />
-        <span style={st.headerTitle}>ЭИОС</span>
-      </div>
-      {contextLabel
-        ? <div style={{ ...st.contextBtn, cursor: "default" as CSSProperties["cursor"] }}>
-            <span style={st.contextName}>{contextLabel}</span>
-          </div>
-        : onContextTap
-          ? <button style={st.contextBtn} onClick={onContextTap}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                <div style={{ minWidth: 0, overflow: "hidden", textAlign: "left" as const }}>
-                  <div style={st.contextName}>{learner.programType} · {learner.group}</div>
-                  <div style={st.contextPeriod}>{learner.periodLabel}</div>
-                </div>
-                <SwitchIcon />
-              </div>
-            </button>
-          : <div style={st.contextBtn}>
-              <div style={st.contextName}>{learner.programType} · {learner.group}</div>
-              <div style={st.contextPeriod}>{learner.periodLabel}</div>
-            </div>
-      }
-      <button style={st.bellBtn} onClick={onBell}>
-        <BellIcon />
-        {unreadCount > 0 && <span style={st.bellBadge}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
-      </button>
-      <button style={st.avatarBtn} onClick={onProfileTap}>
-        <div style={st.avatar}>{initials}</div>
-      </button>
-    </header>
-  );
-}
-
-// ── Нижняя навигация ──────────────────────────────────────────────────────────
-type TabId = "schedule" | "performance" | "gradebook" | "profile";
-
-function BottomNav({ tab, debtCount }: { tab: TabId; debtCount: number }) {
-  const { t } = useLocale();
-  const items: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: "schedule",    label: t("schedule"),    icon: <CalIcon /> },
-    { id: "performance", label: t("disciplines"), icon: <BookIcon /> },
-    { id: "gradebook",   label: t("gradebook"),   icon: <GradebookIcon /> },
-    { id: "profile",     label: t("profile"),     icon: <PersonIcon /> },
-  ];
-  return (
-    <nav style={st.bottomNav}>
-      {items.map(it => {
-        const active = tab === it.id;
-        return (
-          <button key={it.id} style={st.navItem}
-            onClick={() => navigate({ name: it.id })}>
-            <span style={{ position: "relative", display: "inline-flex", color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>
-              {it.icon}
-              {it.id === "gradebook" && debtCount > 0 && (
-                <span style={st.navBadge}>{debtCount > 9 ? "9+" : debtCount}</span>
-              )}
-            </span>
-            <span style={{ ...st.navLabel, color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-// ── Статусная строка ──────────────────────────────────────────────────────────
 // ── Стили ─────────────────────────────────────────────────────────────────────
 const st: Record<string, CSSProperties> = {
-  root:         { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)" },
-  body:         { flex: 1, overflowY: "auto", padding: "12px 16px" },
-  header:       { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
-  headerLogo:   { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
-  headerTitle:  { color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 700 },
-  contextBtn:   { flex: 1, minWidth: 0, background: "none", border: "none", padding: "4px 8px", borderRadius: 8, cursor: "pointer" },
-  contextName:  { color: "var(--c-text-primary)", fontSize: "0.75rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, display: "block" },
-  contextPeriod:{ color: "var(--c-text-muted)", fontSize: "0.62rem", whiteSpace: "nowrap" as const, display: "block" },
-  bellBtn:      { position: "relative" as const, background: "none", border: "none", cursor: "pointer", color: "var(--c-text-secondary)", padding: 4, flexShrink: 0 },
-  bellBadge:    { position: "absolute" as const, top: 0, right: 0, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
-  navBadge:     { position: "absolute" as const, top: -3, right: -6, background: "var(--c-danger)", color: "#fff", borderRadius: "50%", fontSize: "0.55rem", fontWeight: 700, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 2px" },
-  avatarBtn:    { background: "none", border: "none", padding: 0, cursor: "pointer", flexShrink: 0, borderRadius: "50%" },
-  avatar:       { width: 28, height: 28, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" },
-  bottomNav:    { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
-  navItem:      { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
-  navLabel:     { fontSize: "0.62rem", fontWeight: 500 },
+  root: { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)" },
+  body: { flex: 1, overflowY: "auto", padding: "12px 16px" },
 };
 
 // type augmentation для Vite define

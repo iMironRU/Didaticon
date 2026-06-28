@@ -2,11 +2,13 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { TeacherScheduleResponse, TeacherScheduleSlot, AttendanceResponse } from "@eios/contracts";
 import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
-import { LogoIcon, CalIcon, PersonIcon } from "./components/icons/index.js";
+import { CalIcon, PersonIcon } from "./components/icons/index.js";
 import { TeacherScheduleTab } from "./screens/teacher/TeacherScheduleTab.js";
 import { TeacherLessonScreen } from "./screens/teacher/TeacherLessonScreen.js";
 import { onSwUpdate } from "./sw-update.js";
 import { StatusBar } from "./shell/StatusBar.js";
+import { Header, ContextLabel } from "./shell/Header.js";
+import { BottomNav } from "./shell/BottomNav.js";
 import { useEffect } from "react";
 
 type TeacherTab = "schedule" | "tasks" | "profile";
@@ -50,15 +52,10 @@ export function TeacherShell({ teacherName, schedule, attendance, eiv, lkUrl, on
 
   return (
     <div style={st.root}>
-      {/* Шапка */}
-      <header style={st.header}>
-        <div style={st.headerLogo}>
-          <LogoIcon />
-          <span style={st.headerTitle}>ЭИОС</span>
-        </div>
-        <div style={st.headerRole}>Педагог</div>
-        <div style={st.avatar}>{initials}</div>
-      </header>
+      <Header
+        initials={initials}
+        middle={<ContextLabel text="Педагог" />}
+      />
 
       {/* Контент */}
       <div style={st.body}>
@@ -87,22 +84,15 @@ export function TeacherShell({ teacherName, schedule, attendance, eiv, lkUrl, on
         )}
       </div>
 
-      {/* Нижняя навигация */}
-      <nav style={st.bottomNav}>
-        {([
-          { id: "schedule" as TeacherTab, label: "Расписание", icon: <CalIcon /> },
-          { id: "tasks"    as TeacherTab, label: "Задания",    icon: <span style={{ fontSize: 20 }}>📋</span> },
-          { id: "profile"  as TeacherTab, label: "Профиль",   icon: <PersonIcon /> },
-        ]).map(it => {
-          const active = tab === it.id;
-          return (
-            <button key={it.id} style={st.navItem} onClick={() => setTab(it.id)}>
-              <span style={{ color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.icon}</span>
-              <span style={{ ...st.navLabel, color: active ? "var(--c-accent)" : "var(--c-text-dim)" }}>{it.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <BottomNav
+        activeId={tab}
+        onTap={(id) => setTab(id as TeacherTab)}
+        tabs={[
+          { id: "schedule", label: "Расписание", icon: <CalIcon /> },
+          { id: "tasks",    label: "Задания",    icon: <span style={{ fontSize: 20 }}>📋</span> },
+          { id: "profile",  label: "Профиль",   icon: <PersonIcon /> },
+        ]}
+      />
 
       <StatusBar swUpdate={swUpdate} eiv={eiv} />
     </div>
@@ -160,20 +150,12 @@ function TeacherProfile({ teacherName, themeMode, onThemeChange, lkUrl, onLogout
 }
 
 const st: Record<string, CSSProperties> = {
-  root:       { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
-  header:     { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
-  headerLogo: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
-  headerTitle:{ color: "var(--c-text-primary)", fontSize: "0.85rem", fontWeight: 700 },
-  headerRole: { flex: 1, fontSize: "0.72rem", color: "var(--c-accent)", fontWeight: 600, paddingLeft: 4 },
-  avatar:     { width: 28, height: 28, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  body:       { flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" },
-  bottomNav:  { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
-  navItem:    { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
-  navLabel:   { fontSize: "0.62rem", fontWeight: 500 },
-  stub:       { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
-  stubIcon:   { fontSize: 48 },
-  stubTitle:  { fontSize: "1rem", fontWeight: 600, color: "var(--c-text-primary)" },
-  stubSub:    { fontSize: "0.82rem", color: "var(--c-text-muted)", textAlign: "center" as const, lineHeight: 1.5 },
+  root:      { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+  body:      { flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" },
+  stub:      { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
+  stubIcon:  { fontSize: 48 },
+  stubTitle: { fontSize: "1rem", fontWeight: 600, color: "var(--c-text-primary)" },
+  stubSub:   { fontSize: "0.82rem", color: "var(--c-text-muted)", textAlign: "center" as const, lineHeight: 1.5 },
 };
 
 const pr: Record<string, CSSProperties> = {
