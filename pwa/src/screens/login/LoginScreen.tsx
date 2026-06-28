@@ -8,6 +8,7 @@ import { useState } from "react";
 import type { AuthState } from "../../auth/useAuth.js";
 import { loginAs } from "../../auth/oidc.js";
 import type { Branding } from "../../config.js";
+import { Spinner } from "../../ui/Spinner.js";
 
 interface Props {
   auth:    AuthState;
@@ -59,7 +60,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
           title={!oidcReady ? "Авторизация не настроена — обратитесь к администратору" : undefined}
         >
           {isLoading
-            ? <><span style={r.spin} />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
+            ? <><Spinner size={16} className="mr-2.5" />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
             : <><LoginIcon />{!oidcReady ? "Войти (не настроено)" : auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
           }
         </button>
@@ -291,17 +292,6 @@ const r: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     cursor: "pointer",
     letterSpacing: "0.02em",
-  },
-  spin: {
-    width: 16,
-    height: 16,
-    border: "2px solid rgba(255,255,255,.3)",
-    borderTopColor: "#fff",
-    borderRadius: "50%",
-    animation: "spin .8s linear infinite",
-    display: "inline-block",
-    marginRight: 10,
-    flexShrink: 0,
   },
   demoRoleBtn: {
     flex: 1,
