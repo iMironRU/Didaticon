@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocale } from "../../locale.js";
-import type { CSSProperties } from "react";
 import type { Person, Learner } from "@eios/contracts";
 
 interface Props {
@@ -12,7 +11,15 @@ interface Props {
   onSetDefault:(learnerId: string) => void;
 }
 
-export function ContextSwitcherScreen({ person, learners, currentId, defaultId, onSelect, onSetDefault }: Props) {
+const CARD_BASE_CLS =
+  "border border-line rounded-xl px-4 py-3.5 mb-2.5 cursor-pointer";
+const CARD_ACTIVE_CLS =
+  "border-accent bg-[color-mix(in_srgb,var(--c-accent)_6%,var(--c-card))]";
+const CARD_DEFAULT_CLS = "bg-surface";
+
+export function ContextSwitcherScreen({
+  person, learners, currentId, defaultId, onSelect, onSetDefault,
+}: Props) {
   const { t } = useLocale();
   const [localDefault, setLocalDefault] = useState(defaultId);
 
@@ -25,26 +32,40 @@ export function ContextSwitcherScreen({ person, learners, currentId, defaultId, 
   const title = person.personType === "parent" ? t("myChildren") : t("learnersTitle");
 
   return (
-    <div style={{ ...st.body, paddingTop: 16, flex: 1 }}>
-      <div style={st.sectionLabel}>{title}</div>
+    <div className="flex-1 px-4 py-3 overflow-y-auto pt-4">
+      <div className="text-fg-dim text-[0.68rem] font-bold uppercase tracking-[0.06em] mb-2.5">
+        {title}
+      </div>
       {learners.map(learner => {
-        const isCurrent  = learner.learnerId === currentId;
-        const isDefault  = learner.learnerId === localDefault;
+        const isCurrent = learner.learnerId === currentId;
+        const isDefault = learner.learnerId === localDefault;
         return (
           <div
             key={learner.learnerId}
-            style={{ ...st.ctxCard, ...(isCurrent ? st.ctxCardActive : {}) }}
+            className={`${CARD_BASE_CLS} ${isCurrent ? CARD_ACTIVE_CLS : CARD_DEFAULT_CLS}`}
             onClick={() => onSelect(learner.learnerId)}
           >
-            <div style={st.ctxHead}>
-              <span style={st.ctxTypeBadge}>{learner.programType}</span>
-              {isDefault  && <span style={st.ctxDefaultBadge}>{t("defaultBadge")}</span>}
-              {isCurrent  && <span style={st.ctxCheck}>✓</span>}
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[0.65rem] font-bold tracking-[0.04em] bg-line text-fg-muted rounded px-1.5 py-0.5">
+                {learner.programType}
+              </span>
+              {isDefault && (
+                <span className="text-[0.65rem] font-semibold bg-[color-mix(in_srgb,var(--c-accent)_12%,transparent)] text-accent rounded px-1.5 py-0.5">
+                  {t("defaultBadge")}
+                </span>
+              )}
+              {isCurrent && (
+                <span className="ml-auto text-accent font-bold">✓</span>
+              )}
             </div>
-            <div style={st.ctxName}>{learner.programTitle}</div>
-            <div style={st.ctxPeriod}>{learner.group} · {learner.periodLabel}</div>
+            <div className="text-fg text-[0.9rem] font-semibold leading-tight mb-[3px]">
+              {learner.programTitle}
+            </div>
+            <div className="text-fg-muted text-xs">
+              {learner.group} · {learner.periodLabel}
+            </div>
             <button
-              style={{ ...st.ctxSetDefaultBtn, ...(isDefault ? { visibility: "hidden" as const } : {}) }}
+              className={`border-0 bg-transparent text-accent text-xs cursor-pointer mt-2 p-0 ${isDefault ? "invisible" : ""}`}
               onClick={e => handleSetDefault(learner.learnerId, e)}
             >
               {t("setAsDefault")}
@@ -55,17 +76,3 @@ export function ContextSwitcherScreen({ person, learners, currentId, defaultId, 
     </div>
   );
 }
-
-const st: Record<string, CSSProperties> = {
-  body:            { flex: 1, padding: "12px 16px", overflowY: "auto" },
-  sectionLabel:    { color: "var(--c-text-dim)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 },
-  ctxCard:         { background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 12, padding: "14px 16px", marginBottom: 10, cursor: "pointer" },
-  ctxCardActive:   { borderColor: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 6%, var(--c-card))" },
-  ctxHead:         { display: "flex", alignItems: "center", gap: 6, marginBottom: 6 },
-  ctxTypeBadge:    { fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.04em", background: "var(--c-border)", color: "var(--c-text-muted)", borderRadius: 4, padding: "2px 6px" },
-  ctxDefaultBadge: { fontSize: "0.65rem", fontWeight: 600, background: "color-mix(in srgb, var(--c-accent) 12%, transparent)", color: "var(--c-accent)", borderRadius: 4, padding: "2px 6px" },
-  ctxCheck:        { marginLeft: "auto", color: "var(--c-accent)", fontWeight: 700 },
-  ctxName:         { color: "var(--c-text-primary)", fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.3, marginBottom: 3 },
-  ctxPeriod:       { color: "var(--c-text-muted)", fontSize: "0.75rem" },
-  ctxSetDefaultBtn:{ border: "none", background: "none", color: "var(--c-accent)", fontSize: "0.75rem", cursor: "pointer", marginTop: 8, padding: 0 },
-};

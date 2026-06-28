@@ -129,22 +129,31 @@ function TeacherProfile({ teacherName, themeMode, onThemeChange, lkUrl, onLogout
     { id: "dark",  label: "Тёмная"  },
   ];
   return (
-    <div style={pr.root}>
-      <div style={pr.nameBlock}>
-        <div style={pr.avatar}>{teacherName.split(" ").map(w => w[0]).slice(0, 2).join("")}</div>
+    <div className="px-4 py-5 flex flex-col gap-4">
+      <div className="flex items-center gap-3.5 px-4 py-3.5 bg-surface rounded-2xl">
+        <div className="w-12 h-12 rounded-full bg-accent text-white text-base font-bold flex items-center justify-center shrink-0">
+          {teacherName.split(" ").map(w => w[0]).slice(0, 2).join("")}
+        </div>
         <div>
-          <div style={pr.name}>{teacherName}</div>
-          <div style={pr.role}>Педагог</div>
+          <div className="text-[0.95rem] font-semibold text-fg">{teacherName}</div>
+          <div className="text-xs text-accent mt-0.5">Педагог</div>
         </div>
       </div>
 
-      <div style={pr.section}>
-        <div style={pr.sectionLabel}>Тема</div>
-        <div style={pr.themeRow}>
+      <div className="bg-surface rounded-2xl px-4 py-3.5">
+        <div className="text-[0.72rem] text-fg-muted uppercase tracking-[0.06em] font-semibold mb-2.5">
+          Тема
+        </div>
+        <div className="flex gap-1.5">
           {THEMES.map(t => (
             <button
               key={t.id}
-              style={{ ...pr.themeBtn, ...(themeMode === t.id ? pr.themeBtnActive : {}) }}
+              className={
+                "flex-1 bg-surface rounded-lg px-1 py-2 text-[0.78rem] cursor-pointer " +
+                (themeMode === t.id
+                  ? "border-[1.5px] border-accent text-accent font-semibold"
+                  : "border border-line text-fg-secondary")
+              }
               onClick={() => onThemeChange(t.id)}
             >
               {t.label}
@@ -154,13 +163,23 @@ function TeacherProfile({ teacherName, themeMode, onThemeChange, lkUrl, onLogout
       </div>
 
       {lkUrl && (
-        <a href={lkUrl} target="_blank" rel="noopener noreferrer" style={pr.lkLink}>
+        <a
+          href={lkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-accent text-[0.85rem] py-3 no-underline"
+        >
           Личный кабинет Univerkon ↗
         </a>
       )}
 
       {onLogout && (
-        <button style={pr.logoutBtn} onClick={onLogout}>Выйти</button>
+        <button
+          className="w-full bg-transparent border border-danger rounded-xl py-3 text-[0.9rem] text-danger cursor-pointer"
+          onClick={onLogout}
+        >
+          Выйти
+        </button>
       )}
     </div>
   );
@@ -175,18 +194,4 @@ const st: Record<string, CSSProperties> = {
   stubSub:   { fontSize: "0.82rem", color: "var(--c-text-muted)", textAlign: "center" as const, lineHeight: 1.5 },
 };
 
-const pr: Record<string, CSSProperties> = {
-  root:       { padding: "20px 16px", display: "flex", flexDirection: "column", gap: 16 },
-  nameBlock:  { display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "var(--c-card)", borderRadius: 14 },
-  avatar:     { width: 48, height: 48, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  name:       { fontSize: "0.95rem", fontWeight: 600, color: "var(--c-text-primary)" },
-  role:       { fontSize: "0.75rem", color: "var(--c-accent)", marginTop: 2 },
-  section:    { background: "var(--c-card)", borderRadius: 14, padding: "14px 16px" },
-  sectionLabel:{ fontSize: "0.72rem", color: "var(--c-text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.06em", fontWeight: 600, marginBottom: 10 },
-  themeRow:   { display: "flex", gap: 6 },
-  themeBtn:   { flex: 1, background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 8, padding: "8px 4px", fontSize: "0.78rem", color: "var(--c-text-secondary)", cursor: "pointer" },
-  themeBtnActive: { border: "1.5px solid var(--c-accent)", color: "var(--c-accent)", fontWeight: 600 },
-  lkLink:     { display: "block", textAlign: "center" as const, color: "var(--c-accent)", fontSize: "0.85rem", padding: "12px 0", textDecoration: "none" },
-  logoutBtn:  { width: "100%", background: "none", border: "1px solid var(--c-danger)", borderRadius: 12, padding: "13px 0", fontSize: "0.9rem", color: "var(--c-danger)", cursor: "pointer" },
-};
 

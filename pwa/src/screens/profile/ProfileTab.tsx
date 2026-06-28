@@ -1,8 +1,8 @@
-import type { CSSProperties } from "react";
 import type { Person, Learner } from "@eios/contracts";
 import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
+import { Card } from "../../ui/Card.js";
 
 interface Props {
   person:          Person;
@@ -16,7 +16,19 @@ interface Props {
   onLogout?:        () => void;
 }
 
-export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, onLocaleChange, lkUrl, onSwitchContext, onLogout }: Props) {
+const SECTION_LABEL_CLS =
+  "text-fg-dim text-[0.68rem] font-bold uppercase tracking-[0.06em] mb-2.5";
+const FIELD_LABEL_CLS = "text-fg-muted text-[0.72rem] mb-0.5";
+const OPTION_BTN_CLS =
+  "flex items-center gap-1.5 border border-line rounded-lg px-3.5 py-2 " +
+  "bg-surface text-fg-secondary text-[0.85rem] font-medium cursor-pointer";
+const OPTION_ACTIVE_CLS =
+  "border-accent text-accent bg-[color-mix(in_srgb,var(--c-accent)_10%,transparent)]";
+
+export function ProfileTab({
+  person, learner, themeMode, onThemeChange, locale, onLocaleChange,
+  lkUrl, onSwitchContext, onLogout,
+}: Props) {
   const { t } = useLocale();
   const THEMES: { value: ThemeMode; label: string }[] = [
     { value: "auto",  label: t("themeAuto") },
@@ -27,36 +39,45 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
   return (
     <div>
       {/* ЕИВ */}
-      <div style={st.block}>
-        <div style={st.fieldLabel}>{t("eivFull")}</div>
-        <div style={st.eivValue}>{person.eiv}</div>
+      <div className="mb-6">
+        <div className={FIELD_LABEL_CLS}>{t("eivFull")}</div>
+        <div className="text-fg text-base font-semibold mt-1">{person.eiv}</div>
       </div>
 
       {/* Личные данные */}
-      <div style={st.block}>
-        <div style={st.sectionLabel}>{t("personalInfo")}</div>
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>{t("personalInfo")}</div>
         {[
           { label: t("lastName"),   value: person.lastName  },
           { label: t("firstName"),  value: person.firstName  },
           { label: t("patronymic"), value: person.patronymic },
         ].filter(f => f.value).map(f => (
-          <div key={f.label} style={st.field}>
-            <div style={st.fieldLabel}>{f.label}</div>
-            <div style={st.fieldValue}>{f.value}</div>
+          <div key={f.label} className="mt-2.5">
+            <div className={FIELD_LABEL_CLS}>{f.label}</div>
+            <div className="text-fg text-[0.95rem] font-medium">{f.value}</div>
           </div>
         ))}
       </div>
 
       {/* Текущий профиль обучения */}
-      <div style={st.block}>
-        <div style={st.sectionLabel}>{t("learnProfile")}</div>
-        <div style={st.learnerCard}>
-          <div style={st.learnerProgram}>{learner.programType} · {learner.programTitle}</div>
-          <div style={st.learnerMeta}>{learner.group} · {learner.course} курс · {learner.form}</div>
-          <div style={st.learnerMeta}>{learner.periodLabel}</div>
-        </div>
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>{t("learnProfile")}</div>
+        <Card className="px-3.5 py-3">
+          <div className="text-fg text-[0.88rem] font-semibold mb-1">
+            {learner.programType} · {learner.programTitle}
+          </div>
+          <div className="text-fg-muted text-xs mt-0.5">
+            {learner.group} · {learner.course} курс · {learner.form}
+          </div>
+          <div className="text-fg-muted text-xs mt-0.5">
+            {learner.periodLabel}
+          </div>
+        </Card>
         {onSwitchContext && (
-          <button style={st.switchBtn} onClick={onSwitchContext}>
+          <button
+            className="w-full mt-2 border border-line rounded-lg bg-transparent text-fg-secondary text-[0.85rem] font-medium py-2.5 cursor-pointer"
+            onClick={onSwitchContext}
+          >
             {t("switchProfile")}
           </button>
         )}
@@ -64,21 +85,26 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
 
       {/* Перейти в ЛК */}
       {lkUrl && (
-        <div style={st.block}>
-          <a href={lkUrl} target="_blank" rel="noopener noreferrer" style={st.lkBtn}>
+        <div className="mb-6">
+          <a
+            href={lkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block py-3 px-4 rounded-lg bg-accent text-white no-underline text-[0.88rem] font-semibold text-center"
+          >
             {t("goToLk")}
           </a>
         </div>
       )}
 
       {/* Язык */}
-      <div style={st.block}>
-        <div style={st.sectionLabel}>{t("language")}</div>
-        <div style={st.optionsRow}>
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>{t("language")}</div>
+        <div className="flex gap-2 mt-2 flex-wrap">
           {LOCALES.map(l => (
             <button
               key={l}
-              style={{ ...st.optionBtn, ...(locale === l ? st.optionActive : {}) }}
+              className={locale === l ? `${OPTION_BTN_CLS} ${OPTION_ACTIVE_CLS}` : OPTION_BTN_CLS}
               onClick={() => onLocaleChange(l)}
             >
               {l === "ru" ? t("langRu") : l === "en" ? t("langEn") : t("langKk")}
@@ -88,13 +114,13 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
       </div>
 
       {/* Тема */}
-      <div style={st.block}>
-        <div style={st.sectionLabel}>{t("theme")}</div>
-        <div style={st.optionsRow}>
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>{t("theme")}</div>
+        <div className="flex gap-2 mt-2 flex-wrap">
           {THEMES.map(({ value, label }) => (
             <button
               key={value}
-              style={{ ...st.optionBtn, ...(themeMode === value ? st.optionActive : {}) }}
+              className={themeMode === value ? `${OPTION_BTN_CLS} ${OPTION_ACTIVE_CLS}` : OPTION_BTN_CLS}
               onClick={() => onThemeChange(value)}
             >
               <ThemeIcon mode={value} /> {label}
@@ -105,28 +131,15 @@ export function ProfileTab({ person, learner, themeMode, onThemeChange, locale, 
 
       {/* Выход */}
       {onLogout && (
-        <div style={{ marginTop: 32 }}>
-          <button style={st.logoutBtn} onClick={onLogout}>{t("logout")}</button>
+        <div className="mt-8">
+          <button
+            className="w-full border border-danger rounded-lg py-3 bg-transparent text-danger text-[0.95rem] font-semibold cursor-pointer"
+            onClick={onLogout}
+          >
+            {t("logout")}
+          </button>
         </div>
       )}
     </div>
   );
 }
-
-const st: Record<string, CSSProperties> = {
-  block:          { marginBottom: 24 },
-  sectionLabel:   { color: "var(--c-text-dim)", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 },
-  field:          { marginTop: 10 },
-  fieldLabel:     { color: "var(--c-text-muted)", fontSize: "0.72rem", marginBottom: 2 },
-  fieldValue:     { color: "var(--c-text-primary)", fontSize: "0.95rem", fontWeight: 500 },
-  eivValue:       { color: "var(--c-text-primary)", fontSize: "1rem", fontWeight: 600, marginTop: 4 },
-  learnerCard:    { background: "var(--c-card)", borderRadius: 10, border: "0.5px solid var(--c-border)", padding: "12px 14px" },
-  learnerProgram: { color: "var(--c-text-primary)", fontSize: "0.88rem", fontWeight: 600, marginBottom: 4 },
-  learnerMeta:    { color: "var(--c-text-muted)", fontSize: "0.75rem", marginTop: 2 },
-  switchBtn:      { width: "100%", marginTop: 8, border: "1px solid var(--c-border)", borderRadius: 8, background: "none", color: "var(--c-text-secondary)", fontSize: "0.85rem", fontWeight: 500, padding: "10px 0", cursor: "pointer" },
-  lkBtn:          { display: "block", padding: "11px 16px", borderRadius: 10, background: "var(--c-accent)", color: "#fff", textDecoration: "none", fontSize: "0.88rem", fontWeight: 600, textAlign: "center" as const },
-  optionsRow:     { display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" as const },
-  optionBtn:      { display: "flex", alignItems: "center", gap: 5, border: "1px solid var(--c-border)", borderRadius: 8, padding: "8px 14px", background: "var(--c-card)", color: "var(--c-text-secondary)", fontSize: "0.85rem", cursor: "pointer", fontWeight: 500 },
-  optionActive:   { borderColor: "var(--c-accent)", color: "var(--c-accent)", background: "color-mix(in srgb, var(--c-accent) 10%, transparent)" },
-  logoutBtn:      { width: "100%", border: "1px solid var(--c-danger)", borderRadius: 10, padding: "13px 0", background: "none", color: "var(--c-danger)", fontSize: "0.95rem", cursor: "pointer", fontWeight: 600 },
-};
