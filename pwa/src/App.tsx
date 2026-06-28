@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
-import { login, loginAs, getUser, type EiosRole } from "./auth/oidc.js";
+import { login, loginAs, logout, getUser, type EiosRole } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
 import { DemoShell } from "./DemoShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
@@ -73,6 +73,10 @@ export function App() {
 
   function handleLogout() {
     sessionStorage.clear();
+    if (!USE_MOCK) {
+      logout(); // signoutRedirect: очищает localStorage + редирект на Auth0
+      return;
+    }
     setAuth({ phase: "anonymous" });
   }
 
