@@ -6,7 +6,7 @@
  */
 import { useState } from "react";
 import type { TeacherScheduleSlot, AttendanceStudent } from "@eios/contracts";
-import { LessonHeader } from "./LessonHeader.js";
+import { SubHeader } from "../../shell/SubHeader.js";
 import { LessonHero } from "./LessonHero.js";
 import { Card } from "../../ui/Card.js";
 
@@ -50,7 +50,7 @@ export function TeacherLessonScreen({ slot, date, students: initialStudents, onB
 
   return (
     <>
-      <LessonHeader title={`${slot.lessonKind} · ${slot.unitRef.title}`} onBack={onBack} />
+      <SubHeader title={`${slot.lessonKind} · ${slot.unitRef.title}`} onBack={onBack} />
 
       <div className="flex-1 px-4 py-3 overflow-y-auto pt-4 flex flex-col gap-4">
         <LessonHero

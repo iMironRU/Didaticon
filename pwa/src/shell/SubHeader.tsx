@@ -1,8 +1,10 @@
 /**
- * LessonHeader — общий sub-header для экранов урока.
- * Использует и студент/родитель, и педагог.
+ * SubHeader — back-кнопка + breadcrumb title.
+ *
+ * Используется на детальных экранах: lesson, unit, group, и т.д.
+ * Фон тот же что у Header, border-bottom разделяет от тела экрана.
  */
-import { useLocale } from "../../locale.js";
+import { useLocale } from "../locale.js";
 
 interface Props {
   /** Хлебная крошка (название дисциплины / типа+предмета) */
@@ -10,7 +12,7 @@ interface Props {
   onBack: () => void;
 }
 
-export function LessonHeader({ title, onBack }: Props) {
+export function SubHeader({ title, onBack }: Props) {
   const { t } = useLocale();
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-elevated border-b border-line shrink-0">

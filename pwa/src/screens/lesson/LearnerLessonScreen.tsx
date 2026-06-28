@@ -13,7 +13,7 @@ import type { TrajectoryLesson, ScheduleSlot, AttendanceResult } from "@eios/con
 import { formatIsoDate } from "../../utils/date.js";
 import { useLocale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
-import { LessonHeader } from "./LessonHeader.js";
+import { SubHeader } from "../../shell/SubHeader.js";
 import { LessonHero } from "./LessonHero.js";
 
 interface Props {
@@ -74,7 +74,7 @@ export function LearnerLessonScreen({
 
   return (
     <>
-      <LessonHeader title={unitTitle} onBack={onBack} />
+      <SubHeader title={unitTitle} onBack={onBack} />
 
       <div className="flex-1 px-4 py-3 overflow-y-auto pt-4">
         <LessonHero

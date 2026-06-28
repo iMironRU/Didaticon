@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { CSSProperties } from "react";
-import type { GradebookResponse, GradebookSemester, GradebookEntry, GradebookFinalControl, BookingSlot } from "@eios/contracts";
+import type {
+  GradebookResponse, GradebookSemester, GradebookEntry, GradebookFinalControl, BookingSlot,
+} from "@eios/contracts";
 import { gradeColor } from "../../utils/grade.js";
 import { useLocale, type StringKey } from "../../locale.js";
 import { fcChipStyle } from "../../utils/color.js";
@@ -11,25 +12,32 @@ interface Props {
   onBookRetake?: (entry: GradebookEntry, slot: BookingSlot) => void;
 }
 
-// GradebookTab — зачётная книжка ──────────────────────────────────────────────
+const TYPE_TAG_CLS =
+  "text-[0.6rem] font-bold tracking-[0.02em] px-1.5 py-0.5 rounded shrink-0";
+
 export function GradebookTab({ gradebook, onBookRetake }: Props) {
   const { t } = useLocale();
   const semesters  = gradebook.semesters;
   const currentIdx = semesters.findIndex(s => s.isCurrent);
   const [selIdx, setSelIdx] = useState(currentIdx >= 0 ? currentIdx : semesters.length - 1);
   const sem = semesters[selIdx];
-  if (!sem) return <div style={st.empty}>{t("dataUnavailable")}</div>;
+  if (!sem) return <div className="text-fg-dim text-center py-8 text-[0.85rem]">{t("dataUnavailable")}</div>;
 
   const isSpO = sem.entries.some(e => e.groupCode);
 
   return (
     <div>
       {/* Вкладки семестров */}
-      <div style={st.semTabs}>
+      <div className="flex gap-1 overflow-x-auto mb-3 pb-1">
         {semesters.map((s, i) => (
           <button
             key={s.period}
-            style={{ ...st.semTab, ...(i === selIdx ? st.semTabActive : {}) }}
+            className={
+              "shrink-0 rounded-md text-[0.72rem] font-medium px-2.5 py-1.5 cursor-pointer whitespace-nowrap " +
+              (i === selIdx
+                ? "bg-accent border border-accent text-white"
+                : "bg-transparent border border-line text-fg-muted")
+            }
             onClick={() => setSelIdx(i)}
           >
             {semShort(s, i + 1, t)}
@@ -37,13 +45,13 @@ export function GradebookTab({ gradebook, onBookRetake }: Props) {
         ))}
       </div>
 
-      {/* Метка семестра */}
-      <div style={st.semLabel}>{sem.label}</div>
+      <div className="text-fg-muted text-[0.68rem] tracking-[0.08em] uppercase mb-2.5 font-semibold">
+        {sem.label}
+      </div>
 
-      {/* Записи */}
       {isSpO
         ? <SpOGroupedEntries semester={sem} onBook={onBookRetake} />
-        : <VoEntries semester={sem} onBook={onBookRetake} />
+        : <VoEntries          semester={sem} onBook={onBookRetake} />
       }
     </div>
   );
@@ -57,9 +65,7 @@ function semShort(s: GradebookSemester, n: number, t: (k: StringKey) => string):
 function VoEntries({ semester, onBook }: { semester: GradebookSemester; onBook?: Props["onBookRetake"] }) {
   return (
     <div>
-      {semester.entries.map(e => (
-        <EntryRow key={e.unitId} entry={e} onBook={onBook} />
-      ))}
+      {semester.entries.map(e => <EntryRow key={e.unitId} entry={e} onBook={onBook} />)}
     </div>
   );
 }
@@ -83,10 +89,10 @@ function SpOGroupedEntries({ semester, onBook }: { semester: GradebookSemester; 
   return (
     <div>
       {groups.map(g => (
-        <div key={g.code} style={st.pmBlock}>
-          <div style={st.pmHeader}>
-            <span style={st.pmCode}>{g.code}</span>
-            <span style={st.pmTitle}>{g.title}</span>
+        <div key={g.code} className="mb-4 bg-surface rounded-xl border border-line overflow-hidden">
+          <div className="flex items-baseline gap-2 px-3.5 py-2.5 bg-[color-mix(in_srgb,var(--c-accent)_8%,transparent)] border-b border-line">
+            <span className="text-accent text-[0.72rem] font-bold tracking-[0.04em] shrink-0">{g.code}</span>
+            <span className="text-fg text-[0.82rem] font-semibold leading-tight">{g.title}</span>
           </div>
           {g.entries.map(e => <EntryRow key={e.unitId} entry={e} onBook={onBook} />)}
         </div>
@@ -99,37 +105,54 @@ function SpOGroupedEntries({ semester, onBook }: { semester: GradebookSemester; 
 // ── Строка записи ─────────────────────────────────────────────────────────────
 function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["onBookRetake"] }) {
   const { t } = useLocale();
-  const fc   = entry.finalControl;
+  const fc = entry.finalControl;
   const [expanded, setExpanded] = useState(false);
+  const expandable = fc.state === "failed_retake_scheduled";
 
   return (
     <>
-      <div style={st.row} onClick={fc.state === "failed_retake_scheduled" ? () => setExpanded(e => !e) : undefined}>
-        <div style={{ ...st.typeTag, ...fcChipStyle(fc.type) }}>{fc.type}</div>
-        <div style={st.rowBody}>
-          {entry.code && <span style={st.entryCode}>{entry.code}</span>}
+      <div
+        className={
+          "flex items-center gap-2 px-3.5 py-2.5 bg-surface rounded-lg border border-line mb-1.5 " +
+          (expandable ? "cursor-pointer" : "")
+        }
+        onClick={expandable ? () => setExpanded(e => !e) : undefined}
+      >
+        <div className={TYPE_TAG_CLS} style={fcChipStyle(fc.type)}>{fc.type}</div>
+        <div className="flex-1 text-fg text-[0.82rem] leading-tight">
+          {entry.code && (
+            <span className="block text-accent text-[0.65rem] font-bold tracking-[0.03em] mb-px">
+              {entry.code}
+            </span>
+          )}
           {entry.title}
         </div>
-        <div style={st.credits}>{entry.credits} {t("creditsUnit")}</div>
+        <div className="text-fg-dim text-[0.7rem] shrink-0">{entry.credits} {t("creditsUnit")}</div>
         <GradeCell fc={fc} />
       </div>
 
-      {/* Слоты для пересдачи */}
       {expanded && fc.state === "failed_retake_scheduled" && (
-        <div style={st.slotsBlock}>
-          <div style={st.slotsLabel}>
+        <div className="bg-[color-mix(in_srgb,var(--c-danger)_6%,transparent)] border border-danger rounded-lg px-3.5 py-2.5 -mt-1 mb-1.5">
+          <div className="text-danger text-[0.72rem] font-semibold mb-2">
             {t("retakeNum")}{fc.attemptNumber}{fc.isCommission ? ` ${t("commission")}` : ""}
             {" · "}{formatIsoDate(fc.retakeDate)}
           </div>
           {fc.availableSlots.length === 0 ? (
-            <div style={st.slotsEmpty}>{t("noSlots")}</div>
+            <div className="text-fg-dim text-[0.78rem]">{t("noSlots")}</div>
           ) : (
             fc.availableSlots.map(slot => (
-              <div key={slot.bookingSlotId} style={st.slotRow}>
-                <span style={st.slotTime}>{slot.timeStart}–{slot.timeEnd}{slot.room ? ` · ${slot.room}` : ""}</span>
-                <span style={st.slotSpots}>{slot.availableSpots} {t("spots")}</span>
+              <div key={slot.bookingSlotId} className="flex items-center gap-2 py-1.5 border-t border-line">
+                <span className="flex-1 text-fg-secondary text-[0.8rem]">
+                  {slot.timeStart}–{slot.timeEnd}{slot.room ? ` · ${slot.room}` : ""}
+                </span>
+                <span className="text-fg-muted text-[0.72rem]">
+                  {slot.availableSpots} {t("spots")}
+                </span>
                 {onBook && slot.availableSpots > 0 && (
-                  <button style={st.bookBtn} onClick={e => { e.stopPropagation(); onBook(entry, slot); }}>
+                  <button
+                    className="border-0 bg-accent text-white rounded-md px-2.5 py-1 text-[0.72rem] cursor-pointer"
+                    onClick={e => { e.stopPropagation(); onBook(entry, slot); }}
+                  >
                     {t("book")}
                   </button>
                 )}
@@ -145,54 +168,28 @@ function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["on
 // ── Ячейка оценки ─────────────────────────────────────────────────────────────
 function GradeCell({ fc }: { fc: GradebookFinalControl }) {
   const { t } = useLocale();
+  const baseCls = "text-[0.85rem] font-bold shrink-0 min-w-[40px] text-right";
   if (fc.state === "passed") {
     return (
-      <div style={{ ...st.grade, color: gradeColor(fc.grade) }}>
+      <div className={baseCls} style={{ color: gradeColor(fc.grade) }}>
         {fc.grade}
-        {fc.grade100 != null && <span style={st.grade100}>/{fc.grade100}</span>}
+        {fc.grade100 != null && <span className="text-[0.6rem] font-normal text-fg-muted">/{fc.grade100}</span>}
       </div>
     );
   }
   if (fc.state === "in_progress") {
-    return <div style={{ ...st.grade, color: "var(--c-text-dim)" }}>—</div>;
+    return <div className={`${baseCls} text-fg-dim`}>—</div>;
   }
   if (fc.state === "failed_retake_scheduled") {
     return (
-      <div style={{ ...st.grade, color: "var(--c-danger)" }}>
-        {t("debt")} <span style={{ fontSize: "0.6rem" }}>›</span>
+      <div className={`${baseCls} text-danger`}>
+        {t("debt")} <span className="text-[0.6rem]">›</span>
       </div>
     );
   }
   if (fc.state === "failed_retake_pending") {
-    return <div style={{ ...st.grade, color: "var(--c-danger)" }}>{t("debt")}</div>;
+    return <div className={`${baseCls} text-danger`}>{t("debt")}</div>;
   }
   // failed_final
-  return <div style={{ ...st.grade, color: "var(--c-danger)" }}>✗</div>;
+  return <div className={`${baseCls} text-danger`}>✗</div>;
 }
-
-// ── Стили ─────────────────────────────────────────────────────────────────────
-const st: Record<string, CSSProperties> = {
-  empty:       { color: "var(--c-text-dim)", textAlign: "center" as const, padding: "32px 0", fontSize: "0.85rem" },
-  semTabs:     { display: "flex", gap: 4, overflowX: "auto", marginBottom: 12, paddingBottom: 4 },
-  semTab:      { flexShrink: 0, border: "1px solid var(--c-border)", borderRadius: 6, background: "none", color: "var(--c-text-muted)", fontSize: "0.72rem", fontWeight: 500, padding: "5px 10px", cursor: "pointer", whiteSpace: "nowrap" as const },
-  semTabActive:{ background: "var(--c-accent)", borderColor: "var(--c-accent)", color: "#fff" },
-  semLabel:    { color: "var(--c-text-muted)", fontSize: "0.68rem", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 10, fontWeight: 600 },
-  pmBlock:     { marginBottom: 16, background: "var(--c-card)", borderRadius: 12, border: "0.5px solid var(--c-border)", overflow: "hidden" as const },
-  pmHeader:    { display: "flex", alignItems: "baseline", gap: 8, padding: "10px 14px", background: "color-mix(in srgb, var(--c-accent) 8%, transparent)", borderBottom: "0.5px solid var(--c-border)" },
-  pmCode:      { color: "var(--c-accent)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.04em", flexShrink: 0 },
-  pmTitle:     { color: "var(--c-text-primary)", fontSize: "0.82rem", fontWeight: 600, lineHeight: 1.3 },
-  row:         { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-card)", borderRadius: 8, border: "0.5px solid var(--c-border)", marginBottom: 6 },
-  typeTag:     { fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.02em", padding: "2px 6px", borderRadius: 4, flexShrink: 0 },
-  rowBody:     { flex: 1, color: "var(--c-text-primary)", fontSize: "0.82rem", lineHeight: 1.3 },
-  entryCode:   { display: "block", color: "var(--c-accent)", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.03em", marginBottom: 1 },
-  credits:     { color: "var(--c-text-dim)", fontSize: "0.7rem", flexShrink: 0 },
-  grade:       { fontSize: "0.85rem", fontWeight: 700, flexShrink: 0, minWidth: 40, textAlign: "right" as const },
-  grade100:    { fontSize: "0.6rem", fontWeight: 400, color: "var(--c-text-muted)" },
-  slotsBlock:  { background: "color-mix(in srgb, var(--c-danger) 6%, transparent)", border: "0.5px solid var(--c-danger)", borderRadius: 8, padding: "10px 14px", marginTop: -4, marginBottom: 6 },
-  slotsLabel:  { color: "var(--c-danger)", fontSize: "0.72rem", fontWeight: 600, marginBottom: 8 },
-  slotsEmpty:  { color: "var(--c-text-dim)", fontSize: "0.78rem" },
-  slotRow:     { display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderTop: "0.5px solid var(--c-border)" },
-  slotTime:    { flex: 1, color: "var(--c-text-secondary)", fontSize: "0.8rem" },
-  slotSpots:   { color: "var(--c-text-muted)", fontSize: "0.72rem" },
-  bookBtn:     { border: "none", background: "var(--c-accent)", color: "#fff", borderRadius: 6, padding: "4px 10px", fontSize: "0.72rem", cursor: "pointer" },
-};
