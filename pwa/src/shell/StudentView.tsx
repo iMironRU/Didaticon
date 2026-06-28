@@ -12,8 +12,8 @@ import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { useLocale } from "../locale.js";
 import { onSwUpdate } from "../sw-update.js";
 import { StatusBar } from "./StatusBar.js";
-import type { ScheduleItem } from "../screens/schedule/ScheduleTab.js";
-import { ScheduleTab } from "../screens/schedule/ScheduleTab.js";
+import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
+import { LearnerSlotCard, type LearnerSlotEntry } from "../screens/schedule/LearnerSlotCard.js";
 import { LessonScreen } from "../screens/lesson/LessonScreen.js";
 import { PerformanceTab } from "../screens/performance/PerformanceTab.js";
 import { UnitScreen } from "../screens/performance/UnitScreen.js";
@@ -49,7 +49,7 @@ function collectLessons(units: CurriculumUnit[]): Map<string, { lesson: Trajecto
   return map;
 }
 
-function buildScheduleItems(schedule: ScheduleResponse | undefined, lessonMap: Map<string, { lesson: TrajectoryLesson; unitTitle: string }>): ScheduleItem[] {
+function buildScheduleItems(schedule: ScheduleResponse | undefined, lessonMap: Map<string, { lesson: TrajectoryLesson; unitTitle: string }>): LearnerSlotEntry[] {
   if (!schedule) return [];
   return schedule.days.flatMap(day =>
     day.slots.map(slot => ({
@@ -245,8 +245,8 @@ export function StudentView({ role, lkUrl, onLogout }: Props) {
         />
         <div style={st.body}>
           {tab === "schedule" && (
-            <ScheduleTab
-              items={schedItems}
+            <ScheduleScreen
+              entries={schedItems}
               fromDate={schedule?.from ?? today}
               toDate={schedule?.to   ?? today}
               today={today}
@@ -254,7 +254,16 @@ export function StudentView({ role, lkUrl, onLogout }: Props) {
               onViewChange={setScheduleView}
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
-              onItem={item => navigate({ name: "lesson", id: item.slot.slotId })}
+              emptyText={t("noLessons")}
+              renderSlot={(entry, showDate) => (
+                <LearnerSlotCard
+                  key={entry.slot.slotId}
+                  entry={entry}
+                  today={today}
+                  showDate={showDate}
+                  onOpen={() => navigate({ name: "lesson", id: entry.slot.slotId })}
+                />
+              )}
             />
           )}
           {tab === "performance" && learner && (

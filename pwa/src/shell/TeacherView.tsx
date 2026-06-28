@@ -3,7 +3,8 @@ import type { CSSProperties } from "react";
 import type { TeacherScheduleResponse, TeacherScheduleSlot } from "@eios/contracts";
 import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { CalIcon, PersonIcon } from "../components/icons/index.js";
-import { TeacherScheduleTab } from "../screens/teacher/TeacherScheduleTab.js";
+import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
+import { TeacherSlotCard } from "../screens/schedule/TeacherSlotCard.js";
 import { TeacherLessonScreen } from "../screens/teacher/TeacherLessonScreen.js";
 import { onSwUpdate } from "../sw-update.js";
 import { StatusBar } from "./StatusBar.js";
@@ -36,8 +37,15 @@ export function TeacherView({ authName, lkUrl, onLogout }: Props) {
   const route = useRoute();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [swUpdate, setSwUpdate]   = useState(false);
+  const [scheduleView, setScheduleView] = useState<"day" | "week">("day");
 
   const today = new Date().toISOString().slice(0, 10);
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  // Плоский список entries для ScheduleScreen (он не знает про nested days)
+  const teacherEntries = schedule.days.flatMap(d => d.slots.map(slot => ({ date: d.date, slot })));
+  const fromDate = schedule.days[0]?.date ?? today;
+  const toDate   = schedule.days[schedule.days.length - 1]?.date ?? today;
 
   useEffect(() => { onSwUpdate(s => setSwUpdate(s === "available")); }, []);
 
@@ -77,11 +85,27 @@ export function TeacherView({ authName, lkUrl, onLogout }: Props) {
       {/* Контент */}
       <div style={st.body}>
         {tab === "schedule" && (
-          <TeacherScheduleTab
-            schedule={schedule}
-            today={today}
-            onLesson={(slot) => navigate({ name: "lesson", id: slot.slotId })}
-          />
+          <div className="px-4 py-2.5">
+            <ScheduleScreen
+              entries={teacherEntries}
+              fromDate={fromDate}
+              toDate={toDate}
+              today={today}
+              view={scheduleView}
+              onViewChange={setScheduleView}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+              emptyText="Занятий нет"
+              renderSlot={(entry) => (
+                <TeacherSlotCard
+                  key={entry.slot.slotId}
+                  slot={entry.slot}
+                  date={entry.date}
+                  onOpen={() => navigate({ name: "lesson", id: entry.slot.slotId })}
+                />
+              )}
+            />
+          </div>
         )}
         {tab === "tasks" && (
           <div style={st.stub}>
