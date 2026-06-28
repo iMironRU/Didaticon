@@ -172,8 +172,8 @@ const st: Record<string, CSSProperties> = {
   navLabel:   { fontSize: "0.62rem", fontWeight: 500 },
   stub:       { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
   stubIcon:   { fontSize: 48 },
-  stubTitle:  { fontSize: "1rem", fontWeight: 600, color: "var(--c-text)" },
-  stubSub:    { fontSize: "0.82rem", color: "var(--c-text2)", textAlign: "center" as const, lineHeight: 1.5 },
+  stubTitle:  { fontSize: "1rem", fontWeight: 600, color: "var(--c-text-primary)" },
+  stubSub:    { fontSize: "0.82rem", color: "var(--c-text-muted)", textAlign: "center" as const, lineHeight: 1.5 },
 };
 
 const pr: Record<string, CSSProperties> = {

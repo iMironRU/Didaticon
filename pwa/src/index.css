@@ -6,24 +6,44 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
 .access-html ul,.access-html ol{margin:0 0 10px;padding-left:18px}
 .access-html a{color:inherit}
 
+/* ──────────────────────────────────────────────────────────────────────────────
+ * CSS-токены ЭИОС — ЕДИНЫЙ источник истины.
+ *
+ * Использовать ТОЛЬКО переменные из этого списка. Перед добавлением новой —
+ * сначала задекларировать здесь (и в светлой теме ниже), потом использовать.
+ *
+ * Раньше код использовал --c-surface/--c-surface2/--c-text/--c-text2/--c-text3 —
+ * этих токенов НЕТ. Браузер падал на fallback и UI ломался (чёрный фон у педагога).
+ *
+ * См. memory: architecture.md → правило 2.
+ * ────────────────────────────────────────────────────────────────────────────── */
 :root {
-  --c-bg:#091629;
-  --c-header:#0A1E3B;
-  --c-card:#0F2545;
-  --c-border:#1A3560;
-  --c-accent:#4B9EE5;
-  --c-text-primary:#C8DEF4;
-  --c-text-secondary:#7FA4CC;
-  --c-text-muted:#4D7BA8;
-  --c-text-dim:#2A4A6A;
+  /* Фоны */
+  --c-bg:#091629;             /* фон страницы */
+  --c-header:#0A1E3B;         /* шапка, нижняя навигация, status bar */
+  --c-card:#0F2545;           /* карточки, поднятые поверхности */
+  --c-border:#1A3560;         /* границы */
+  --c-progress-track:#152A4A; /* фон прогресс-бара, бейджи */
+
+  /* Акцент */
+  --c-accent:#4B9EE5;         /* брендовый цвет (перекрывается БРЕНДИНГОМ во время рантайма) */
+
+  /* Текст */
+  --c-text-primary:#C8DEF4;   /* основной текст */
+  --c-text-secondary:#7FA4CC; /* подзаголовки, второстепенный */
+  --c-text-muted:#4D7BA8;     /* метаданные, описания */
+  --c-text-dim:#2A4A6A;       /* очень бледный — placeholder'ы */
+
+  /* Status bar (нижняя версионная плашка) */
   --c-status-bg:#060F1E;
   --c-status-border:#0F2030;
   --c-status-text:#1E3A5F;
+
+  /* Статусы */
   --c-success:#2EA05A;
   --c-success-bg:#0A2010;
   --c-danger:#E05555;
   --c-purple:#7C5CBF;
-  --c-progress-track:#152A4A;
 }
 :root[data-theme="light"] {
   --c-bg:#F0F5FB;
