@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, loginAs, logout, getUser, type EiosRole } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
-import { Shell } from "./Shell.js";
-import { TeacherShell } from "./TeacherShell.js";
-import { LocaleProvider } from "./locale.js";
+import { AppShell } from "./shell/AppShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
 
 type AuthState =
@@ -104,25 +102,18 @@ export function App() {
     const role = USE_MOCK ? DEMO_PERSONA : auth.role;
     const lkUrl = branding.lkUrl ?? undefined;
 
-    if (role === "teacher") {
-      return (
-        <TeacherShell
-          authName={USE_MOCK ? "" : auth.name}
-          lkUrl={lkUrl}
-          onLogout={handleLogout}
-        />
-      );
-    }
-
     // Реальный студент пока на legacy Trajectory (этап 7 закроет миграцию).
-    if (!USE_MOCK) {
+    if (!USE_MOCK && role !== "teacher") {
       return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={lkUrl} />;
     }
 
     return (
-      <LocaleProvider>
-        <Shell role={role} lkUrl={lkUrl} onLogout={handleLogout} />
-      </LocaleProvider>
+      <AppShell
+        role={role}
+        authName={USE_MOCK ? "" : auth.name}
+        lkUrl={lkUrl}
+        onLogout={handleLogout}
+      />
     );
   }
 

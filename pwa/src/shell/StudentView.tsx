@@ -7,25 +7,25 @@ import type {
 import type { ScheduleResponse, ScheduleSlot } from "@eios/contracts";
 import type { GradebookResponse, GradebookEntry, BookingSlot } from "@eios/contracts";
 import type { NotificationsResponse } from "@eios/contracts";
-import { useRoute, navigate } from "./router.js";
-import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
-import { useLocale } from "./locale.js";
-import { onSwUpdate } from "./sw-update.js";
-import { StatusBar } from "./shell/StatusBar.js";
-import type { ScheduleItem } from "./screens/schedule/ScheduleTab.js";
-import { ScheduleTab } from "./screens/schedule/ScheduleTab.js";
-import { LessonScreen } from "./screens/lesson/LessonScreen.js";
-import { PerformanceTab } from "./screens/performance/PerformanceTab.js";
-import { UnitScreen } from "./screens/performance/UnitScreen.js";
-import { GroupScreen } from "./screens/performance/GroupScreen.js";
-import { GradebookTab } from "./screens/gradebook/GradebookTab.js";
-import { ProfileTab } from "./screens/profile/ProfileTab.js";
-import { ContextSwitcherScreen } from "./screens/profile/ContextSwitcherScreen.js";
-import { NotificationsScreen, NotificationDetailScreen } from "./screens/notifications/NotificationsScreen.js";
-import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "./components/icons/index.js";
-import { Header, ContextSwitcher, ContextLabel } from "./shell/Header.js";
-import { BottomNav } from "./shell/BottomNav.js";
-import * as source from "./data/source.js";
+import { useRoute, navigate } from "../router.js";
+import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
+import { useLocale } from "../locale.js";
+import { onSwUpdate } from "../sw-update.js";
+import { StatusBar } from "./StatusBar.js";
+import type { ScheduleItem } from "../screens/schedule/ScheduleTab.js";
+import { ScheduleTab } from "../screens/schedule/ScheduleTab.js";
+import { LessonScreen } from "../screens/lesson/LessonScreen.js";
+import { PerformanceTab } from "../screens/performance/PerformanceTab.js";
+import { UnitScreen } from "../screens/performance/UnitScreen.js";
+import { GroupScreen } from "../screens/performance/GroupScreen.js";
+import { GradebookTab } from "../screens/gradebook/GradebookTab.js";
+import { ProfileTab } from "../screens/profile/ProfileTab.js";
+import { ContextSwitcherScreen } from "../screens/profile/ContextSwitcherScreen.js";
+import { NotificationsScreen, NotificationDetailScreen } from "../screens/notifications/NotificationsScreen.js";
+import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "../components/icons/index.js";
+import { Header, ContextSwitcher, ContextLabel } from "./Header.js";
+import { BottomNav } from "./BottomNav.js";
+import * as source from "../data/source.js";
 
 interface Props {
   role:      source.Role;     // "student" | "parent" — данные тянем из data/source
@@ -88,7 +88,7 @@ function findGroupById(units: CurriculumUnit[], id: string): UnitGroup | null {
 }
 
 // ── Главный компонент ─────────────────────────────────────────────────────────
-export function Shell({ role, lkUrl, onLogout }: Props) {
+export function StudentView({ role, lkUrl, onLogout }: Props) {
   const person        = source.getPerson(role);
   const scheduleMap   = source.getScheduleMap();
   const gradebookMap  = source.getGradebookMap();

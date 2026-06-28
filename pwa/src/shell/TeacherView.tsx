@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import type { CSSProperties } from "react";
 import type { TeacherScheduleResponse, TeacherScheduleSlot } from "@eios/contracts";
-import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
-import { CalIcon, PersonIcon } from "./components/icons/index.js";
-import { TeacherScheduleTab } from "./screens/teacher/TeacherScheduleTab.js";
-import { TeacherLessonScreen } from "./screens/teacher/TeacherLessonScreen.js";
-import { onSwUpdate } from "./sw-update.js";
-import { StatusBar } from "./shell/StatusBar.js";
-import { Header, ContextLabel } from "./shell/Header.js";
-import { BottomNav } from "./shell/BottomNav.js";
-import { useRoute, navigate } from "./router.js";
-import { canAccess, defaultRoute } from "./permissions.js";
-import * as source from "./data/source.js";
+import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
+import { CalIcon, PersonIcon } from "../components/icons/index.js";
+import { TeacherScheduleTab } from "../screens/teacher/TeacherScheduleTab.js";
+import { TeacherLessonScreen } from "../screens/teacher/TeacherLessonScreen.js";
+import { onSwUpdate } from "../sw-update.js";
+import { StatusBar } from "./StatusBar.js";
+import { Header, ContextLabel } from "./Header.js";
+import { BottomNav } from "./BottomNav.js";
+import { useRoute, navigate } from "../router.js";
+import * as source from "../data/source.js";
 
 function findSlotById(schedule: TeacherScheduleResponse, slotId: string): { slot: TeacherScheduleSlot; date: string } | null {
   for (const day of schedule.days) {
@@ -29,7 +28,7 @@ interface Props {
   onLogout?: () => void;
 }
 
-export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
+export function TeacherView({ authName, lkUrl, onLogout }: Props) {
   const { name: teacherName, eiv } = source.getTeacherIdentity(authName);
   const schedule   = source.getTeacherSchedule();
   const attendance = source.getAttendance();
@@ -41,10 +40,6 @@ export function TeacherShell({ authName, lkUrl, onLogout }: Props) {
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => { onSwUpdate(s => setSwUpdate(s === "available")); }, []);
-  // Если педагог попал на чужой маршрут (например, набрал #/gradebook) — редиректим
-  useEffect(() => {
-    if (!canAccess("teacher", route)) navigate(defaultRoute("teacher"));
-  }, [route]);
 
   function handleThemeChange(mode: ThemeMode) { setTheme(mode); setThemeMode(mode); }
 
