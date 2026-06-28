@@ -1,3 +1,17 @@
+/**
+ * Роутинг по pathname + History API (без `#`).
+ *
+ * SPA-fallback на nginx-стороне (`try_files $uri /index.html`) гарантирует,
+ * что любой неизвестный путь отдаст index.html — React сам разберётся.
+ *
+ * Не пересекается с:
+ *   /admin.html  — реальный файл, nginx сервит до fallback
+ *   /scorm/*     — реальные файлы из volume
+ *   /assets/*    — хешированные бандлы
+ *   /api/*       — проксируется Caddy на glue
+ *   /callback    — нет файла; React в main.tsx ловит pathname до рендера
+ *                  и сразу делает history.replaceState на "/"
+ */
 import { useState, useEffect } from "react";
 
 export type Route =
@@ -13,11 +27,9 @@ export type Route =
   | { name: "unit";    id: string }     // UnitId (discipline/MDK/practice)
   | { name: "group";   id: string };    // UnitId (ПМ)
 
-export function parseHash(hash: string): Route {
-  const path = hash.startsWith("#/") ? hash.slice(2) : hash.replace(/^#/, "");
-  const parts = path.split("/").filter(Boolean);
+export function parsePath(pathname: string): Route {
+  const parts = pathname.split("/").filter(Boolean);
   const [seg0, seg1] = parts;
-
   if (seg0 === "performance")   return { name: "performance" };
   if (seg0 === "gradebook")     return { name: "gradebook" };
   if (seg0 === "tasks")         return { name: "tasks" };
@@ -30,32 +42,41 @@ export function parseHash(hash: string): Route {
   return { name: "schedule" };
 }
 
-export function routeToHash(route: Route): string {
+export function routeToPath(route: Route): string {
   switch (route.name) {
-    case "schedule":      return "#/";
-    case "performance":   return "#/performance";
-    case "gradebook":     return "#/gradebook";
-    case "tasks":         return "#/tasks";
-    case "profile":       return "#/profile";
-    case "contexts":      return "#/contexts";
-    case "notifications": return "#/notifications";
-    case "notification":  return `#/notifications/${route.id}`;
-    case "lesson":        return `#/lesson/${route.id}`;
-    case "unit":          return `#/unit/${route.id}`;
-    case "group":         return `#/group/${route.id}`;
+    case "schedule":      return "/";
+    case "performance":   return "/performance";
+    case "gradebook":     return "/gradebook";
+    case "tasks":         return "/tasks";
+    case "profile":       return "/profile";
+    case "contexts":      return "/contexts";
+    case "notifications": return "/notifications";
+    case "notification":  return `/notifications/${route.id}`;
+    case "lesson":        return `/lesson/${route.id}`;
+    case "unit":          return `/unit/${route.id}`;
+    case "group":         return `/group/${route.id}`;
   }
 }
 
+const NAV_EVENT = "eios:navigation";
+
 export function navigate(route: Route): void {
-  window.location.hash = routeToHash(route);
+  const path = routeToPath(route);
+  if (window.location.pathname === path) return; // не плодим дубли в истории
+  window.history.pushState({}, "", path);
+  window.dispatchEvent(new Event(NAV_EVENT));
 }
 
 export function useRoute(): Route {
-  const [route, setRoute] = useState(() => parseHash(window.location.hash));
+  const [route, setRoute] = useState(() => parsePath(window.location.pathname));
   useEffect(() => {
-    const update = () => setRoute(parseHash(window.location.hash));
-    window.addEventListener("hashchange", update);
-    return () => window.removeEventListener("hashchange", update);
+    const update = () => setRoute(parsePath(window.location.pathname));
+    window.addEventListener("popstate", update);       // браузерные back/forward
+    window.addEventListener(NAV_EVENT, update);        // наша navigate()
+    return () => {
+      window.removeEventListener("popstate", update);
+      window.removeEventListener(NAV_EVENT, update);
+    };
   }, []);
   return route;
 }

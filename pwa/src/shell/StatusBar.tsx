@@ -18,7 +18,7 @@ export function StatusBar({ swUpdate, eiv }: Props) {
   const [copied, setCopied] = useState(false);
 
   function copySupportInfo() {
-    const screen = window.location.hash || "#/";
+    const screen = window.location.pathname;
     const parts  = [`ЭИОС v${version}`, commit, `ЕИВ ${eiv}`, screen].filter(Boolean);
     navigator.clipboard.writeText(parts.join(" · ")).then(() => {
       setCopied(true);

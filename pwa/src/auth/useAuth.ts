@@ -39,8 +39,11 @@ export function useAuth(): AuthHook {
     getUser()
       .then((u) => {
         if (u) {
-          const returnHash = sessionStorage.getItem("eios_return_hash");
-          if (returnHash) { sessionStorage.removeItem("eios_return_hash"); window.location.hash = returnHash; }
+          const returnPath = sessionStorage.getItem("eios_return_path");
+          if (returnPath) {
+            sessionStorage.removeItem("eios_return_path");
+            window.history.replaceState({}, "", returnPath);
+          }
           setAuth({ phase: "authenticated", studentId: u.id, role: u.role, name: u.name });
         } else {
           setAuth({ phase: "anonymous" });
@@ -60,9 +63,10 @@ export function useAuth(): AuthHook {
 
   async function handleLogin() {
     setAuth({ phase: "logging_in" });
-    // Сохраняем хеш чтобы восстановить экран после OIDC-редиректа
-    if (window.location.hash && window.location.hash !== "#/") {
-      sessionStorage.setItem("eios_return_hash", window.location.hash);
+    // Сохраняем путь чтобы восстановить экран после OIDC-редиректа
+    const path = window.location.pathname + window.location.search;
+    if (path !== "/" && !path.startsWith("/callback")) {
+      sessionStorage.setItem("eios_return_path", path);
     }
     try {
       await login();
