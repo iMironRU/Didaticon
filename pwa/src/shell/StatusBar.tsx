@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { CSSProperties } from "react";
 import { applySwUpdate } from "../sw-update.js";
 import { useLocale } from "../locale.js";
 import { Button } from "../ui/Button.js";
@@ -28,25 +27,22 @@ export function StatusBar({ swUpdate, eiv }: Props) {
   }
 
   return (
-    <div style={st.bar}>
+    <div className="flex items-center justify-between px-3 py-1 bg-elevated border-t border-line shrink-0">
       <div>
         {swUpdate && (
           <Button size="sm" onClick={applySwUpdate}>{t("updateApp")}</Button>
         )}
       </div>
-      <button style={st.versionBtn} onClick={copySupportInfo} title={t("copyForSupport")}>
+      <button
+        className="bg-transparent border-0 cursor-pointer p-0"
+        onClick={copySupportInfo}
+        title={t("copyForSupport")}
+      >
         {copied
-          ? <span style={st.copied}>✓ {t("copied")}</span>
-          : <span style={st.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
+          ? <span className="text-success text-[0.62rem]">✓ {t("copied")}</span>
+          : <span className="text-fg-dim text-[0.62rem]">v{version}{commit ? ` · ${commit}` : ""}</span>
         }
       </button>
     </div>
   );
 }
-
-const st: Record<string, CSSProperties> = {
-  bar:          { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 12px", background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", flexShrink: 0 },
-  versionBtn:   { background: "none", border: "none", cursor: "pointer", padding: 0 },
-  versionLabel: { color: "var(--c-text-dim)", fontSize: "0.62rem" },
-  copied:       { color: "var(--c-success)", fontSize: "0.62rem" },
-};
