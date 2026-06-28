@@ -184,7 +184,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
     inner = (
       <>
         <Header person={person} learner={learner} unreadCount={unreadCount}
-          onBell={() => navigate({ name: "notifications" })}
+          onBell={() => navigate({ name: "profile" })}
           onContextTap={() => history.back()}
           contextLabel={person.personType === "parent" ? t("myChildren") : t("learnersTitle")}
         />
@@ -227,7 +227,7 @@ export function Shell({ person, scheduleMap, gradebookMap, notifications: notifP
           person={person}
           learner={learner}
           unreadCount={unreadCount}
-          onBell={() => navigate({ name: "notifications" })}
+          onBell={() => navigate({ name: "profile" })}
           onContextTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
         />
         <div style={st.body}>
