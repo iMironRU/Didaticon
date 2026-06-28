@@ -4,15 +4,18 @@
  * Используется на детальных экранах: lesson, unit, group, и т.д.
  * Фон тот же что у Header, border-bottom разделяет от тела экрана.
  */
+import type { ReactNode } from "react";
 import { useLocale } from "../locale.js";
 
 interface Props {
   /** Хлебная крошка (название дисциплины / типа+предмета) */
   title:  string;
   onBack: () => void;
+  /** Опциональный блок в правой части (например, "Прочитать все") */
+  action?: ReactNode;
 }
 
-export function SubHeader({ title, onBack }: Props) {
+export function SubHeader({ title, onBack, action }: Props) {
   const { t } = useLocale();
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-elevated border-b border-line shrink-0">
@@ -22,9 +25,10 @@ export function SubHeader({ title, onBack }: Props) {
       >
         <span className="text-xl">‹</span> {t("back")}
       </button>
-      <div className="text-fg text-[0.85rem] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+      <div className="flex-1 text-fg text-[0.85rem] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
         {title}
       </div>
+      {action}
     </div>
   );
 }
