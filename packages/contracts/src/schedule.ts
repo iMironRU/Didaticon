@@ -1,6 +1,6 @@
-// Контракт расписания: GET /eios/student/{learnerId}/schedule
-// Только реализационные данные (время, аудитория, педагог).
-// Содержание занятия — в TrajectoryLesson (связь по SlotId).
+// Контракт расписания студента и педагога.
+// Студент: GET /eios/student/{learnerId}/schedule
+// Педагог: GET /eios/teacher/{teacherId}/schedule
 import type { LearnerId, SlotId, UnitId } from "./ids.js";
 import type { RatingCriterion } from "./trajectory.js";
 
@@ -26,6 +26,8 @@ export interface ScheduleDay {
   slots:   ScheduleSlot[];
 }
 
+export type SlotStatus = "not_started" | "in_progress" | "completed";
+
 export interface ScheduleSlot {
   slotId:     SlotId;     // совпадает с TrajectoryLesson.lessonId
   timeStart:  string;     // "09:00"
@@ -36,6 +38,7 @@ export interface ScheduleSlot {
   unitRef:    UnitRef;
   hasControl: boolean;    // есть модульный контроль в этом слоте
   rating:     SlotRating | null; // null если LESSON_RATING_ENABLED = false
+  status?:    SlotStatus; // отсутствие = not_started
 }
 
 export interface Teacher {
@@ -53,6 +56,70 @@ export interface UnitRef {
 export interface SlotRating {
   submitted: boolean;
   criteria:  RatingCriterion[] | null; // null если критерии не назначены
+}
+
+// ---------------------------------------------------------------------------
+// Расписание педагога: GET /eios/teacher/{teacherId}/schedule
+// ---------------------------------------------------------------------------
+
+export type RefuseReason = "illness" | "business_trip" | "other";
+
+export interface TeacherSlotGroup {
+  groupId: string;
+  title:   string;   // "ИВТ-22"
+  count:   number;   // кол-во студентов
+}
+
+export interface TeacherScheduleSlot {
+  slotId:     SlotId;
+  timeStart:  string;
+  timeEnd:    string;
+  room?:      string;
+  isOnline:   boolean;
+  unitRef:    UnitRef;
+  lessonKind: string;   // "Лекция" | "Практика" | "Лабораторная" | …
+  groups:     TeacherSlotGroup[];
+  status:     SlotStatus;
+  canRefuse:  boolean;  // false если дата занятия == сегодня
+}
+
+export interface TeacherScheduleDay {
+  date:    string;
+  weekday: string;
+  status:  DayStatus;
+  slots:   TeacherScheduleSlot[];
+}
+
+export interface TeacherScheduleResponse {
+  teacherId: string;
+  from:      string;
+  to:        string;
+  days:      TeacherScheduleDay[];
+}
+
+export interface RefuseRequest {
+  slotId: SlotId;
+  reason: RefuseReason;
+}
+
+// ---------------------------------------------------------------------------
+// Посещаемость: GET /eios/teacher/{teacherId}/slot/{slotId}/attendance
+// ---------------------------------------------------------------------------
+
+export interface AttendanceStudent {
+  studentId: string;
+  name:      string;
+  absent:    boolean;
+}
+
+export interface AttendanceResponse {
+  slotId:   SlotId;
+  students: AttendanceStudent[];
+}
+
+export interface AttendanceSaveRequest {
+  slotId:    SlotId;
+  absentIds: string[];   // только отсутствующие
 }
 
 // ---------------------------------------------------------------------------

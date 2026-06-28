@@ -14,7 +14,9 @@ type AuthState =
 
 const _searchParams = new URLSearchParams(window.location.search);
 const USE_MOCK = import.meta.env.DEV || _searchParams.has("demo");
-const DEMO_PERSONA: "student" | "parent" = _searchParams.get("demo") === "parent" ? "parent" : "student";
+const DEMO_PERSONA: "student" | "parent" | "teacher" =
+  _searchParams.get("demo") === "parent"  ? "parent"  :
+  _searchParams.get("demo") === "teacher" ? "teacher" : "student";
 
 export function App() {
   const [auth, setAuth] = useState<AuthState>(
@@ -160,6 +162,12 @@ function LoginScreen({
             onClick={() => { window.location.href = window.location.pathname + "?demo=parent"; }}
           >
             👨‍👧 Родитель
+          </button>
+          <button
+            style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+            onClick={() => { window.location.href = window.location.pathname + "?demo=teacher"; }}
+          >
+            👨‍🏫 Педагог
           </button>
         </div>
 
