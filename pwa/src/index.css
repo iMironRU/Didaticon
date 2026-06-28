@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
 #root{min-height:100vh;display:flex;flex-direction:column}
@@ -63,4 +65,35 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
   --c-danger:#DC2626;
   --c-purple:#6D28D9;
   --c-progress-track:#D0E4F0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Tailwind theme — семантические токены, использующие CSS-vars выше.
+ *
+ * @theme inline означает: Tailwind генерирует utility-классы (bg-canvas,
+ * text-fg, border-line, ...), но они резолвятся в var(--c-...) в рантайме.
+ * Это даёт авто-смену цветов при переключении data-theme без `dark:` префиксов.
+ *
+ * Имена СЕМАНТИЧЕСКИЕ (canvas/surface/fg), не цветовые. Не привязаны к
+ * текущей dark-палитре — при изменении цветов классы остаются прежними.
+ *
+ * См. memory: architecture.md → правило 6.
+ * ────────────────────────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-canvas:       var(--c-bg);           /* bg-canvas — фон страницы */
+  --color-surface:      var(--c-card);         /* bg-surface — карточки */
+  --color-elevated:     var(--c-header);       /* bg-elevated — шапка, нижняя нав, status bar */
+  --color-track:        var(--c-progress-track); /* bg-track — прогресс, бейджи */
+  --color-line:         var(--c-border);       /* border-line */
+
+  --color-accent:       var(--c-accent);       /* bg-accent, text-accent, border-accent */
+
+  --color-fg:           var(--c-text-primary); /* text-fg — основной текст */
+  --color-fg-secondary: var(--c-text-secondary);
+  --color-fg-muted:     var(--c-text-muted);
+  --color-fg-dim:       var(--c-text-dim);
+
+  --color-success:      var(--c-success);
+  --color-danger:       var(--c-danger);
+  --color-purple:       var(--c-purple);
 }

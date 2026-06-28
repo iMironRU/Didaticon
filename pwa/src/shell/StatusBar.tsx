@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { applySwUpdate } from "../sw-update.js";
 import { useLocale } from "../locale.js";
+import { Button } from "../ui/Button.js";
 
 declare const __APP_VERSION__: string;
 declare const __COMMIT_HASH__: string;
@@ -30,7 +31,7 @@ export function StatusBar({ swUpdate, eiv }: Props) {
     <div style={st.bar}>
       <div>
         {swUpdate && (
-          <button style={st.updateBtn} onClick={applySwUpdate}>{t("updateApp")}</button>
+          <Button size="sm" onClick={applySwUpdate}>{t("updateApp")}</Button>
         )}
       </div>
       <button style={st.versionBtn} onClick={copySupportInfo} title={t("copyForSupport")}>
@@ -48,5 +49,4 @@ const st: Record<string, CSSProperties> = {
   versionBtn:   { background: "none", border: "none", cursor: "pointer", padding: 0 },
   versionLabel: { color: "var(--c-text-dim)", fontSize: "0.62rem" },
   copied:       { color: "var(--c-success)", fontSize: "0.62rem" },
-  updateBtn:    { border: "none", background: "var(--c-accent)", color: "#fff", borderRadius: 6, padding: "3px 10px", fontSize: "0.72rem", cursor: "pointer" },
 };
