@@ -77,6 +77,13 @@ export function LoginScreen({ onLogin }: Props) {
         <p className="text-fg-dim text-xs mt-6 text-center">
           ADMIN_TOKEN задаётся в переменных окружения контейнера glue.
         </p>
+
+        <a
+          href="/"
+          className="block text-center text-fg-secondary hover:text-fg text-sm no-underline mt-6"
+        >
+          ← Вернуться в приложение
+        </a>
       </div>
     </div>
   );

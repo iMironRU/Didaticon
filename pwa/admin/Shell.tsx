@@ -39,6 +39,13 @@ export function AdminShell({ onLogout }: Props) {
           <div className="text-fg text-sm font-bold leading-tight">ЭИОС — Администрирование</div>
           <div className="text-fg-muted text-xs mt-0.5">v{version}{commit ? ` · ${commit}` : ""}</div>
         </div>
+        <a
+          href="/"
+          className="text-fg-secondary hover:text-fg text-sm no-underline shrink-0"
+          title="Вернуться в PWA"
+        >
+          ← К приложению
+        </a>
         <Button variant="secondary" size="sm" onClick={onLogout}>Выйти</Button>
       </header>
 
