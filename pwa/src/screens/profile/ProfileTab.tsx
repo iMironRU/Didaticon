@@ -3,6 +3,7 @@ import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
+import { useInstallPrompt } from "../../install.js";
 
 interface Props {
   person:          Person;
@@ -129,6 +130,9 @@ export function ProfileTab({
         </div>
       </div>
 
+      {/* Установка PWA */}
+      <InstallSection />
+
       {/* Выход */}
       {onLogout && (
         <div className="mt-8">
@@ -142,4 +146,42 @@ export function ProfileTab({
       )}
     </div>
   );
+}
+
+function InstallSection() {
+  const { installed, canInstall, isIOS, install } = useInstallPrompt();
+  if (installed) return null;
+
+  if (canInstall) {
+    return (
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>Приложение</div>
+        <button
+          className="w-full bg-accent text-white rounded-lg py-3 font-semibold text-[0.88rem] cursor-pointer"
+          onClick={install}
+        >
+          📲 Установить на устройство
+        </button>
+      </div>
+    );
+  }
+
+  if (isIOS) {
+    return (
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>Приложение</div>
+        <Card className="px-3.5 py-3">
+          <div className="text-fg text-[0.85rem] font-medium mb-1">
+            Установить на главный экран
+          </div>
+          <div className="text-fg-muted text-xs leading-relaxed">
+            Нажмите кнопку «Поделиться» <span className="text-fg">⎙</span> внизу
+            и выберите <span className="text-fg font-medium">«На экран „Домой"»</span>.
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return null;
 }
