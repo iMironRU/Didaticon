@@ -208,17 +208,17 @@ const st: Record<string, CSSProperties> = {
 
 const pr: Record<string, CSSProperties> = {
   root:       { padding: "20px 16px", display: "flex", flexDirection: "column", gap: 16 },
-  nameBlock:  { display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "var(--c-surface2)", borderRadius: 14 },
+  nameBlock:  { display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "var(--c-card)", borderRadius: 14 },
   avatar:     { width: 48, height: 48, borderRadius: "50%", background: "var(--c-accent)", color: "#fff", fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  name:       { fontSize: "0.95rem", fontWeight: 600, color: "var(--c-text)" },
+  name:       { fontSize: "0.95rem", fontWeight: 600, color: "var(--c-text-primary)" },
   role:       { fontSize: "0.75rem", color: "var(--c-accent)", marginTop: 2 },
-  section:    { background: "var(--c-surface2)", borderRadius: 14, padding: "14px 16px" },
-  sectionLabel:{ fontSize: "0.72rem", color: "var(--c-text2)", textTransform: "uppercase" as const, letterSpacing: "0.06em", fontWeight: 600, marginBottom: 10 },
+  section:    { background: "var(--c-card)", borderRadius: 14, padding: "14px 16px" },
+  sectionLabel:{ fontSize: "0.72rem", color: "var(--c-text-muted)", textTransform: "uppercase" as const, letterSpacing: "0.06em", fontWeight: 600, marginBottom: 10 },
   themeRow:   { display: "flex", gap: 6 },
-  themeBtn:   { flex: 1, background: "var(--c-surface)", border: "0.5px solid var(--c-border)", borderRadius: 8, padding: "8px 4px", fontSize: "0.78rem", color: "var(--c-text2)", cursor: "pointer" },
+  themeBtn:   { flex: 1, background: "var(--c-card)", border: "0.5px solid var(--c-border)", borderRadius: 8, padding: "8px 4px", fontSize: "0.78rem", color: "var(--c-text-secondary)", cursor: "pointer" },
   themeBtnActive: { border: "1.5px solid var(--c-accent)", color: "var(--c-accent)", fontWeight: 600 },
   lkLink:     { display: "block", textAlign: "center" as const, color: "var(--c-accent)", fontSize: "0.85rem", padding: "12px 0", textDecoration: "none" },
-  logoutBtn:  { width: "100%", background: "none", border: "0.5px solid var(--c-border)", borderRadius: 12, padding: "13px 0", fontSize: "0.9rem", color: "var(--c-text2)", cursor: "pointer" },
+  logoutBtn:  { width: "100%", background: "none", border: "1px solid var(--c-danger)", borderRadius: 12, padding: "13px 0", fontSize: "0.9rem", color: "var(--c-danger)", cursor: "pointer" },
 };
 
 declare const __APP_VERSION__: string;
