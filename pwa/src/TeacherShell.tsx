@@ -5,7 +5,8 @@ import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
 import { LogoIcon, CalIcon, PersonIcon } from "./components/icons/index.js";
 import { TeacherScheduleTab } from "./screens/teacher/TeacherScheduleTab.js";
 import { TeacherLessonScreen } from "./screens/teacher/TeacherLessonScreen.js";
-import { onSwUpdate, applySwUpdate } from "./sw-update.js";
+import { onSwUpdate } from "./sw-update.js";
+import { StatusBar } from "./shell/StatusBar.js";
 import { useEffect } from "react";
 
 type TeacherTab = "schedule" | "tasks" | "profile";
@@ -158,33 +159,6 @@ function TeacherProfile({ teacherName, themeMode, onThemeChange, lkUrl, onLogout
   );
 }
 
-function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv: string }) {
-  const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
-  const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
-  const [copied, setCopied] = useState(false);
-
-  function copySupportInfo() {
-    const screen = window.location.hash || "#/";
-    const parts  = [`ЭИОС v${version}`, commit, `ЕИВ ${eiv}`, screen].filter(Boolean);
-    navigator.clipboard.writeText(parts.join(" · ")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  return (
-    <div style={st.statusBar}>
-      <div>{swUpdate && <button style={st.updateBtn} onClick={applySwUpdate}>Обновить</button>}</div>
-      <button style={st.versionBtn} onClick={copySupportInfo} title="Скопировать для поддержки">
-        {copied
-          ? <span style={{ color: "var(--c-success)" }}>✓ Скопировано</span>
-          : <span style={st.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
-        }
-      </button>
-    </div>
-  );
-}
-
 const st: Record<string, CSSProperties> = {
   root:       { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
   header:     { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: "var(--c-header)", borderBottom: "0.5px solid var(--c-border)", flexShrink: 0 },
@@ -196,10 +170,6 @@ const st: Record<string, CSSProperties> = {
   bottomNav:  { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem:    { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel:   { fontSize: "0.62rem", fontWeight: 500 },
-  statusBar:  { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 12px", background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", flexShrink: 0 },
-  versionBtn: { background: "none", border: "none", cursor: "pointer", padding: 0 },
-  versionLabel:{ color: "var(--c-text-dim)", fontSize: "0.62rem" },
-  updateBtn:  { border: "none", background: "var(--c-accent)", color: "#fff", borderRadius: 6, padding: "3px 10px", fontSize: "0.72rem", cursor: "pointer" },
   stub:       { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
   stubIcon:   { fontSize: 48 },
   stubTitle:  { fontSize: "1rem", fontWeight: 600, color: "var(--c-text)" },
@@ -221,5 +191,3 @@ const pr: Record<string, CSSProperties> = {
   logoutBtn:  { width: "100%", background: "none", border: "1px solid var(--c-danger)", borderRadius: 12, padding: "13px 0", fontSize: "0.9rem", color: "var(--c-danger)", cursor: "pointer" },
 };
 
-declare const __APP_VERSION__: string;
-declare const __COMMIT_HASH__:  string;

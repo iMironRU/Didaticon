@@ -10,7 +10,8 @@ import type { NotificationsResponse } from "@eios/contracts";
 import { useRoute, navigate } from "./router.js";
 import { getThemeMode, setTheme, type ThemeMode } from "./theme.js";
 import { useLocale } from "./locale.js";
-import { onSwUpdate, applySwUpdate } from "./sw-update.js";
+import { onSwUpdate } from "./sw-update.js";
+import { StatusBar } from "./shell/StatusBar.js";
 import type { ScheduleItem } from "./screens/schedule/ScheduleTab.js";
 import { ScheduleTab } from "./screens/schedule/ScheduleTab.js";
 import { LessonScreen } from "./screens/lesson/LessonScreen.js";
@@ -368,38 +369,6 @@ function BottomNav({ tab, debtCount }: { tab: TabId; debtCount: number }) {
 }
 
 // ── Статусная строка ──────────────────────────────────────────────────────────
-function StatusBar({ swUpdate, eiv }: { swUpdate: boolean; eiv: string }) {
-  const { t } = useLocale();
-  const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
-  const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
-  const [copied, setCopied] = useState(false);
-
-  function copySupportInfo() {
-    const screen = window.location.hash || "#/";
-    const parts  = [`ЭИОС v${version}`, commit, `ЕИВ ${eiv}`, screen].filter(Boolean);
-    navigator.clipboard.writeText(parts.join(" · ")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  return (
-    <div style={st.statusBar}>
-      <div>
-        {swUpdate && (
-          <button style={st.updateBtn} onClick={applySwUpdate}>{t("updateApp")}</button>
-        )}
-      </div>
-      <button style={st.versionBtn} onClick={copySupportInfo} title={t("copyForSupport")}>
-        {copied
-          ? <span style={{ color: "var(--c-success)" }}>✓ {t("copied")}</span>
-          : <span style={st.versionLabel}>v{version}{commit ? ` · ${commit}` : ""}</span>
-        }
-      </button>
-    </div>
-  );
-}
-
 // ── Стили ─────────────────────────────────────────────────────────────────────
 const st: Record<string, CSSProperties> = {
   root:         { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)" },
@@ -418,12 +387,6 @@ const st: Record<string, CSSProperties> = {
   bottomNav:    { background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", display: "flex", padding: "6px 0 10px", flexShrink: 0 },
   navItem:      { flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3, padding: "4px 0" },
   navLabel:     { fontSize: "0.62rem", fontWeight: 500 },
-  statusBar:    { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 12px", background: "var(--c-header)", borderTop: "0.5px solid var(--c-border)", flexShrink: 0 },
-  versionBtn:   { background: "none", border: "none", cursor: "pointer", padding: 0 },
-  versionLabel: { color: "var(--c-text-dim)", fontSize: "0.62rem" },
-  updateBtn:    { border: "none", background: "var(--c-accent)", color: "#fff", borderRadius: 6, padding: "3px 10px", fontSize: "0.72rem", cursor: "pointer" },
 };
 
 // type augmentation для Vite define
-declare const __APP_VERSION__: string;
-declare const __COMMIT_HASH__:  string;
