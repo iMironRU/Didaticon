@@ -12,8 +12,6 @@ import type { Role } from "./data/source.js";
 const STUDENT_ROUTES = new Set<Route["name"]>([
   "schedule", "performance", "gradebook", "profile", "contexts",
   "notifications", "notification", "lesson", "unit", "group",
-  // legacy Trajectory (этап 7)
-  "disciplines", "profiles", "completed", "discipline", "pm", "practice",
 ]);
 
 const TEACHER_ROUTES = new Set<Route["name"]>([

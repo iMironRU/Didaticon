@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, loginAs, logout, getUser, type EiosRole } from "./auth/oidc.js";
-import { Trajectory } from "./projections/trajectory.js";
 import { AppShell } from "./shell/AppShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
 
@@ -100,18 +99,11 @@ export function App() {
 
   if (auth.phase === "authenticated") {
     const role = USE_MOCK ? DEMO_PERSONA : auth.role;
-    const lkUrl = branding.lkUrl ?? undefined;
-
-    // Реальный студент пока на legacy Trajectory (этап 7 закроет миграцию).
-    if (!USE_MOCK && role !== "teacher") {
-      return <Trajectory studentId={auth.studentId} onLogout={handleLogout} lkUrl={lkUrl} />;
-    }
-
     return (
       <AppShell
         role={role}
         authName={USE_MOCK ? "" : auth.name}
-        lkUrl={lkUrl}
+        lkUrl={branding.lkUrl ?? undefined}
         onLogout={handleLogout}
       />
     );
