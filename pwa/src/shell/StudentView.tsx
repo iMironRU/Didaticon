@@ -14,7 +14,7 @@ import { onSwUpdate } from "../sw-update.js";
 import { StatusBar } from "./StatusBar.js";
 import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
 import { LearnerSlotCard, type LearnerSlotEntry } from "../screens/schedule/LearnerSlotCard.js";
-import { LessonScreen } from "../screens/lesson/LessonScreen.js";
+import { LearnerLessonScreen } from "../screens/lesson/LearnerLessonScreen.js";
 import { PerformanceTab } from "../screens/performance/PerformanceTab.js";
 import { UnitScreen } from "../screens/performance/UnitScreen.js";
 import { GroupScreen } from "../screens/performance/GroupScreen.js";
@@ -145,13 +145,14 @@ export function StudentView({ role, lkUrl, onLogout }: Props) {
     const slotInfo  = findSlotByLessonId(schedule, route.id);
     if (entry) {
       inner = (
-        <LessonScreen
+        <LearnerLessonScreen
           lesson={entry.lesson}
           slot={slotInfo?.slot ?? null}
           slotDate={slotInfo?.date ?? null}
           unitTitle={entry.unitTitle}
           onBack={() => history.back()}
           onLaunch={() => entry.lesson.packageUrl && window.open(entry.lesson.packageUrl)}
+          readOnly={role === "parent"}
         />
       );
     }

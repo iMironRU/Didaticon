@@ -5,7 +5,7 @@ import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { CalIcon, PersonIcon } from "../components/icons/index.js";
 import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
 import { TeacherSlotCard } from "../screens/schedule/TeacherSlotCard.js";
-import { TeacherLessonScreen } from "../screens/teacher/TeacherLessonScreen.js";
+import { TeacherLessonScreen } from "../screens/lesson/TeacherLessonScreen.js";
 import { onSwUpdate } from "../sw-update.js";
 import { StatusBar } from "./StatusBar.js";
 import { Header, ContextLabel } from "./Header.js";
