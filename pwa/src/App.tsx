@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
-import { login, getUser, type EiosRole } from "./auth/oidc.js";
+import { login, loginAs, getUser, type EiosRole } from "./auth/oidc.js";
 import { Trajectory } from "./projections/trajectory.js";
 import { DemoShell } from "./DemoShell.js";
 import { DEFAULT_BRANDING, type Branding } from "./config.js";
@@ -36,6 +36,7 @@ export function App() {
         const patch: Partial<Branding> = {};
         if (d.accessInfo  != null) patch.accessInfo  = d.accessInfo;
         if (d.oidcEnabled != null) patch.oidcEnabled = d.oidcEnabled;
+        if (d.demoEnabled != null) patch.demoEnabled = d.demoEnabled;
         if (d.logoUrl     != null) patch.logoUrl     = d.logoUrl;
         if (d.lkUrl       != null) patch.lkUrl       = d.lkUrl;
         if (d.orgName     != null) patch.orgName     = d.orgName;
@@ -127,11 +128,18 @@ function LoginScreen({
   branding: Branding;
 }) {
   const [screen, setScreen] = useState<"login" | "access">("login");
+  const [demoOpen, setDemoOpen] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
   const oidcReady = branding.oidcEnabled;
   const loginDisabled = isLoading || !oidcReady;
+
+  const DEMO_USERS = [
+    { label: "👨‍🎓 Студент",  email: "student@didacticon.test" },
+    { label: "👨‍👧 Родитель", email: "parent@didacticon.test"  },
+    { label: "👨‍🏫 Педагог",  email: "teacher@didacticon.test" },
+  ];
 
   if (screen === "access") {
     return <AccessScreen branding={branding} onBack={() => setScreen("login")} />;
@@ -166,6 +174,7 @@ function LoginScreen({
           }
         </button>
 
+        {/* Демо-режим (анонимный, без Auth0) */}
         <div style={r.demoRow}>
           <button
             style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
@@ -186,6 +195,31 @@ function LoginScreen({
             👨‍🏫 Педагог
           </button>
         </div>
+
+        {/* Тестовый вход через Auth0 (только если demoEnabled) */}
+        {branding.demoEnabled && (
+          <div style={r.demoLoginBlock}>
+            <button style={{ ...r.demoLoginToggle, color: hex80(b) }} onClick={() => setDemoOpen(o => !o)}>
+              Тестовый вход {demoOpen ? "▲" : "▼"}
+            </button>
+            {demoOpen && (
+              <div style={r.demoLoginPanel}>
+                <p style={r.demoLoginHint}>Пароль для всех: <code style={{ color: b }}>Test1234!</code></p>
+                <div style={r.demoLoginBtns}>
+                  {DEMO_USERS.map(u => (
+                    <button
+                      key={u.email}
+                      style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b), flex: "none", width: "100%" }}
+                      onClick={() => loginAs(u.email)}
+                    >
+                      {u.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {!oidcReady && (
           <div style={r.warnBox}>
@@ -407,6 +441,40 @@ const r: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     padding: "11px 0",
     cursor: "pointer",
+  },
+  demoLoginBlock: {
+    marginTop: 8,
+    width: "100%",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 0,
+  },
+  demoLoginToggle: {
+    background: "none",
+    border: "none",
+    fontSize: "0.78rem",
+    cursor: "pointer",
+    padding: "4px 0",
+    opacity: 0.7,
+  },
+  demoLoginPanel: {
+    width: "100%",
+    marginTop: 8,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+  },
+  demoLoginHint: {
+    fontSize: "0.75rem",
+    color: "#4D7BA8",
+    textAlign: "center" as const,
+    marginBottom: 2,
+  },
+  demoLoginBtns: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
   },
   demoCancelBtn: {
     marginTop: 10,

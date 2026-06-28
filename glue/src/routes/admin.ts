@@ -17,7 +17,7 @@ interface AdmZipInstance {
 
 // Ключи конфига которые можно менять через admin UI.
 // tab: "connect" | "brand" | "settings" — для разбивки по вкладкам.
-const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; restart?: boolean; html?: boolean; note?: string }[] = [
+const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; restart?: boolean; html?: boolean; note?: string; toggle?: boolean }[] = [
   { key: "OIDC_ISSUER",            label: "OIDC Issuer (URL Univerkon)",          tab: "connect", restart: true },
   { key: "OIDC_CLIENT_ID",         label: "OIDC Client ID (для PWA)",             tab: "connect", restart: true },
   { key: "OIDC_CLIENT_SECRET",     label: "OIDC Client Secret",                   tab: "connect", secret: true, restart: true },
@@ -36,7 +36,8 @@ const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; 
   { key: "BRANDING_SUPPORT_HOURS", label: "Часы работы поддержки",                tab: "brand" },
   { key: "BRANDING_FOOTER_TEXT",   label: "Текст подвала",                        tab: "brand" },
   { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)",   tab: "brand", html: true },
-  { key: "LESSON_RATING_ENABLED",  label: "Оценка занятий",                       tab: "settings", note: "true / false" },
+  { key: "LESSON_RATING_ENABLED",  label: "Оценка занятий",                       tab: "settings", toggle: true },
+  { key: "DEMO_LOGIN_ENABLED",     label: "Тестовый вход (демо-пользователи)",     tab: "settings", toggle: true },
 ];
 
 function requireAdmin(cfg: Config, req: FastifyRequest, reply: FastifyReply): boolean {
@@ -89,12 +90,13 @@ export function registerAdmin(
       key:     k.key,
       label:   k.label,
       tab:     k.tab,
-      secret:  k.secret ?? false,
+      secret:  k.secret  ?? false,
       restart: k.restart ?? false,
-      html:    k.html ?? false,
-      note:    k.note ?? null,
-      envValue: k.secret ? "****" : (process.env[k.key] ?? ""),
-      savedValue: saved[k.key] ?? null,
+      html:    k.html    ?? false,
+      toggle:  k.toggle  ?? false,
+      note:    k.note    ?? null,
+      envValue:      k.secret ? "****" : (process.env[k.key] ?? ""),
+      savedValue:    saved[k.key] ?? null,
       effectiveValue: k.secret ? "****" : (saved[k.key] ?? process.env[k.key] ?? ""),
     }));
   });

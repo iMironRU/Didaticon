@@ -9,6 +9,7 @@ export interface Branding {
   accessInfo: string;
   footerText: string;
   oidcEnabled: boolean;
+  demoEnabled: boolean;
 }
 
 declare global {
@@ -32,6 +33,7 @@ export const DEFAULT_BRANDING: Branding = {
   accessInfo:   "<p>Доступ к ЭИОС предоставляется учебной частью при зачислении.</p><p>Если вы уже обучаетесь, но не можете войти — обратитесь в деканат или службу поддержки.</p>",
   footerText:   "",
   oidcEnabled:  true,
+  demoEnabled:  false,
 };
 
 // Версия: v2 — принудительная смена хэша бандла после перехода на runtime config.

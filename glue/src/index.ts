@@ -47,6 +47,7 @@ app.get("/branding", async () => {
   const supportHours = settings.get("BRANDING_SUPPORT_HOURS");
   const footerText  = settings.get("BRANDING_FOOTER_TEXT");
   const lessonRatingRaw = settings.get("LESSON_RATING_ENABLED");
+  const demoEnabledRaw  = settings.get("DEMO_LOGIN_ENABLED");
   const oidcIssuer  = settings.get("OIDC_ISSUER")       ?? cfg.oidcIssuer  ?? null;
   const oidcClientId = settings.get("OIDC_CLIENT_ID")   ?? null;
   const oidcRedirectUri = settings.get("OIDC_REDIRECT_URI") ?? null;
@@ -61,6 +62,7 @@ app.get("/branding", async () => {
     supportHours: supportHours ?? null,
     footerText:   footerText   ?? null,
     lessonRatingEnabled: lessonRatingRaw != null ? lessonRatingRaw !== "false" : null,
+    demoEnabled:         demoEnabledRaw  != null ? demoEnabledRaw  !== "false" : false,
     oidcEnabled: !!(oidcIssuer && oidcClientId),
     oidc: oidcIssuer ? { issuer: oidcIssuer, clientId: oidcClientId, redirectUri: oidcRedirectUri } : null,
   };

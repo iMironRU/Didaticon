@@ -376,13 +376,18 @@ function renderField(f) {
   const noteBadge    = f.note    ? `<span class="note-badge">${esc(f.note)}</span>` : '';
   const label = `<label>${esc(f.label)}${restartBadge}${noteBadge}</label>`;
 
-  // Булевый тоггл для LESSON_RATING_ENABLED
-  if (f.key === "LESSON_RATING_ENABLED") {
+  // Булевые тогглы
+  const TOGGLE_META = {
+    LESSON_RATING_ENABLED: { title: "Оценка занятий",            desc: "Студенты могут оценить занятие (👍/👎) после прохождения SCORM" },
+    DEMO_LOGIN_ENABLED:    { title: "Тестовый вход",             desc: "На экране входа появится блок с тестовыми пользователями (Auth0)" },
+  };
+  if (f.toggle || f.key in TOGGLE_META) {
+    const meta = TOGGLE_META[f.key] || { title: esc(f.label), desc: "" };
     const checked = f.savedValue !== null ? f.savedValue !== "false" : (f.envValue !== "false" && f.envValue !== "");
     return `<div class="toggle-row">
       <div class="toggle-label">
-        <strong>Оценка занятий</strong>
-        <span>Студенты могут оценить занятие (👍/👎) после прохождения SCORM</span>
+        <strong>${meta.title}</strong>
+        <span>${meta.desc}</span>
       </div>
       <label class="toggle">
         <input type="checkbox" id="cfg-${f.key}" ${checked ? 'checked' : ''}>
@@ -406,7 +411,7 @@ async function saveConfig(tab) {
   fields.forEach(f => {
     const el = document.getElementById("cfg-" + f.key);
     if (!el) return;
-    body[f.key] = f.key === "LESSON_RATING_ENABLED" ? (el.checked ? "true" : "false") : el.value;
+    body[f.key] = (f.toggle || f.key === "LESSON_RATING_ENABLED") ? (el.checked ? "true" : "false") : el.value;
   });
   const alertId = "cfg-alert-" + tab;
   document.getElementById(alertId).innerHTML = "";

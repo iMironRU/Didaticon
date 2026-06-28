@@ -25,6 +25,10 @@ export async function login(): Promise<void> {
   await mgr.signinRedirect();
 }
 
+export async function loginAs(email: string): Promise<void> {
+  await mgr.signinRedirect({ login_hint: email });
+}
+
 export async function logout(): Promise<void> {
   await mgr.signoutRedirect();
 }
