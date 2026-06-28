@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
+import { resolve } from "path";
 const { version } = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 const commitHash = (process.env.COMMIT_HASH || (() => { try { return execSync("git rev-parse --short HEAD").toString().trim(); } catch { return "dev"; } })()).slice(0, 7);
 
@@ -22,6 +23,13 @@ export default defineConfig({
     minify: "terser",
     terserOptions: {
       mangle: { reserved: ["of", "in", "do", "if", "for", "let", "new", "try", "var"] },
+    },
+    // Multi-page: PWA на /, admin на /admin/. Отдельные бандлы, общий src/.
+    rollupOptions: {
+      input: {
+        main:  resolve(__dirname, "index.html"),
+        admin: resolve(__dirname, "admin/index.html"),
+      },
     },
   },
   plugins: [
