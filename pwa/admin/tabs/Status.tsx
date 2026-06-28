@@ -3,6 +3,7 @@ import { Card } from "../../src/ui/Card.js";
 import { Button } from "../../src/ui/Button.js";
 import { Spinner } from "../../src/ui/Spinner.js";
 import { useToast } from "../../src/ui/Toast.js";
+import { useConfirm } from "../../src/ui/Confirm.js";
 import { apiFetch } from "../auth.js";
 
 interface Status {
@@ -24,6 +25,7 @@ export function StatusTab() {
   const [busy, setBusy]   = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   async function load() {
     setBusy(true); setError(null);
@@ -41,7 +43,13 @@ export function StatusTab() {
   useEffect(() => { void load(); }, []);
 
   async function restart() {
-    if (!confirm("Перезапустить glue-сервис?")) return;
+    const ok = await confirm({
+      title: "Перезапустить glue?",
+      description: "Все активные подключения прервутся на несколько секунд.",
+      confirmLabel: "Перезапустить",
+      variant: "danger",
+    });
+    if (!ok) return;
     const r = await apiFetch("/admin/restart", { method: "POST" });
     if (r.ok) {
       toast({ title: "Перезапуск", description: "Сервис перезапускается…", variant: "success" });

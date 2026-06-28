@@ -6,6 +6,7 @@ import { Card } from "../../src/ui/Card.js";
 import { Button } from "../../src/ui/Button.js";
 import { Spinner } from "../../src/ui/Spinner.js";
 import { useToast } from "../../src/ui/Toast.js";
+import { useConfirm } from "../../src/ui/Confirm.js";
 import { apiFetch } from "../auth.js";
 
 interface ScormPkg {
@@ -19,6 +20,7 @@ export function ContentTab() {
   const [busy, setBusy]         = useState(true);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   async function load() {
     setBusy(true);
@@ -44,7 +46,13 @@ export function ContentTab() {
   }
 
   async function del(id: string) {
-    if (!confirm(`Удалить пакет ${id}?`)) return;
+    const ok = await confirm({
+      title: "Удалить SCORM-пакет?",
+      description: `Файл «${id}» будет удалён без возможности восстановления.`,
+      confirmLabel: "Удалить",
+      variant: "danger",
+    });
+    if (!ok) return;
     const r = await apiFetch(`/admin/scorm/${id}`, { method: "DELETE" });
     if (r.ok) {
       toast({ title: "Удалено", description: id });

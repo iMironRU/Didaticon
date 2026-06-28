@@ -10,6 +10,7 @@ import { getToken, clearToken } from "./auth.js";
 import { LoginScreen } from "./LoginScreen.js";
 import { AdminShell } from "./Shell.js";
 import { ToastQueue } from "../src/ui/Toast.js";
+import { ConfirmProvider } from "../src/ui/Confirm.js";
 
 export function AdminApp() {
   const [authed, setAuthed] = useState(!!getToken());
@@ -21,9 +22,11 @@ export function AdminApp() {
 
   return (
     <ToastQueue>
-      {authed
-        ? <AdminShell onLogout={handleLogout} />
-        : <LoginScreen onLogin={() => setAuthed(true)} />}
+      <ConfirmProvider>
+        {authed
+          ? <AdminShell onLogout={handleLogout} />
+          : <LoginScreen onLogin={() => setAuthed(true)} />}
+      </ConfirmProvider>
     </ToastQueue>
   );
 }
