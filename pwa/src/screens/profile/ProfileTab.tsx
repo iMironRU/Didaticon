@@ -204,7 +204,9 @@ function MyRolesSection() {
 
   function switchRole() {
     clearRole();
-    window.location.reload();   // AppShell перерендерится с RoleSelector
+    // Очищаем URL от /{role}/{contextId} префикса — иначе AppShell заберёт
+    // роль из URL и снова покажет тот же контекст вместо RoleSelector.
+    window.location.assign("/");
   }
 
   return (
