@@ -9,6 +9,7 @@ import type { AuthState } from "../../auth/useAuth.js";
 import { loginAs } from "../../auth/oidc.js";
 import type { Branding } from "../../config.js";
 import { Spinner } from "../../ui/Spinner.js";
+import { Button } from "../../ui/Button.js";
 
 interface Props {
   auth:    AuthState;
@@ -55,17 +56,19 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         <h1 style={r.title}>ЭИОС</h1>
         <p style={r.subtitle}>Электронная информационно-образовательная среда</p>
 
-        <button
-          style={{ ...r.btn, background: loginDisabled ? hex80(b) : b, cursor: loginDisabled ? "not-allowed" : "pointer" }}
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
           onClick={loginDisabled ? undefined : onLogin}
           disabled={loginDisabled}
           title={!oidcReady ? "Авторизация не настроена — обратитесь к администратору" : undefined}
         >
           {isLoading
-            ? <><Spinner size={16} className="mr-2.5" />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
+            ? <><Spinner size={16} />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
             : <><LoginIcon />{!oidcReady ? "Войти (не настроено)" : auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
           }
-        </button>
+        </Button>
 
         {/* Демо-вход через Auth0 (только если demoEnabled).
             Раньше был аккордеон, теперь — просто секция: 3 кнопки сверху,
@@ -75,15 +78,18 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
             <div style={{ ...r.demoLoginLabel, color: hex80(b) }}>
               {hasLoggedInBefore ? "Демо других ролей" : "Демо-вход для ознакомления"}
             </div>
-            <div style={r.demoLoginBtns}>
+            <div className="w-full flex flex-row gap-2">
               {DEMO_USERS.map(u => (
-                <button
+                <Button
                   key={u.email}
-                  style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+                  variant="ghost"
+                  size="md"
+                  className="flex-1 border text-[0.88rem]"
+                  style={{ borderColor: hex20(b), color: hex80(b) }}
                   onClick={() => loginAs(u.email)}
                 >
                   {u.label}
-                </button>
+                </Button>
               ))}
             </div>
             <p style={r.demoLoginHint}>
@@ -242,7 +248,7 @@ function LoginIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      style={{ marginRight: 8, verticalAlign: -3 }} aria-hidden="true">
+      aria-hidden="true">
       <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
       <polyline points="10 17 15 12 10 7"/>
       <line x1="15" y1="12" x2="3" y2="12"/>
@@ -313,31 +319,6 @@ const r: Record<string, React.CSSProperties> = {
     maxWidth: 220,
     margin: "0 0 28px",
   },
-  btn: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 0,
-    padding: "14px 20px",
-    border: "none",
-    borderRadius: 10,
-    color: "#fff",
-    fontSize: "0.95rem",
-    fontWeight: 500,
-    cursor: "pointer",
-    letterSpacing: "0.02em",
-  },
-  demoRoleBtn: {
-    flex: 1,
-    background: "none",
-    border: "0.5px solid",
-    borderRadius: 10,
-    fontSize: "0.88rem",
-    fontWeight: 500,
-    padding: "11px 0",
-    cursor: "pointer",
-  },
   demoLoginBlock: {
     marginTop: 8,
     width: "100%",
@@ -359,11 +340,6 @@ const r: Record<string, React.CSSProperties> = {
     color: "#4D7BA8",
     textAlign: "center" as const,
     marginTop: 8,
-  },
-  demoLoginBtns: {
-    display: "flex",
-    flexDirection: "row" as const,
-    gap: 8,
   },
   copyBtn: {
     background: "none",

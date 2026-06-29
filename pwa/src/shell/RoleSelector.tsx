@@ -9,6 +9,7 @@
 import type { ContextsResponse } from "../data/contexts.js";
 import type { AvailableRole } from "./contextSelection.js";
 import { Card } from "../ui/Card.js";
+import { Button } from "../ui/Button.js";
 import { usePersonIdLabel } from "../branding/usePersonIdLabel.js";
 
 interface Props {
@@ -86,13 +87,10 @@ export function RoleSelector({ identity, contexts, available, onPick, onLogout }
         </div>
 
         {/* Выход */}
-        <div className="mt-8">
-          <button
-            onClick={onLogout}
-            className="w-full text-fg-muted text-sm py-2 hover:text-fg transition-colors"
-          >
+        <div className="mt-8 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={onLogout}>
             Выйти
-          </button>
+          </Button>
         </div>
       </div>
     </div>

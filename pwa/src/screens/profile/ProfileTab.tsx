@@ -3,6 +3,7 @@ import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
+import { Button } from "../../ui/Button.js";
 import { Spinner } from "../../ui/Spinner.js";
 import { useInstallPrompt } from "../../install.js";
 import { useContexts } from "../../data/contexts.js";
@@ -67,7 +68,7 @@ export function ProfileTab({
             <div className="text-fg text-[0.95rem] font-medium">{f.value}</div>
           </div>
         ))}
-        {/* Read-only PD — править в ЛК Univerkon */}
+        {/* Read-only PD — править во внешнем ЛК организации */}
         {lkUrl && (
           <a
             href={lkUrl}
@@ -75,7 +76,7 @@ export function ProfileTab({
             rel="noopener noreferrer"
             className="block text-accent text-xs mt-3 no-underline hover:underline"
           >
-            Изменить в личном кабинете ↗
+            Изменить в {branding.orgName} ↗
           </a>
         )}
       </div>
@@ -95,12 +96,9 @@ export function ProfileTab({
           </div>
         </Card>
         {onSwitchContext && (
-          <button
-            className="w-full mt-2 border border-line rounded-lg bg-transparent text-fg-secondary text-[0.85rem] font-medium py-2.5 cursor-pointer"
-            onClick={onSwitchContext}
-          >
+          <Button variant="secondary" size="md" className="w-full mt-2" onClick={onSwitchContext}>
             {t("switchProfile")}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -159,12 +157,9 @@ export function ProfileTab({
       {/* Выход */}
       {onLogout && (
         <div className="mt-8">
-          <button
-            className="w-full border border-danger rounded-lg py-3 bg-transparent text-danger text-[0.95rem] font-semibold cursor-pointer"
-            onClick={onLogout}
-          >
+          <Button variant="danger" size="lg" className="w-full" onClick={onLogout}>
             {t("logout")}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -246,12 +241,9 @@ function MyRolesSection() {
         </Card>
       )}
       {canSwitch && (
-        <button
-          onClick={switchRole}
-          className="mt-2 text-accent text-sm hover:underline"
-        >
+        <Button variant="ghost" size="sm" onClick={switchRole} className="mt-2 text-accent">
           ↩ Сменить роль
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -265,12 +257,9 @@ function InstallSection() {
     return (
       <div className="mb-6">
         <div className={SECTION_LABEL_CLS}>Приложение</div>
-        <button
-          className="w-full bg-accent text-white rounded-lg py-3 font-semibold text-[0.88rem] cursor-pointer"
-          onClick={install}
-        >
+        <Button variant="primary" size="lg" className="w-full" onClick={install}>
           📲 Установить на устройство
-        </button>
+        </Button>
       </div>
     );
   }
