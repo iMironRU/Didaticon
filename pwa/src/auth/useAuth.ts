@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, logout, getUser, type RoleName, type PersonIdentity } from "./oidc.js";
+import { resetContexts } from "../data/contexts.js";
 
 /** @deprecated используйте Role[] из oidc.ts */
 export type EiosRole = "student" | "parent" | "teacher";
@@ -90,6 +91,7 @@ export function useAuth(): AuthHook {
 
   function handleLogout() {
     sessionStorage.clear();
+    resetContexts();
     if (!USE_MOCK) {
       logout();
       return;

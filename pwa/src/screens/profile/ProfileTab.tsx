@@ -3,7 +3,9 @@ import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
+import { Spinner } from "../../ui/Spinner.js";
 import { useInstallPrompt } from "../../install.js";
+import { useContexts } from "../../data/contexts.js";
 
 interface Props {
   person:          Person;
@@ -141,6 +143,9 @@ export function ProfileTab({
         </div>
       </div>
 
+      {/* Мои роли и контексты (из identity.contexts.get) */}
+      <MyRolesSection />
+
       {/* Установка PWA */}
       <InstallSection />
 
@@ -154,6 +159,78 @@ export function ProfileTab({
             {t("logout")}
           </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * MyRolesSection — отображает контексты физика из identity.contexts.get.
+ * Block I §10 — будущий context-switcher (этап 6) использует те же данные,
+ * сейчас просто список для проверки RPC.
+ */
+function MyRolesSection() {
+  const { contexts, loading, error } = useContexts();
+
+  return (
+    <div className="mb-6">
+      <div className={SECTION_LABEL_CLS}>Мои роли</div>
+      {loading && (
+        <Card className="px-3.5 py-3 flex items-center gap-2 text-fg-muted text-sm">
+          <Spinner /> Загрузка контекстов…
+        </Card>
+      )}
+      {error && (
+        <Card className="px-3.5 py-3 text-danger text-sm">
+          Не удалось загрузить: {error}
+        </Card>
+      )}
+      {contexts && !loading && !error && (
+        <Card className="px-3.5 py-3">
+          {contexts.student.map((c) => (
+            <div key={c.context_id} className="py-1.5 border-b border-line last:border-0">
+              <div className="text-fg text-[0.85rem] font-medium">
+                Я (учусь) · {c.education_program.title}
+              </div>
+              <div className="text-fg-muted text-xs mt-0.5">
+                {c.education_program.code} · {c.education_program.level} · {c.education_program.form} · {c.current_semester} семестр
+              </div>
+            </div>
+          ))}
+          {contexts.parent.map((c) => (
+            <div key={c.context_id} className="py-1.5 border-b border-line last:border-0">
+              <div className="text-fg text-[0.85rem] font-medium">
+                Родитель · {c.child.name}
+              </div>
+              <div className="text-fg-muted text-xs mt-0.5">
+                {c.child.education_program.title}
+              </div>
+            </div>
+          ))}
+          {contexts.teacher.map((c) => (
+            <div key={c.context_id} className="py-1.5 border-b border-line last:border-0">
+              <div className="text-fg text-[0.85rem] font-medium">Преподаваемые группы</div>
+              <div className="text-fg-muted text-xs mt-0.5 font-mono">{c.context_id}</div>
+            </div>
+          ))}
+          {contexts.examiner.map((c) => (
+            <div key={c.context_id} className="py-1.5 border-b border-line last:border-0">
+              <div className="text-fg text-[0.85rem] font-medium">Экзаменатор · {c.event.title}</div>
+              <div className="text-fg-muted text-xs mt-0.5">{c.event.dates.from} — {c.event.dates.to}</div>
+            </div>
+          ))}
+          {contexts.applicant.map((c) => (
+            <div key={c.context_id} className="py-1.5 border-b border-line last:border-0">
+              <div className="text-fg text-[0.85rem] font-medium">Абитуриент · {c.application.direction}</div>
+              <div className="text-fg-muted text-xs mt-0.5">статус: {c.application.status}</div>
+            </div>
+          ))}
+          {contexts.student.length === 0 && contexts.parent.length === 0 &&
+           contexts.teacher.length === 0 && contexts.examiner.length === 0 &&
+           contexts.applicant.length === 0 && (
+            <div className="text-fg-muted text-sm py-1">Нет активных контекстов</div>
+          )}
+        </Card>
       )}
     </div>
   );
