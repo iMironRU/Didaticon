@@ -12,7 +12,11 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, logout, getUser, type RoleName, type PersonIdentity } from "./oidc.js";
+import { USE_MOCK, DEMO_PERSONA } from "./mock.js";
 import { resetContexts } from "../data/contexts.js";
+
+// Re-export для backward-compat с App.tsx и другими consumers
+export { USE_MOCK, DEMO_PERSONA };
 
 /** @deprecated используйте Role[] из oidc.ts */
 export type EiosRole = "student" | "parent" | "teacher";
@@ -29,12 +33,6 @@ export type AuthState =
       name:     string;
       identity?: PersonIdentity;     // полная identity (все роли + модификаторы), для будущего multi-role UI
     };
-
-const _searchParams = new URLSearchParams(window.location.search);
-export const USE_MOCK = import.meta.env.DEV || _searchParams.has("demo");
-export const DEMO_PERSONA: EiosRole =
-  _searchParams.get("demo") === "parent"  ? "parent"  :
-  _searchParams.get("demo") === "teacher" ? "teacher" : "student";
 
 /** Из массива ролей физика выбираем "основную" для текущего single-role AppShell.
  *  Приоритет: student > teacher > parent > examiner > applicant. Если ни одна

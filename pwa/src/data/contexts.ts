@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { rpc, RpcError } from "./rpc.js";
+import { USE_MOCK, DEMO_PERSONA } from "../auth/mock.js";
 
 export interface EducationProgram {
   code:  string;
@@ -56,11 +57,56 @@ export interface ContextsResponse {
 
 const EMPTY: ContextsResponse = { student: [], parent: [], teacher: [], examiner: [], applicant: [] };
 
+/** Demo-моки — для ?demo= режима без реального Auth0-логина.
+ *  Совпадают по структуре с glue mocks (та же education_program/группы). */
+const DEMO_CONTEXTS: Record<string, ContextsResponse> = {
+  student: {
+    student: [{
+      context_id: "stu:demo-1",
+      education_program: {
+        code: "09.03.01", title: "Информатика и вычислительная техника",
+        level: "bachelor", form: "full_time",
+      },
+      year_of_admission: 2023, current_semester: 6,
+    }],
+    parent: [], teacher: [], examiner: [], applicant: [],
+  },
+  parent: {
+    student: [],
+    parent: [{
+      context_id: "par:demo-1",
+      child: {
+        fp_id: "fpid:demo-c1",
+        name: "Иванов Иван Иванович",
+        education_program: {
+          code: "09.03.01", title: "Информатика и вычислительная техника",
+          level: "bachelor", form: "full_time",
+        },
+      },
+    }],
+    teacher: [], examiner: [], applicant: [],
+  },
+  teacher: {
+    student: [], parent: [],
+    teacher: [{ context_id: "tch:demo-1" }],
+    examiner: [], applicant: [],
+  },
+};
+
 let _cache: ContextsResponse | null = null;
 let _inFlight: Promise<ContextsResponse> | null = null;
 
 export async function loadContexts(): Promise<ContextsResponse> {
   if (_cache) return _cache;
+
+  // Demo-режим — без RPC. Возвращаем mock по DEMO_PERSONA.
+  // Старый Auth0 access_token может торчать в localStorage от прошлой сессии,
+  // но дёргать его в demo бессмысленно — glue его отклонит.
+  if (USE_MOCK) {
+    _cache = DEMO_CONTEXTS[DEMO_PERSONA] ?? EMPTY;
+    return _cache;
+  }
+
   if (_inFlight) return _inFlight;
   _inFlight = rpc<ContextsResponse>("identity.contexts.get")
     .then((r) => { _cache = r; return r; })
