@@ -35,6 +35,7 @@ const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; 
   { key: "BRANDING_SUPPORT_PHONE", label: "Телефон поддержки",                    tab: "brand" },
   { key: "BRANDING_SUPPORT_HOURS", label: "Часы работы поддержки",                tab: "brand" },
   { key: "BRANDING_FOOTER_TEXT",   label: "Текст подвала",                        tab: "brand" },
+  { key: "BRANDING_PERSON_ID_LABEL", label: "Название ID физлица (напр. ЕИВ, Студ. код, UID)", tab: "brand", note: "пусто → дефолт из локали" },
   { key: "BRANDING_ACCESS_INFO",   label: "Экран «Как получить доступ» (HTML)",   tab: "brand", html: true },
   { key: "LESSON_RATING_ENABLED",  label: "Оценка занятий",                       tab: "settings", toggle: true },
   { key: "DEMO_LOGIN_ENABLED",     label: "Тестовый вход (демо-пользователи)",     tab: "settings", toggle: true },

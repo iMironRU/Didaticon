@@ -10,6 +10,9 @@ export interface Branding {
   footerText: string;
   oidcEnabled: boolean;
   demoEnabled: boolean;
+  /** Название ID физлица в этой ОО — "ЕИВ" / "Студ. код" / "UID" / ...
+   *  Пустая строка → используется локализованный дефолт из locale.ts (`eivLabel`). */
+  personIdLabel: string;
 }
 
 declare global {
@@ -34,6 +37,7 @@ export const DEFAULT_BRANDING: Branding = {
   footerText:   "",
   oidcEnabled:  true,
   demoEnabled:  false,
+  personIdLabel: "",
 };
 
 // Версия: v2 — принудительная смена хэша бандла после перехода на runtime config.

@@ -29,6 +29,7 @@ export function useBranding(): Branding {
         if (d.supportPhone != null) patch.supportPhone = d.supportPhone;
         if (d.supportHours != null) patch.supportHours = d.supportHours;
         if (d.footerText  != null) patch.footerText  = d.footerText;
+        if (d.personIdLabel != null) patch.personIdLabel = d.personIdLabel;
         setRemote(patch);
         if (d.brandColor && /^#[0-9a-fA-F]{6}$/.test(d.brandColor)) {
           document.documentElement.style.setProperty("--c-accent", d.brandColor);

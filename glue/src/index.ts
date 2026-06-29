@@ -48,6 +48,7 @@ app.get("/branding", async () => {
   const supportPhone = settings.get("BRANDING_SUPPORT_PHONE");
   const supportHours = settings.get("BRANDING_SUPPORT_HOURS");
   const footerText  = settings.get("BRANDING_FOOTER_TEXT");
+  const personIdLabel = settings.get("BRANDING_PERSON_ID_LABEL");
   const lessonRatingRaw = settings.get("LESSON_RATING_ENABLED");
   const demoEnabledRaw  = settings.get("DEMO_LOGIN_ENABLED");
   const oidcIssuer  = settings.get("OIDC_ISSUER")       ?? cfg.oidcIssuer  ?? null;
@@ -63,6 +64,7 @@ app.get("/branding", async () => {
     supportPhone: supportPhone ?? null,
     supportHours: supportHours ?? null,
     footerText:   footerText   ?? null,
+    personIdLabel: personIdLabel ?? null,
     lessonRatingEnabled: lessonRatingRaw != null ? lessonRatingRaw !== "false" : null,
     demoEnabled:         demoEnabledRaw  != null ? demoEnabledRaw  !== "false" : false,
     oidcEnabled: !!(oidcIssuer && oidcClientId),

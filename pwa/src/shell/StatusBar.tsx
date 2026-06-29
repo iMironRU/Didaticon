@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { applySwUpdate } from "../sw-update.js";
 import { useLocale } from "../locale.js";
+import { usePersonIdLabel } from "../branding/usePersonIdLabel.js";
 import { Button } from "../ui/Button.js";
 
 declare const __APP_VERSION__: string;
@@ -13,13 +14,14 @@ interface Props {
 
 export function StatusBar({ swUpdate, eiv }: Props) {
   const { t } = useLocale();
+  const personIdLabel = usePersonIdLabel();
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
   const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
   const [copied, setCopied] = useState(false);
 
   function copySupportInfo() {
     const screen = window.location.pathname;
-    const parts  = [`ЭИОС v${version}`, commit, `ЕИВ ${eiv}`, screen].filter(Boolean);
+    const parts  = [`ЭИОС v${version}`, commit, `${personIdLabel} ${eiv}`, screen].filter(Boolean);
     navigator.clipboard.writeText(parts.join(" · ")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

@@ -8,6 +8,7 @@ import { useInstallPrompt } from "../../install.js";
 import { useContexts } from "../../data/contexts.js";
 import { clearRole, availableRoles } from "../../shell/contextSelection.js";
 import { USE_MOCK } from "../../auth/mock.js";
+import { useBranding } from "../../branding/useBranding.js";
 
 interface Props {
   person:          Person;
@@ -41,11 +42,15 @@ export function ProfileTab({
     { value: "dark",  label: t("themeDark") },
   ];
 
+  // Если организация задала свой label в брендинге — он перекрывает t("eivFull")
+  const branding = useBranding();
+  const idLabel  = branding.personIdLabel?.trim() || t("eivFull");
+
   return (
     <div>
-      {/* ЕИВ */}
+      {/* ID физлица (ЕИВ по умолчанию, конфигурируемо через брендинг) */}
       <div className="mb-6">
-        <div className={FIELD_LABEL_CLS}>{t("eivFull")}</div>
+        <div className={FIELD_LABEL_CLS}>{idLabel}</div>
         <div className="text-fg text-base font-semibold mt-1">{person.eiv}</div>
       </div>
 

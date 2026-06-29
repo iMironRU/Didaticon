@@ -9,6 +9,7 @@
 import type { ContextsResponse } from "../data/contexts.js";
 import type { AvailableRole } from "./contextSelection.js";
 import { Card } from "../ui/Card.js";
+import { usePersonIdLabel } from "../branding/usePersonIdLabel.js";
 
 interface Props {
   identity: { name: string; eiv: string };
@@ -43,6 +44,7 @@ function countLabel(role: AvailableRole, c: ContextsResponse): string {
 }
 
 export function RoleSelector({ identity, contexts, available, onPick, onLogout }: Props) {
+  const personIdLabel = usePersonIdLabel();
   return (
     <div className="min-h-screen flex flex-col bg-canvas px-4 py-8">
       <div className="max-w-md mx-auto w-full">
@@ -52,7 +54,7 @@ export function RoleSelector({ identity, contexts, available, onPick, onLogout }
             {identity.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
           </div>
           <div className="text-fg text-base font-semibold">{identity.name}</div>
-          <div className="text-fg-muted text-xs mt-1">ЕИВ {identity.eiv}</div>
+          <div className="text-fg-muted text-xs mt-1">{personIdLabel} {identity.eiv}</div>
         </div>
 
         <div className="text-fg-dim text-[0.68rem] font-bold uppercase tracking-[0.06em] mb-3 text-center">
