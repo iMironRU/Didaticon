@@ -12,6 +12,7 @@ import { useContexts } from "../../data/contexts.js";
 import { clearRole, availableRoles } from "../../shell/contextSelection.js";
 import { USE_MOCK } from "../../auth/mock.js";
 import { useBranding } from "../../branding/useBranding.js";
+import { navigate } from "../../router.js";
 
 interface Props {
   person:          Person;
@@ -87,6 +88,22 @@ export function ProfileTab({
           </a>
         )}
       </div>
+
+      {/* e-Student card — только для студента (не родителя). Большая визуальная
+          кнопка, потому что это частая операция (показать на входе в библиотеку
+          или комментарийной зоне). */}
+      {learner && person.personType === "student" && (
+        <div className="mb-6">
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={() => navigate({ name: "estudent" })}
+          >
+            🪪 Открыть студенческий
+          </Button>
+        </div>
+      )}
 
       {/* Текущий профиль обучения — только если есть learner (т.е. студент/родитель) */}
       {learner && (

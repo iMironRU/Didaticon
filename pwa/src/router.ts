@@ -36,7 +36,8 @@ export type Route =
   | { name: "notification"; id: string }
   | { name: "lesson";  id: string }     // SlotId
   | { name: "unit";    id: string }     // UnitId (discipline/MDK/practice)
-  | { name: "group";   id: string };    // UnitId (ПМ)
+  | { name: "group";   id: string }     // UnitId (ПМ)
+  | { name: "estudent" };               // e-Student card (Block I §9)
 
 /** Контекст из URL: роль + id контекста (формат glue: "stu:s1", "par:p1-c1", ...). */
 export interface ContextRef {
@@ -71,6 +72,7 @@ function parseViewParts(parts: string[]): Route {
   if (seg0 === "unit"   && seg1) return { name: "unit",   id: seg1 };
   if (seg0 === "group"  && seg1) return { name: "group",  id: seg1 };
   if (seg0 === "lesson" && seg1) return { name: "lesson", id: seg1 };
+  if (seg0 === "estudent")       return { name: "estudent" };
   return { name: "schedule" };
 }
 
@@ -87,6 +89,7 @@ function viewToPath(route: Route): string {
     case "lesson":        return `/lesson/${route.id}`;
     case "unit":          return `/unit/${route.id}`;
     case "group":         return `/group/${route.id}`;
+    case "estudent":      return "/estudent";
   }
 }
 

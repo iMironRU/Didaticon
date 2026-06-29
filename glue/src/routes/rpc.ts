@@ -21,6 +21,7 @@ import type { JWTPayload } from "jose";
 import type { Config } from "../config.js";
 import { AuthError, verifyBearerToken } from "../auth/index.js";
 import { identityContextsGet } from "./rpc/identity-contexts.js";
+import { identityEStudentIssue } from "./rpc/identity-estudent.js";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -46,7 +47,7 @@ type Handler = (params: Record<string, unknown>, claims: JWTPayload) => Promise<
 
 const methods: Record<string, Handler> = {
   "identity.contexts.get":    identityContextsGet,
-  // "identity.e_student.issue": ...будет реализовано позже
+  "identity.e_student.issue": identityEStudentIssue,
 };
 
 function rpcError(id: JsonRpcRequest["id"], code: number, message: string, data?: unknown): JsonRpcResponse {

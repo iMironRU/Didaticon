@@ -21,7 +21,7 @@ import type {
   ScheduleResponse, ScheduleSlot, GradebookEntry, BookingSlot,
   TeacherScheduleResponse, TeacherScheduleSlot,
 } from "@eios/contracts";
-import { useRoute, navigate } from "../router.js";
+import { useRoute, useRouteContext, navigate } from "../router.js";
 import { getThemeMode, setTheme, type ThemeMode } from "../theme.js";
 import { useLocale } from "../locale.js";
 import { onSwUpdate } from "../sw-update.js";
@@ -40,6 +40,7 @@ import { GradebookTab } from "../screens/gradebook/GradebookTab.js";
 import { ProfileTab } from "../screens/profile/ProfileTab.js";
 import { ContextSwitcherScreen } from "../screens/profile/ContextSwitcherScreen.js";
 import { NotificationsScreen, NotificationDetailScreen } from "../screens/notifications/NotificationsScreen.js";
+import { EStudentScreen } from "../screens/EStudentScreen.js";
 import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "../components/icons/index.js";
 import * as source from "../data/source.js";
 
@@ -116,6 +117,7 @@ function findTeacherSlotById(schedule: TeacherScheduleResponse, slotId: string):
 // ── Главный компонент ───────────────────────────────────────────────────────
 export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
   const route = useRoute();
+  const urlCtx = useRouteContext();
   const { t, locale, changeLocale } = useLocale();
   const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
   const [swUpdate, setSwUpdate] = useState(false);
@@ -196,6 +198,16 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
         );
       }
     }
+  }
+
+  // ── e-Student — только для студентов (parent видит контексты детей,
+  //   но карту выпускает Univerkon на конкретного физика) ─────────────────
+  if (!isTeacher && role === "student" && route.name === "estudent" && urlCtx) {
+    return (
+      <Frame swUpdate={swUpdate} eiv={person.eiv}>
+        <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
+      </Frame>
+    );
   }
 
   // ── Unit / Group / Contexts / Notifications — только для студентов/родителей ─
