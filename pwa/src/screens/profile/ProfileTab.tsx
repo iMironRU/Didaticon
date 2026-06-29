@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { Person, Learner } from "@eios/contracts";
 import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
+import { getFontSize, setFontSize, FONT_SIZE_LABELS, type FontSize } from "../../fontSize.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
 import { Button } from "../../ui/Button.js";
@@ -46,6 +48,10 @@ export function ProfileTab({
   // Если организация задала свой label в брендинге — он перекрывает t("eivFull")
   const branding = useBranding();
   const idLabel  = branding.personIdLabel?.trim() || t("eivFull");
+
+  // Размер шрифта — accessibility-настройка (S/M/L → 14/16/18 px на root)
+  const [fontSize, setFontSizeState] = useState<FontSize>(getFontSize);
+  function handleFontSize(s: FontSize) { setFontSize(s); setFontSizeState(s); }
 
   return (
     <div>
@@ -145,6 +151,27 @@ export function ProfileTab({
               <ThemeIcon mode={value} /> {label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Размер шрифта (accessibility) */}
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>Размер шрифта</div>
+        <div className="flex gap-2 mt-2">
+          {(["s","m","l"] as FontSize[]).map(s => (
+            <button
+              key={s}
+              className={fontSize === s ? `${OPTION_BTN_CLS} ${OPTION_ACTIVE_CLS}` : OPTION_BTN_CLS}
+              onClick={() => handleFontSize(s)}
+              aria-label={`Размер шрифта ${FONT_SIZE_LABELS[s]}`}
+              style={{ fontSize: s === "s" ? "0.78rem" : s === "l" ? "1.05rem" : "0.9rem" }}
+            >
+              {FONT_SIZE_LABELS[s]}
+            </button>
+          ))}
+        </div>
+        <div className="text-fg-dim text-xs mt-2">
+          Влияет на весь интерфейс. Удобно для слабовидящих.
         </div>
       </div>
 

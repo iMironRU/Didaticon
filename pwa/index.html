@@ -7,14 +7,18 @@
     <title>ЭИОС</title>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     <script>
-      // FOUC prevention — применяем тему ДО загрузки React-бандла,
-      // иначе у тёмного юзера моргает светлая на старте.
+      // FOUC prevention — применяем тему и размер шрифта ДО загрузки React,
+      // иначе у тёмного юзера моргает светлая, а у L/S — мелкий или крупный
+      // шрифт сначала рендерится в дефолтном 16px.
       (function(){
         var saved = localStorage.getItem("eios_theme") || "auto";
         var mode  = saved === "auto"
           ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
           : saved;
         document.documentElement.setAttribute("data-theme", mode);
+        var fs = localStorage.getItem("eios_font_size");
+        if (fs === "s") document.documentElement.style.fontSize = "14px";
+        else if (fs === "l") document.documentElement.style.fontSize = "18px";
       })();
     </script>
     <script src="/config.js"></script>

@@ -19,9 +19,11 @@ interface Props {
 
 export function LoginScreen({ auth, onLogin, branding }: Props) {
   const [screen, setScreen] = useState<"login" | "access">("login");
-  // Меняем подпись для тех кто уже залогинился — он не основная аудитория
-  // демо-блока (см. didakticon_design.md §3.4 "Жизненный цикл демо").
+  // Жизненный цикл демо-блока (didakticon_design.md §3.4):
+  //  - первый визит → полный блок (3 кнопки + подсказка с паролем)
+  //  - после первого входа → свёрнуто в одну ссылку, открывается по клику
   const hasLoggedInBefore = localStorage.getItem("eios_has_logged_in_before") === "1";
+  const [demoOpen, setDemoOpen] = useState(!hasLoggedInBefore);
   const [pwCopied, setPwCopied] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
@@ -71,9 +73,19 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         </Button>
 
         {/* Демо-вход через Auth0 (только если demoEnabled).
-            Раньше был аккордеон, теперь — просто секция: 3 кнопки сверху,
-            подсказка с паролем под ними. См. didakticon_design.md §3.4. */}
-        {branding.demoEnabled && (
+            Lifecycle (didakticon_design.md §3.4):
+              - первый визит → блок развёрнут (3 кнопки + пароль)
+              - после первого реального входа → одна ссылка, разворачивается кликом */}
+        {branding.demoEnabled && !demoOpen && (
+          <button
+            className="mt-3 text-[0.78rem] hover:underline cursor-pointer bg-transparent border-0"
+            style={{ color: hex80(b) }}
+            onClick={() => setDemoOpen(true)}
+          >
+            Демо других ролей ▾
+          </button>
+        )}
+        {branding.demoEnabled && demoOpen && (
           <div style={r.demoLoginBlock}>
             <div style={{ ...r.demoLoginLabel, color: hex80(b) }}>
               {hasLoggedInBefore ? "Демо других ролей" : "Демо-вход для ознакомления"}
