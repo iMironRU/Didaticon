@@ -36,7 +36,7 @@ const mgr = new UserManager({
   client_id: config.oidcClientId,
   redirect_uri: window.location.origin + "/callback",
   post_logout_redirect_uri: window.location.origin + "/",
-  scope: "openid profile",
+  scope: "openid profile email",
   response_type: "code",   // code + PKCE
   loadUserInfo: false,
   automaticSilentRenew: true,
