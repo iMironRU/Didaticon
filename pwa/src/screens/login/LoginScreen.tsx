@@ -18,10 +18,9 @@ interface Props {
 
 export function LoginScreen({ auth, onLogin, branding }: Props) {
   const [screen, setScreen] = useState<"login" | "access">("login");
-  // Свёрнут по дефолту если физик уже залогинился раньше — он не аудитория
-  // для демо-блока (см. didakticon_design.md §3.4 "Жизненный цикл демо").
+  // Меняем подпись для тех кто уже залогинился — он не основная аудитория
+  // демо-блока (см. didakticon_design.md §3.4 "Жизненный цикл демо").
   const hasLoggedInBefore = localStorage.getItem("eios_has_logged_in_before") === "1";
-  const [demoOpen, setDemoOpen] = useState(() => !hasLoggedInBefore);
   const [pwCopied, setPwCopied] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
@@ -68,50 +67,44 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
           }
         </button>
 
-        {/* Тестовый вход через Auth0 (только если demoEnabled) */}
+        {/* Демо-вход через Auth0 (только если demoEnabled).
+            Раньше был аккордеон, теперь — просто секция: 3 кнопки сверху,
+            подсказка с паролем под ними. См. didakticon_design.md §3.4. */}
         {branding.demoEnabled && (
           <div style={r.demoLoginBlock}>
-            <button style={{ ...r.demoLoginToggle, color: hex80(b) }} onClick={() => setDemoOpen(o => !o)}>
-              {hasLoggedInBefore ? "Посмотреть демо других ролей" : "Демо-вход для ознакомления"} {demoOpen ? "▲" : "▼"}
-            </button>
-            {demoOpen && (
-              <div style={r.demoLoginPanel}>
-                <p style={r.demoLoginHint}>
-                  Пароль для всех:{" "}
-                  <code style={{ color: b }}>Test1234!</code>
-                  <button
-                    style={r.copyBtn}
-                    onClick={() => {
-                      navigator.clipboard.writeText("Test1234!").then(() => {
-                        setPwCopied(true);
-                        setTimeout(() => setPwCopied(false), 1500);
-                      });
-                    }}
-                  >
-                    {pwCopied ? "✓" : "⧉"}
-                  </button>
-                </p>
-                <div style={r.demoLoginBtns}>
-                  {DEMO_USERS.map(u => (
-                    <button
-                      key={u.email}
-                      style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
-                      onClick={() => loginAs(u.email)}
-                    >
-                      {u.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div style={{ ...r.demoLoginLabel, color: hex80(b) }}>
+              {hasLoggedInBefore ? "Демо других ролей" : "Демо-вход для ознакомления"}
+            </div>
+            <div style={r.demoLoginBtns}>
+              {DEMO_USERS.map(u => (
+                <button
+                  key={u.email}
+                  style={{ ...r.demoRoleBtn, borderColor: hex20(b), color: hex80(b) }}
+                  onClick={() => loginAs(u.email)}
+                >
+                  {u.label}
+                </button>
+              ))}
+            </div>
+            <p style={r.demoLoginHint}>
+              Пароль для всех:{" "}
+              <code style={{ color: b }}>Test1234!</code>
+              <button
+                style={r.copyBtn}
+                onClick={() => {
+                  navigator.clipboard.writeText("Test1234!").then(() => {
+                    setPwCopied(true);
+                    setTimeout(() => setPwCopied(false), 1500);
+                  });
+                }}
+              >
+                {pwCopied ? "✓" : "⧉"}
+              </button>
+            </p>
           </div>
         )}
 
-        {!oidcReady && (
-          <div style={r.warnBox}>
-            Авторизация через Univerkon не настроена. Войдите в <a href="/admin" style={{ color: "#E0A070" }}>админ-панель</a> и укажите OIDC-параметры.
-          </div>
-        )}
+        {!oidcReady && <ConfigWarning />}
 
         {hasError && (
           <div style={r.errorBox}>
@@ -180,6 +173,45 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
             )}
             {branding.supportPhone && <ContactRow icon="phone">{branding.supportPhone}</ContactRow>}
             {branding.supportHours && <ContactRow icon="clock">{branding.supportHours}</ContactRow>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ConfigWarning — плавающий "!" в правом верхнем углу.
+ * Клик → раскрывается влево с полным сообщением и ссылкой на админку.
+ * Только для админов/разработчиков, обычный юзер этой кнопки не видит
+ * (потому что OIDC уже настроен).
+ */
+function ConfigWarning() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "fixed", top: 12, right: 12, zIndex: 100 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: "row-reverse" }}>
+        <button
+          onClick={() => setOpen(o => !o)}
+          aria-label="Конфигурация не задана"
+          style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: "#4A3010", border: "0.5px solid #6A4818",
+            color: "#E0A070", fontSize: "1.1rem", fontWeight: 700,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >!</button>
+        {open && (
+          <div style={{
+            background: "#1A1208", border: "0.5px solid #4A3010", borderRadius: 8,
+            padding: "10px 14px", color: "#C09050",
+            fontSize: "0.78rem", lineHeight: 1.5, width: 260,
+            boxShadow: "0 8px 24px rgba(0,0,0,.4)",
+          }}>
+            Авторизация через Univerkon не настроена. Войдите в{" "}
+            <a href="/admin" style={{ color: "#E0A070" }}>админ-панель</a>
+            {" "}и укажите OIDC-параметры.
           </div>
         )}
       </div>
@@ -314,26 +346,19 @@ const r: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 0,
   },
-  demoLoginToggle: {
-    background: "none",
-    border: "none",
-    fontSize: "0.78rem",
-    cursor: "pointer",
-    padding: "4px 0",
-    opacity: 0.7,
-  },
-  demoLoginPanel: {
-    width: "100%",
-    marginTop: 8,
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 6,
+  demoLoginLabel: {
+    fontSize: "0.7rem",
+    letterSpacing: "0.06em",
+    textTransform: "uppercase" as const,
+    fontWeight: 600,
+    marginBottom: 8,
+    textAlign: "center" as const,
   },
   demoLoginHint: {
     fontSize: "0.75rem",
     color: "#4D7BA8",
     textAlign: "center" as const,
-    marginBottom: 2,
+    marginTop: 8,
   },
   demoLoginBtns: {
     display: "flex",
@@ -348,17 +373,6 @@ const r: Record<string, React.CSSProperties> = {
     opacity: 0.7,
     padding: "0 4px",
     verticalAlign: "middle",
-  },
-  warnBox: {
-    marginTop: 12,
-    width: "100%",
-    background: "#1A1208",
-    border: "0.5px solid #4A3010",
-    borderRadius: 8,
-    padding: "10px 14px",
-    color: "#C09050",
-    fontSize: "0.78rem",
-    lineHeight: 1.5,
   },
   errorBox: {
     marginTop: 12,
