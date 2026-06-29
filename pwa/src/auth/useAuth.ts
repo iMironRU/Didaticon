@@ -91,6 +91,9 @@ export function useAuth(): AuthHook {
     sessionStorage.clear();
     resetContexts();
     if (!USE_MOCK) {
+      // Флаг для LogoutScreen — App.tsx покажет его на возврате с Auth0.
+      // sessionStorage переживает same-origin редирект Auth0 → /.
+      sessionStorage.setItem("eios_just_logged_out", "1");
       logout();
       return;
     }
