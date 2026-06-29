@@ -6,6 +6,8 @@ import { Card } from "../../ui/Card.js";
 import { Spinner } from "../../ui/Spinner.js";
 import { useInstallPrompt } from "../../install.js";
 import { useContexts } from "../../data/contexts.js";
+import { clearRole, availableRoles } from "../../shell/contextSelection.js";
+import { USE_MOCK } from "../../auth/mock.js";
 
 interface Props {
   person:          Person;
@@ -171,6 +173,12 @@ export function ProfileTab({
  */
 function MyRolesSection() {
   const { contexts, loading, error } = useContexts();
+  const canSwitch = !USE_MOCK && contexts && availableRoles(contexts).length > 1;
+
+  function switchRole() {
+    clearRole();
+    window.location.reload();   // AppShell перерендерится с RoleSelector
+  }
 
   return (
     <div className="mb-6">
@@ -231,6 +239,14 @@ function MyRolesSection() {
             <div className="text-fg-muted text-sm py-1">Нет активных контекстов</div>
           )}
         </Card>
+      )}
+      {canSwitch && (
+        <button
+          onClick={switchRole}
+          className="mt-2 text-accent text-sm hover:underline"
+        >
+          ↩ Сменить роль
+        </button>
       )}
     </div>
   );
