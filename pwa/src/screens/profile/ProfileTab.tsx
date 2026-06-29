@@ -323,7 +323,7 @@ function InstallSection() {
           </div>
           <div className="text-fg-muted text-xs leading-relaxed">
             Нажмите кнопку «Поделиться» <span className="text-fg">⎙</span> внизу
-            и выберите <span className="text-fg font-medium">«На экран „Домой"»</span>.
+            и выберите <span className="text-fg font-medium">«На экран „Домой&quot;»</span>.
           </div>
         </Card>
       </div>

@@ -69,10 +69,13 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
     if (cid) replacePath(route, { role: inferredRole, contextId: cid });
   }, [contexts, inferredRole, urlCtx, route]);
 
-  // Effect: сохраняем выбранную роль в sessionStorage при single-role auto-pick
+  // Effect: сохраняем выбранную роль в sessionStorage при single-role auto-pick.
+  // TODO(a11y/perf): set-state-in-effect — refactor to derived state без
+  //   storage round-trip. Сейчас оставлено как есть, изолированно и стабильно.
   useEffect(() => {
     if (inferredRole && !selected && !USE_MOCK) {
       saveRole(inferredRole);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(inferredRole);
     }
   }, [inferredRole, selected]);

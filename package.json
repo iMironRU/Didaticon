@@ -15,7 +15,17 @@
     "test": "npm run test --workspaces --if-present",
     "mock": "tsx mock/univerkon.ts",
     "dev:glue": "npm run dev -w @eios/glue",
-    "dev:pwa": "npm run dev -w @eios/pwa"
+    "dev:pwa": "npm run dev -w @eios/pwa",
+    "prepare": "husky"
   },
-  "license": "MIT"
+  "lint-staged": {
+    "pwa/src/**/*.{ts,tsx,js,jsx}": [
+      "npm run lint --workspace=@eios/pwa --"
+    ]
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8"
+  }
 }

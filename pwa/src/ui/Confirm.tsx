@@ -72,6 +72,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 <Button
                   variant={pending.opts.variant === "danger" ? "danger" : "primary"}
                   onClick={() => handle(true)}
+                  // eslint-disable-next-line jsx-a11y/no-autofocus -- модалка confirm: фокус на подтверждении — паттерн Radix Dialog
                   autoFocus
                 >
                   {pending.opts.confirmLabel ?? "Подтвердить"}
