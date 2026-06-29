@@ -20,6 +20,7 @@ import { useContexts } from "../data/contexts.js";
 import { USE_MOCK } from "../auth/mock.js";
 import { Spinner } from "../ui/Spinner.js";
 import { Card } from "../ui/Card.js";
+import { Button } from "../ui/Button.js";
 import { TeacherView } from "./TeacherView.js";
 import { StudentView } from "./StudentView.js";
 import { RoleSelector } from "./RoleSelector.js";
@@ -77,9 +78,9 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
             Не удалось загрузить роли
           </div>
           <div className="text-fg-muted text-xs mb-4">{error}</div>
-          <button onClick={handleLogout} className="text-accent text-sm">
+          <Button variant="secondary" size="md" className="w-full" onClick={handleLogout}>
             Выйти и попробовать снова
-          </button>
+          </Button>
         </Card>
       </div>
     );
@@ -100,9 +101,9 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
             <div className="text-fg-muted text-sm mb-4">
               В вашем профиле Дидактикона нет ни одной активной роли. Обратитесь в учебную часть или к администратору.
             </div>
-            <button onClick={handleLogout} className="text-accent text-sm">
+            <Button variant="secondary" size="md" className="w-full" onClick={handleLogout}>
               Выйти
-            </button>
+            </Button>
           </Card>
         </div>
       );
