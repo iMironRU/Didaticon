@@ -127,9 +127,12 @@ export async function getUser(): Promise<PersonIdentity | null> {
   };
 }
 
-/** Свежий access_token (или null) для отправки клею в credential. */
+/** Свежий id_token (JWT) для отправки в Authorization: Bearer.
+ *  Не access_token — у Auth0 SPA без API-audience access_token opaque,
+ *  не валидируется как JWT. id_token всегда JWT, содержит все наши claims
+ *  (https://eios/roles, https://eios/eiv). */
 export async function token(): Promise<string | null> {
   const u = await mgr.getUser();
-  if (!u || u.expired || !u.access_token) return null;
-  return u.access_token;
+  if (!u || u.expired || !u.id_token) return null;
+  return u.id_token;
 }
