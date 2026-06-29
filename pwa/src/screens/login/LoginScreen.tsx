@@ -84,7 +84,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
                   key={u.email}
                   variant="ghost"
                   size="md"
-                  className="flex-1 border text-[0.88rem]"
+                  className="flex-1 border !px-2 !gap-1 text-[0.8rem] whitespace-nowrap"
                   style={{ borderColor: hex20(b), color: hex80(b) }}
                   onClick={() => loginAs(u.email)}
                 >
