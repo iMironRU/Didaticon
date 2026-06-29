@@ -58,6 +58,17 @@ export function ProfileTab({
             <div className="text-fg text-[0.95rem] font-medium">{f.value}</div>
           </div>
         ))}
+        {/* Read-only PD — править в ЛК Univerkon */}
+        {lkUrl && (
+          <a
+            href={lkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-accent text-xs mt-3 no-underline hover:underline"
+          >
+            Изменить в личном кабинете ↗
+          </a>
+        )}
       </div>
 
       {/* Текущий профиль обучения */}

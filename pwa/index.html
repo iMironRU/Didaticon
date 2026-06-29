@@ -6,6 +6,17 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
     <title>ЭИОС</title>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    <script>
+      // FOUC prevention — применяем тему ДО загрузки React-бандла,
+      // иначе у тёмного юзера моргает светлая на старте.
+      (function(){
+        var saved = localStorage.getItem("eios_theme") || "auto";
+        var mode  = saved === "auto"
+          ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : saved;
+        document.documentElement.setAttribute("data-theme", mode);
+      })();
+    </script>
     <script src="/config.js"></script>
   </head>
   <body>

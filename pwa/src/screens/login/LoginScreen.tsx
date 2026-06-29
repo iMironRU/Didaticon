@@ -18,7 +18,10 @@ interface Props {
 
 export function LoginScreen({ auth, onLogin, branding }: Props) {
   const [screen, setScreen] = useState<"login" | "access">("login");
-  const [demoOpen, setDemoOpen] = useState(false);
+  // Свёрнут по дефолту если физик уже залогинился раньше — он не аудитория
+  // для демо-блока (см. didakticon_design.md §3.4 "Жизненный цикл демо").
+  const hasLoggedInBefore = localStorage.getItem("eios_has_logged_in_before") === "1";
+  const [demoOpen, setDemoOpen] = useState(() => !hasLoggedInBefore);
   const [pwCopied, setPwCopied] = useState(false);
   const b = branding.brandColor;
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
@@ -69,7 +72,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         {branding.demoEnabled && (
           <div style={r.demoLoginBlock}>
             <button style={{ ...r.demoLoginToggle, color: hex80(b) }} onClick={() => setDemoOpen(o => !o)}>
-              Тестовый вход {demoOpen ? "▲" : "▼"}
+              {hasLoggedInBefore ? "Посмотреть демо других ролей" : "Демо-вход для ознакомления"} {demoOpen ? "▲" : "▼"}
             </button>
             {demoOpen && (
               <div style={r.demoLoginPanel}>

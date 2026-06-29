@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
     <title>ЭИОС — Администрирование</title>
+    <script>
+      // FOUC prevention — тема до React-бандла
+      (function(){
+        var saved = localStorage.getItem("eios_theme") || "auto";
+        var mode  = saved === "auto"
+          ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+          : saved;
+        document.documentElement.setAttribute("data-theme", mode);
+      })();
+    </script>
     <script src="/config.js"></script>
   </head>
   <body>

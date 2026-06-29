@@ -44,6 +44,9 @@ export function useAuth(): AuthHook {
             sessionStorage.removeItem("eios_return_path");
             window.history.replaceState({}, "", returnPath);
           }
+          // Маркируем что физик хоть раз залогинился реально —
+          // LoginScreen использует это чтобы сворачивать demo-блок.
+          localStorage.setItem("eios_has_logged_in_before", "1");
           setAuth({ phase: "authenticated", studentId: u.id, role: u.role, name: u.name });
         } else {
           setAuth({ phase: "anonymous" });
