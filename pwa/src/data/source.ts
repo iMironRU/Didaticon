@@ -74,3 +74,26 @@ export function getTeacherIdentity(authName: string): { name: string; eiv: strin
   if (authName) return { name: authName, eiv: "000000" }; // TODO: ЕИВ из Univerkon
   return { name: "Петров Иван Сергеевич", eiv: "260001" };
 }
+
+/**
+ * Person-stub для педагога — общий UnifiedShell использует Person везде
+ * (Header initials, ProfileTab, StatusBar.eiv). У учителя нет learners[].
+ *
+ * Тип PersonType не имеет варианта "teacher" — это домен траектории,
+ * педагог в неё не вписан. Используем "student" как нейтральный валидный.
+ */
+import type { PersonId } from "@eios/contracts";
+
+export function getTeacherPerson(authName: string): Person {
+  const { name, eiv } = getTeacherIdentity(authName);
+  const parts = name.split(" ");
+  return {
+    personId:   "p-teacher" as PersonId,
+    personType: "student",
+    eiv,
+    lastName:   parts[0] ?? name,
+    firstName:  parts[1] ?? "",
+    patronymic: parts[2] ?? "",
+    learners:   [],
+  };
+}

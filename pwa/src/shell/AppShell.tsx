@@ -21,8 +21,7 @@ import { USE_MOCK } from "../auth/mock.js";
 import { Spinner } from "../ui/Spinner.js";
 import { Card } from "../ui/Card.js";
 import { Button } from "../ui/Button.js";
-import { TeacherView } from "./TeacherView.js";
-import { StudentView } from "./StudentView.js";
+import { UnifiedShell } from "./UnifiedShell.js";
 import { RoleSelector } from "./RoleSelector.js";
 import {
   availableRoles, firstContextOf, getSavedRole, saveRole, clearRole,
@@ -152,14 +151,15 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
     );
   }
 
-  // Dispatch в существующие views
-  if (dispatchRole === "teacher") {
-    return <TeacherView authName={authName} lkUrl={lkUrl} onLogout={handleLogout} />;
-  }
-
+  // Единый UnifiedShell для всех ролей (Block I этап 8)
   return (
     <LocaleProvider>
-      <StudentView role={dispatchRole} lkUrl={lkUrl} onLogout={handleLogout} />
+      <UnifiedShell
+        role={dispatchRole}
+        authName={authName}
+        lkUrl={lkUrl}
+        onLogout={handleLogout}
+      />
     </LocaleProvider>
   );
 }

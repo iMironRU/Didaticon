@@ -15,7 +15,8 @@ import { useBranding } from "../../branding/useBranding.js";
 
 interface Props {
   person:          Person;
-  learner:         Learner;
+  /** Для педагога/без учебного контекста — null. Блок "Текущий профиль обучения" скрывается. */
+  learner:         Learner | null;
   themeMode:       ThemeMode;
   onThemeChange:   (m: ThemeMode) => void;
   locale:          Locale;
@@ -87,26 +88,28 @@ export function ProfileTab({
         )}
       </div>
 
-      {/* Текущий профиль обучения */}
-      <div className="mb-6">
-        <div className={SECTION_LABEL_CLS}>{t("learnProfile")}</div>
-        <Card className="px-3.5 py-3">
-          <div className="text-fg text-[0.88rem] font-semibold mb-1">
-            {learner.programType} · {learner.programTitle}
-          </div>
-          <div className="text-fg-muted text-xs mt-0.5">
-            {learner.group} · {learner.course} курс · {learner.form}
-          </div>
-          <div className="text-fg-muted text-xs mt-0.5">
-            {learner.periodLabel}
-          </div>
-        </Card>
-        {onSwitchContext && (
-          <Button variant="secondary" size="md" className="w-full mt-2" onClick={onSwitchContext}>
-            {t("switchProfile")}
-          </Button>
-        )}
-      </div>
+      {/* Текущий профиль обучения — только если есть learner (т.е. студент/родитель) */}
+      {learner && (
+        <div className="mb-6">
+          <div className={SECTION_LABEL_CLS}>{t("learnProfile")}</div>
+          <Card className="px-3.5 py-3">
+            <div className="text-fg text-[0.88rem] font-semibold mb-1">
+              {learner.programType} · {learner.programTitle}
+            </div>
+            <div className="text-fg-muted text-xs mt-0.5">
+              {learner.group} · {learner.course} курс · {learner.form}
+            </div>
+            <div className="text-fg-muted text-xs mt-0.5">
+              {learner.periodLabel}
+            </div>
+          </Card>
+          {onSwitchContext && (
+            <Button variant="secondary" size="md" className="w-full mt-2" onClick={onSwitchContext}>
+              {t("switchProfile")}
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Перейти в ЛК */}
       {lkUrl && (
