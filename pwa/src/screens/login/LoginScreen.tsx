@@ -82,7 +82,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
             style={{ color: hex80(b) }}
             onClick={() => setDemoOpen(true)}
           >
-            Демо других ролей ▾
+            Демонстрационный вход ▾
           </button>
         )}
         {branding.demoEnabled && demoOpen && (

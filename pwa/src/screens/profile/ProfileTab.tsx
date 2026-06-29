@@ -32,7 +32,7 @@ const OPTION_BTN_CLS =
   "flex items-center gap-1.5 border border-line rounded-lg px-3.5 py-2 " +
   "bg-surface text-fg-secondary text-[0.85rem] font-medium cursor-pointer";
 const OPTION_ACTIVE_CLS =
-  "border-accent text-accent bg-[color-mix(in_srgb,var(--c-accent)_10%,transparent)]";
+  "!border-accent !bg-accent !text-white font-semibold";
 
 export function ProfileTab({
   person, learner, themeMode, onThemeChange, locale, onLocaleChange,
