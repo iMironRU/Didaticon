@@ -43,8 +43,9 @@ export function App() {
 
   // Пока идёт проверка сессии / callback — splash вместо мигания LoginScreen.
   if (auth.phase === "checking") {
-    const isCallback = window.location.pathname === "/callback";
-    return <Splash branding={branding} message={isCallback ? "Завершаем вход…" : "Проверка сессии…"} />;
+    const wasCallback = sessionStorage.getItem("eios_was_callback") === "1";
+    if (wasCallback) sessionStorage.removeItem("eios_was_callback");
+    return <Splash branding={branding} message={wasCallback ? "Завершаем вход…" : "Проверка сессии…"} />;
   }
 
   if (showLogoutScreen) {

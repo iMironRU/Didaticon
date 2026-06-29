@@ -15,6 +15,9 @@ async function bootstrap() {
   initTheme();
   initSwUpdateCheck(); // до любого await — иначе controllerchange может прийти раньше
   if (window.location.pathname === "/callback") {
+    // Флаг "только что вернулись с Auth0" — App.tsx покажет Splash с правильным
+    // сообщением, и сам удалит флаг после первого рендера.
+    sessionStorage.setItem("eios_was_callback", "1");
     await handleCallback();
   }
   createRoot(document.getElementById("root")!).render(
