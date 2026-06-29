@@ -33,6 +33,28 @@ export async function verify(cred: Credential, cfg: Config): Promise<Principal> 
   throw new AuthError("mTLS not implemented yet — only OIDC for срез-1");
 }
 
+/** Bearer header → проверенный JWT + все claims. Используется RPC-эндпоинтом
+ *  где нужны и sub, и roles, и eiv (Block I §7). audience не проверяем —
+ *  PWA получает токен с aud=eios-pwa (clientId), а cfg.oidcAudience=eios-glue. */
+export async function verifyBearerToken(
+  authHeader: string | undefined,
+  cfg: Config,
+): Promise<{ principal: Principal; claims: JWTPayload }> {
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new AuthError("Missing or invalid Authorization header");
+  }
+  const token = authHeader.slice(7).trim();
+  const { payload } = await jwtVerify(token, getJwks(cfg), {
+    issuer: cfg.oidcIssuer,
+  }).catch((e: unknown) => {
+    throw new AuthError(`OIDC token rejected: ${(e as Error).message}`);
+  });
+  return {
+    principal: { studentId: studentIdFromClaims(payload), plane: "human" },
+    claims:    payload,
+  };
+}
+
 function studentIdFromClaims(p: JWTPayload): StudentId {
   const sub = p.sub;
   if (typeof sub !== "string" || !sub) throw new AuthError("token has no sub");

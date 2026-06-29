@@ -11,6 +11,7 @@ import { registerCommit } from "./routes/commit.js";
 import { registerResume } from "./routes/resume.js";
 import { registerProjection } from "./routes/projection.js";
 import { registerAdmin } from "./routes/admin.js";
+import { registerRpc } from "./routes/rpc.js";
 import { AuthError } from "./auth/index.js";
 
 const cfg = loadConfig();
@@ -34,6 +35,7 @@ registerCommit(app, { cfg, store, outbox });
 registerResume(app, { cfg, store });
 registerProjection(app, { cfg, univerkon });
 registerAdmin(app, { cfg, settings });
+registerRpc(app, { cfg });
 
 // Публичный эндпоинт — PWA читает без авторизации для рендера экрана входа.
 app.get("/branding", async () => {
