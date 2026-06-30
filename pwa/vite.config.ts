@@ -40,14 +40,38 @@ export default defineConfig({
       // manifest читается из public/manifest.webmanifest — не дублируем здесь.
       manifest: false,
       workbox: {
-        globPatterns: ["**/*.{js,css}"],
+        // Прекешируем всё что нужно для холодного офлайн-старта:
+        // - html (иначе на iOS PWA при offline-открытии чёрный экран — нет navigation fallback)
+        // - js, css, svg/png/ico (иконки, favicon, логотип в shell)
+        // - webmanifest (для install metadata)
+        // - woff/woff2 (если появятся свои шрифты)
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff,woff2}"],
         // config.js генерируется nginx'ом из env vars при старте контейнера —
-        // его нельзя кешировать: хеш от placeholder'а не меняется между сборками.
-        globIgnores: ["config.js"],
+        // нельзя кешировать: хеш от placeholder'а не меняется между сборками.
+        globIgnores: ["config.js", "**/admin/**"],
+        // Без navigateFallback Workbox 404'ит на /performance, /student/.../profile
+        // когда сеть отвалилась — SPA-роуты ведь не существуют как файлы.
+        // С navigateFallback отдаём index.html и React сам разрулит роутинг.
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [
+          /^\/api\//,        // RPC и /branding не должны падать в index.html
+          /^\/admin/,        // admin это другой бандл, у него свой index.html
+          /^\/scorm\//,      // SCORM-пакеты обслуживаются отдельным CacheFirst
+          /^\/callback/,     // OIDC-callback обрабатывается main.tsx до рендера
+        ],
         runtimeCaching: [
           {
+            // /branding — стараемся свежий, иначе из кеша. Без него на холодном
+            // оффлайн-старте useBranding падает в catch (default-бренд).
+            urlPattern: /\/api\/branding$/,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "branding",
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+          {
             // SCORM-пакеты: кешируем агрессивно (CacheFirst) — контент статичен.
-            // §6.1: курс должен грузиться без 1С вообще.
             urlPattern: /\/scorm\/.+/,
             handler: "CacheFirst",
             options: {
