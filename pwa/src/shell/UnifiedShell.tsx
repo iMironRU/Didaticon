@@ -29,6 +29,7 @@ import { Header, ContextSwitcher, ContextLabel } from "./Header.js";
 import { BottomNav } from "./BottomNav.js";
 import { StatusBar } from "./StatusBar.js";
 import { NetworkStatus } from "./NetworkStatus.js";
+import { SkipLink } from "./SkipLink.js";
 import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
 import { LearnerSlotCard, type LearnerSlotEntry } from "../screens/schedule/LearnerSlotCard.js";
 import { TeacherSlotCard } from "../screens/schedule/TeacherSlotCard.js";
@@ -173,7 +174,9 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
         const att = attendance[found.slot.slotId]?.students ?? [];
         return (
           <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />
+            <MainContent title={`Занятие · ${found.slot.unitRef.title}`}>
+              <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />
+            </MainContent>
           </Frame>
         );
       }
@@ -186,15 +189,17 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       if (entry) {
         return (
           <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <LearnerLessonScreen
-              lesson={entry.lesson}
-              slot={slotInfo?.slot ?? null}
-              slotDate={slotInfo?.date ?? null}
-              unitTitle={entry.unitTitle}
-              onBack={() => history.back()}
-              onLaunch={() => entry.lesson.packageUrl && window.open(entry.lesson.packageUrl)}
-              readOnly={role === "parent"}
-            />
+            <MainContent title={`Занятие · ${entry.unitTitle}`}>
+              <LearnerLessonScreen
+                lesson={entry.lesson}
+                slot={slotInfo?.slot ?? null}
+                slotDate={slotInfo?.date ?? null}
+                unitTitle={entry.unitTitle}
+                onBack={() => history.back()}
+                onLaunch={() => entry.lesson.packageUrl && window.open(entry.lesson.packageUrl)}
+                readOnly={role === "parent"}
+              />
+            </MainContent>
           </Frame>
         );
       }
@@ -206,7 +211,9 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
   if (!isTeacher && role === "student" && route.name === "estudent" && urlCtx) {
     return (
       <Frame swUpdate={swUpdate} eiv={person.eiv}>
-        <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
+        <MainContent title="Студенческий билет">
+          <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
+        </MainContent>
       </Frame>
     );
   }
@@ -218,8 +225,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       if (unit) {
         return (
           <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <UnitScreen unit={unit} onBack={() => history.back()}
-              onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
+            <MainContent title={`Дисциплина · ${unit.title}`}>
+              <UnitScreen unit={unit} onBack={() => history.back()}
+                onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
+            </MainContent>
           </Frame>
         );
       }
@@ -229,8 +238,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       if (group) {
         return (
           <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <GroupScreen group={group} onBack={() => history.back()}
-              onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
+            <MainContent title={`ПМ · ${group.title}`}>
+              <GroupScreen group={group} onBack={() => history.back()}
+                onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
+            </MainContent>
           </Frame>
         );
       }
@@ -244,14 +255,16 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
             bell={{ unreadCount, onTap: () => navigate({ name: "notifications" }) }}
             middle={<ContextLabel text={person.personType === "parent" ? t("myChildren") : t("learnersTitle")} />}
           />
-          <ContextSwitcherScreen
-            person={person}
-            learners={allLearners}
-            currentId={currentLearnerId}
-            defaultId={defaultLearnerId}
-            onSelect={switchLearner}
-            onSetDefault={setDefault}
-          />
+          <MainContent title={person.personType === "parent" ? "Мои дети" : "Мои профили обучения"}>
+            <ContextSwitcherScreen
+              person={person}
+              learners={allLearners}
+              currentId={currentLearnerId}
+              defaultId={defaultLearnerId}
+              onSelect={switchLearner}
+              onSetDefault={setDefault}
+            />
+          </MainContent>
         </Frame>
       );
     }
@@ -260,7 +273,9 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       if (n) {
         return (
           <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <NotificationDetailScreen notification={n} onBack={() => history.back()} />
+            <MainContent title={`Уведомление · ${n.title}`}>
+              <NotificationDetailScreen notification={n} onBack={() => history.back()} />
+            </MainContent>
           </Frame>
         );
       }
@@ -268,13 +283,15 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
     if (route.name === "notifications") {
       return (
         <Frame swUpdate={swUpdate} eiv={person.eiv}>
-          <NotificationsScreen
-            notifications={notifs}
-            onBack={() => history.back()}
-            onOpen={n => { markRead(n.notificationId); navigate({ name: "notification", id: n.notificationId }); }}
-            onRead={markRead}
-            onReadAll={markAllRead}
-          />
+          <MainContent title="Уведомления">
+            <NotificationsScreen
+              notifications={notifs}
+              onBack={() => history.back()}
+              onOpen={n => { markRead(n.notificationId); navigate({ name: "notification", id: n.notificationId }); }}
+              onRead={markRead}
+              onReadAll={markAllRead}
+            />
+          </MainContent>
         </Frame>
       );
     }
@@ -390,7 +407,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
         bell={isTeacher ? undefined : { unreadCount, onTap: () => navigate({ name: "notifications" }) }}
         middle={middle}
       />
-      <div style={st.body}>
+      <main id="main-content" style={st.body} aria-labelledby="page-h1">
+        {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
+            при переходе по табам. Визуально не нужен (есть BottomNav). */}
+        <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>
         {tab === "schedule" && (
           <div className={isTeacher ? "px-4 py-2.5" : ""}>{scheduleNode}</div>
         )}
@@ -411,7 +431,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
         )}
         {isTeacher && tab === "tasks" && (
           <div style={st.stub}>
-            <div style={st.stubIcon}>📋</div>
+            <div style={st.stubIcon} aria-hidden="true">📋</div>
             <div style={st.stubTitle}>Очередь заданий</div>
             <div style={st.stubSub}>Здесь будут задания студентов на проверку от Тестикона</div>
           </div>
@@ -429,7 +449,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
             onLogout={onLogout}
           />
         )}
-      </div>
+      </main>
       <BottomNav
         activeId={tab}
         onTap={(id) => navigate({ name: id as "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
@@ -440,14 +460,56 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
 }
 
 // ── Frame — обёртка корня + StatusBar для всех веток ────────────────────
+/**
+ * Frame — корневой layout. Содержит общий chrome (skip-link, network-status,
+ * status-bar) + единый landmark `<main id="main-content">` для skip-link
+ * назначения. Header/BottomNav это уже свои landmarks (`<header>`/`<nav>`),
+ * рендерятся внутри children — снаружи main. Чтобы это работало, Frame
+ * НЕ оборачивает children в main автоматически — главные ветки (tab-шаблон,
+ * lesson, contexts, ...) сами размечают свой `<main>`.
+ *
+ * Helper `mainContent` ниже — обёртка для одноразового использования: добавляет
+ * `<main>` + sr-only `<h1>` за один вызов.
+ */
 function Frame({ swUpdate, eiv, children }: { swUpdate: boolean; eiv: string; children: React.ReactNode }) {
   return (
     <div style={st.root}>
+      <SkipLink />
       <NetworkStatus />
       {children}
       <StatusBar swUpdate={swUpdate} eiv={eiv} />
     </div>
   );
+}
+
+/**
+ * MainContent — единый landmark `<main id="main-content">` для detail-экранов
+ * (lesson, unit, group, contexts, notifications, estudent). Skip-link
+ * целится в `#main-content`.
+ *
+ * `display: contents` делает main «прозрачным» для layout — children flow
+ * напрямую в Frame. Современные браузеры (Chrome 87+, Safari 15+, Firefox 117+)
+ * корректно сохраняют landmark-role при display:contents.
+ *
+ * sr-only h1 — каждая страница имеет один (a11y spec §5.1).
+ */
+function MainContent({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <main id="main-content" style={{ display: "contents" }}>
+      <h1 className="sr-only">{title}</h1>
+      {children}
+    </main>
+  );
+}
+
+/** Заголовок таба для sr-only h1 + aria-label main. */
+function tabHeading(tab: string, isTeacher: boolean): string {
+  if (tab === "schedule")    return isTeacher ? "Расписание занятий" : "Моё расписание";
+  if (tab === "performance") return "Дисциплины и успеваемость";
+  if (tab === "gradebook")   return "Зачётная книжка";
+  if (tab === "tasks")       return "Задания на проверку";
+  if (tab === "profile")     return "Профиль";
+  return "Главный экран";
 }
 
 const st: Record<string, CSSProperties> = {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, createElement } from "react";
+import { createContext, useContext, useEffect, useState, createElement } from "react";
 import type { ReactNode } from "react";
 
 export const LOCALES = ["ru", "en", "kk"] as const;
@@ -405,8 +405,19 @@ const LocaleContext = createContext<LocaleCtx>({
   changeLocale: () => {},
 });
 
+/** Маппинг наших локалей в BCP 47 теги для `<html lang>`.
+ *  kk → "kk-Cyrl" (казахская кириллица) — у нас именно она. */
+const LANG_TAG: Record<Locale, string> = { ru: "ru", en: "en", kk: "kk-Cyrl" };
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(detectLocale);
+
+  // Реактивная смена <html lang> — скринридер озвучивает текст голосом
+  // выбранной локали, поисковики и iOS Voice Control видят корректный язык.
+  // (a11y политика §5.2, didakticon-accessibility.md)
+  useEffect(() => {
+    document.documentElement.lang = LANG_TAG[locale];
+  }, [locale]);
 
   function changeLocale(l: Locale) {
     localStorage.setItem(LOCALE_KEY, l);

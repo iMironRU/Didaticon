@@ -30,10 +30,9 @@ function axe(page: Page) {
   return new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .disableRules([
-      "color-contrast",       // #29 этап Е
-      "landmark-one-main",    // #25 этап Б
-      "region",               // #25 этап Б
-      "page-has-heading-one", // #25 этап Б
+      "color-contrast",       // #29 этап Е (contrast matrix + halation)
+      // Этап Б (#25) закрыл: добавлены <main id="main-content">,
+      // BottomNav как <nav aria-label>, sr-only <h1> per screen.
     ]);
 }
 
