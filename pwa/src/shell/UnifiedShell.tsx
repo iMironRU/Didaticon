@@ -28,6 +28,7 @@ import { onSwUpdate } from "../sw-update.js";
 import { Header, ContextSwitcher, ContextLabel } from "./Header.js";
 import { BottomNav } from "./BottomNav.js";
 import { StatusBar } from "./StatusBar.js";
+import { NetworkStatus } from "./NetworkStatus.js";
 import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
 import { LearnerSlotCard, type LearnerSlotEntry } from "../screens/schedule/LearnerSlotCard.js";
 import { TeacherSlotCard } from "../screens/schedule/TeacherSlotCard.js";
@@ -442,6 +443,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
 function Frame({ swUpdate, eiv, children }: { swUpdate: boolean; eiv: string; children: React.ReactNode }) {
   return (
     <div style={st.root}>
+      <NetworkStatus />
       {children}
       <StatusBar swUpdate={swUpdate} eiv={eiv} />
     </div>

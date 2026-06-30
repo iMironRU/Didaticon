@@ -17,6 +17,7 @@ import { useRoute, useRouteContext, navigate, replacePath } from "../router.js";
 import { canAccess, defaultRoute } from "../permissions.js";
 import { LocaleProvider } from "../locale.js";
 import { useContexts } from "../data/contexts.js";
+import { useEStudentBackground } from "../data/useEStudentBackground.js";
 import { USE_MOCK } from "../auth/mock.js";
 import { Spinner } from "../ui/Spinner.js";
 import { Card } from "../ui/Card.js";
@@ -46,6 +47,9 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
   const route   = useRoute();
   const urlCtx  = useRouteContext();
   const { contexts, loading, error } = useContexts();
+  // Проактивный refresh e-Student токенов в фоне (§7.2 спеки offline).
+  // Не делаем в demo — нет реального RPC.
+  useEStudentBackground(contexts, !USE_MOCK);
 
   const [selected, setSelected] = useState<AvailableRole | null>(
     () => USE_MOCK ? (legacyRole as AvailableRole) : getSavedRole(),
