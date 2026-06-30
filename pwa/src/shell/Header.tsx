@@ -30,9 +30,11 @@ export function Header({ middle, initials, onAvatarTap, bell }: Props) {
         <div className="flex flex-col leading-tight">
           <span className="text-fg text-[0.85rem] font-bold">ЭИОС</span>
           <span className="text-fg-dim text-[0.62rem]">
-            {"ЭИОС v" + (typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0")}
-            {typeof __COMMIT_HASH__ !== "undefined" && __COMMIT_HASH__ ? ` · ${__COMMIT_HASH__}` : ""}
+            {"v" + (typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0")}
           </span>
+          {typeof __COMMIT_HASH__ !== "undefined" && __COMMIT_HASH__ && (
+            <span className="text-fg-dim text-[0.62rem]">{__COMMIT_HASH__}</span>
+          )}
         </div>
       </div>
       {middle}
