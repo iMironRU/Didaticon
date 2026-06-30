@@ -113,7 +113,13 @@ export const STRINGS = {
     spots:             "мест",
     book:              "Записаться",
     retakeNum:         "Пересдача №",
+    retakeScheduled:   "пересдача назначена",
     commission:        "(комиссия)",
+    failed:            "не сдано",
+    // Колонки таблицы зачётной книжки (sr-only)
+    controlType:       "Тип контроля",
+    discipline:        "Дисциплина",
+    grade:             "Оценка",
     // Родительский режим
     myChildren:        "Мои дети",
     demoAsStudent:     "Студент",
@@ -237,7 +243,13 @@ export const STRINGS = {
     spots:             "spots",
     book:              "Book",
     retakeNum:         "Retake #",
+    retakeScheduled:   "retake scheduled",
     commission:        "(commission)",
+    failed:            "failed",
+    // Gradebook table columns (sr-only)
+    controlType:       "Control type",
+    discipline:        "Discipline",
+    grade:             "Grade",
     // Parent mode
     myChildren:        "My children",
     demoAsStudent:     "Student",
@@ -361,7 +373,13 @@ export const STRINGS = {
     spots:             "орын",
     book:              "Жазылу",
     retakeNum:         "Қайта тапсыру №",
+    retakeScheduled:   "қайта тапсыру жоспарланған",
     commission:        "(комиссия)",
+    failed:            "тапсырылмаған",
+    // Бағалар кітабы кестесінің бағаналары (sr-only)
+    controlType:       "Бақылау түрі",
+    discipline:        "Пән",
+    grade:             "Баға",
     // Ата-ана режимі
     myChildren:        "Менің балаларым",
     demoAsStudent:     "Студент",

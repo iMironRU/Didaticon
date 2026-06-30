@@ -77,9 +77,15 @@ export function ScheduleScreen<T extends { date: string }>({
 
   return (
     <div>
-      {/* Тоггл день/неделя */}
-      <div className="flex bg-surface rounded-lg p-[3px] mb-3">
+      {/* Тоггл день/неделя — tablist pattern */}
+      <div
+        className="flex bg-surface rounded-lg p-[3px] mb-3"
+        role="tablist"
+        aria-label="Период расписания"
+      >
         <button
+          role="tab"
+          aria-selected={view === "day"}
           className={
             "flex-1 border-0 bg-transparent text-[0.82rem] font-medium py-1.5 rounded-md cursor-pointer " +
             (view === "day" ? "bg-line text-fg" : "text-fg-muted")
@@ -87,6 +93,8 @@ export function ScheduleScreen<T extends { date: string }>({
           onClick={() => onViewChange("day")}
         >{t("day")}</button>
         <button
+          role="tab"
+          aria-selected={view === "week"}
           className={
             "flex-1 border-0 bg-transparent text-[0.82rem] font-medium py-1.5 rounded-md cursor-pointer " +
             (view === "week" ? "bg-line text-fg" : "text-fg-muted")
@@ -95,27 +103,55 @@ export function ScheduleScreen<T extends { date: string }>({
         >{t("week")}</button>
       </div>
 
-      {/* Полоса дней */}
-      <div className="flex gap-1 overflow-x-auto mb-4 pb-1">
+      {/* Полоса дней — tablist с навигацией стрелками (WAI-ARIA tab pattern) */}
+      <div
+        className="flex gap-1 overflow-x-auto mb-4 pb-1 focus-visible:outline-none"
+        role="tablist"
+        aria-label="Выбор дня"
+        tabIndex={-1}
+        onKeyDown={e => {
+          if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+          const idx = stripDates.indexOf(selectedDate);
+          if (idx < 0) return;
+          const nextIdx = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+          const next = stripDates[nextIdx];
+          if (next) {
+            e.preventDefault();
+            onDateChange(next);
+            onViewChange("day");
+          }
+        }}
+      >
         {stripDates.map(iso => {
           const hasEntries = entries.some(e => e.date === iso);
           const isSelected = iso === selectedDate;
           const isToday    = iso === today;
-          const wdLabel = parseLocalDate(iso).toLocaleDateString("ru", { weekday: "short" });
-          const num     = parseLocalDate(iso).getDate();
+          const d = parseLocalDate(iso);
+          const wdLabel = d.toLocaleDateString("ru", { weekday: "short" });
+          const num     = d.getDate();
+          const ariaLabel = d.toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long" })
+            + (isToday ? ", сегодня" : "")
+            + (hasEntries ? ", есть занятия" : "");
           return (
             <button
               key={iso}
-              className="flex flex-col items-center gap-[3px] bg-transparent border-0 cursor-pointer px-1 shrink-0"
+              role="tab"
+              aria-selected={isSelected}
+              aria-label={ariaLabel}
+              // Только выбранная — в Tab-order; остальные доступны стрелками
+              tabIndex={isSelected ? 0 : -1}
+              className="flex flex-col items-center gap-[3px] bg-transparent border-0 cursor-pointer px-1 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
               onClick={() => { onDateChange(iso); onViewChange("day"); }}
             >
               <span
+                aria-hidden="true"
                 className="text-[0.62rem] capitalize"
                 style={{ color: isSelected ? "var(--c-accent)" : isToday ? "var(--c-text-primary)" : "var(--c-text-muted)" }}
               >
                 {wdLabel}
               </span>
               <span
+                aria-hidden="true"
                 className="w-7 h-7 rounded-full text-[0.82rem] flex items-center justify-center"
                 style={{
                   background: isSelected ? "var(--c-accent)" : "transparent",
@@ -127,6 +163,7 @@ export function ScheduleScreen<T extends { date: string }>({
               </span>
               {hasEntries && (
                 <span
+                  aria-hidden="true"
                   className="w-1 h-1 rounded-full"
                   style={{ background: isSelected ? "#fff" : "var(--c-accent)" }}
                 />
