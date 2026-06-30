@@ -44,8 +44,11 @@ export function initSwUpdateCheck() {
   // Когда SW СМЕНИЛСЯ (не первая установка) — перезагружаем страницу.
   // wasControlled=false при первом визите: SW устанавливается впервые,
   // controllerchange тоже придёт — но перезагрузка там не нужна.
+  // Исключение: /callback — перезагрузка уничтожит auth code (однократный PKCE).
   const wasControlled = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (wasControlled) window.location.reload();
+    if (wasControlled && window.location.pathname !== "/callback") {
+      window.location.reload();
+    }
   });
 }

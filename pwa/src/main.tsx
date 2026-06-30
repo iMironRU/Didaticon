@@ -29,7 +29,16 @@ async function bootstrap() {
     // Флаг "только что вернулись с Auth0" — App.tsx покажет Splash с правильным
     // сообщением, и сам удалит флаг после первого рендера.
     sessionStorage.setItem("eios_was_callback", "1");
-    await handleCallback();
+    try {
+      await handleCallback();
+    } catch (e) {
+      // Auth code невалиден (однократный PKCE) или SW-reload его "сжёг" раньше.
+      // Сбрасываем флаг и отправляем на / — пользователь увидит экран входа
+      // и сможет залогиниться снова.
+      sessionStorage.removeItem("eios_was_callback");
+      console.error("[eios] callback failed, redirecting to login:", e);
+      window.history.replaceState({}, document.title, "/");
+    }
   }
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
