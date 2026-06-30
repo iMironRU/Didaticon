@@ -131,6 +131,14 @@ function AutoIcon() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5 3" strokeOpacity="0.5"/><path d="M12 3a9 9 0 0 0 0 18" fill="currentColor" fillOpacity="0.12"/></svg>;
 }
 
+export function TodayIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  );
+}
+
 export function ThemeIcon({ mode }: { mode: ThemeMode }) {
   if (mode === "light") return <SunIcon />;
   if (mode === "dark")  return <MoonIcon />;

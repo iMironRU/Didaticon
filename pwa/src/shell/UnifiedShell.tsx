@@ -45,7 +45,8 @@ import { ProfileTab } from "../screens/profile/ProfileTab.js";
 import { ContextSwitcherScreen } from "../screens/profile/ContextSwitcherScreen.js";
 import { NotificationsScreen, NotificationDetailScreen } from "../screens/notifications/NotificationsScreen.js";
 import { EStudentScreen } from "../screens/EStudentScreen.js";
-import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "../components/icons/index.js";
+import { TodayScreen } from "../screens/today/TodayScreen.js";
+import { CalIcon, BookIcon, GradebookIcon, PersonIcon, TodayIcon } from "../components/icons/index.js";
 import * as source from "../data/source.js";
 
 interface Props {
@@ -310,7 +311,8 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
   // ── Основной шаблон с табами ──────────────────────────────────────────
   const tab = isTeacher
     ? (route.name === "tasks" || route.name === "profile" ? route.name : "schedule")
-    : (route.name === "performance" ? "performance"
+    : (route.name === "today"       ? "today"
+       : route.name === "performance" ? "performance"
        : route.name === "gradebook" ? "gradebook"
        : route.name === "profile"   ? "profile"
        : "schedule");
@@ -391,10 +393,11 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         { id: "profile"  as const, label: "Профиль",    icon: <PersonIcon /> },
       ]
     : [
-        { id: "schedule" as const,    label: t("schedule"),    icon: <CalIcon /> },
-        { id: "performance" as const, label: t("disciplines"), icon: <BookIcon /> },
-        { id: "gradebook" as const,   label: t("gradebook"),   icon: <GradebookIcon />, badge: debtCount },
-        { id: "profile" as const,     label: t("profile"),     icon: <PersonIcon /> },
+        { id: "today"       as const, label: "Сегодня",        icon: <TodayIcon /> },
+        { id: "schedule"    as const, label: t("schedule"),     icon: <CalIcon /> },
+        { id: "performance" as const, label: t("disciplines"),  icon: <BookIcon /> },
+        { id: "gradebook"   as const, label: t("gradebook"),    icon: <GradebookIcon />, badge: debtCount },
+        { id: "profile"     as const, label: t("profile"),      icon: <PersonIcon /> },
       ];
 
   // Header middle — для учителя метка "Педагог", для остальных context-switcher
@@ -421,6 +424,9 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
             при переходе по табам. Визуально не нужен (есть BottomNav). */}
         <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>
+        {!isTeacher && tab === "today" && (
+          <TodayScreen contextId={urlCtx?.contextId ?? "stu:demo-1"} />
+        )}
         {tab === "schedule" && (
           <div className={isTeacher ? "px-4 py-2.5" : ""}>{scheduleNode}</div>
         )}
@@ -462,7 +468,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       </main>
       <BottomNav
         activeId={tab}
-        onTap={(id) => navigate({ name: id as "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
+        onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
         tabs={tabs}
       />
     </Frame>
@@ -521,6 +527,7 @@ function MainContent({ title, children }: { title: string; children: React.React
 
 /** Заголовок таба для sr-only h1 + aria-label main. */
 function tabHeading(tab: string, isTeacher: boolean): string {
+  if (tab === "today")       return "Сегодня";
   if (tab === "schedule")    return isTeacher ? "Расписание занятий" : "Моё расписание";
   if (tab === "performance") return "Дисциплины и успеваемость";
   if (tab === "gradebook")   return "Зачётная книжка";

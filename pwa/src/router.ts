@@ -37,6 +37,7 @@ export type Route =
   | { name: "lesson";  id: string }     // SlotId
   | { name: "unit";    id: string }     // UnitId (discipline/MDK/practice)
   | { name: "group";   id: string }     // UnitId (ПМ)
+  | { name: "today" }                   // дашборд «Сегодня» (Block II)
   | { name: "estudent" }                // e-Student card (Block I §9)
   | { name: "accessibility" };          // публичная декларация (a11y политика §7.5)
 
@@ -73,6 +74,7 @@ function parseViewParts(parts: string[]): Route {
   if (seg0 === "unit"   && seg1) return { name: "unit",   id: seg1 };
   if (seg0 === "group"  && seg1) return { name: "group",  id: seg1 };
   if (seg0 === "lesson" && seg1) return { name: "lesson", id: seg1 };
+  if (seg0 === "today")          return { name: "today" };
   if (seg0 === "estudent")       return { name: "estudent" };
   if (seg0 === "accessibility")  return { name: "accessibility" };
   return { name: "schedule" };
@@ -91,6 +93,7 @@ function viewToPath(route: Route): string {
     case "lesson":        return `/lesson/${route.id}`;
     case "unit":          return `/unit/${route.id}`;
     case "group":         return `/group/${route.id}`;
+    case "today":         return "/today";
     case "estudent":      return "/estudent";
     case "accessibility": return "/accessibility";
   }
