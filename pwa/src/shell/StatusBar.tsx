@@ -2,6 +2,7 @@ import { useState } from "react";
 import { applySwUpdate } from "../sw-update.js";
 import { useLocale } from "../locale.js";
 import { usePersonIdLabel } from "../branding/usePersonIdLabel.js";
+import { useOnline } from "../useOnline.js";
 import { Button } from "../ui/Button.js";
 
 declare const __APP_VERSION__: string;
@@ -15,6 +16,7 @@ interface Props {
 export function StatusBar({ swUpdate, eiv }: Props) {
   const { t } = useLocale();
   const personIdLabel = usePersonIdLabel();
+  const online = useOnline();
   const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
   const commit  = typeof __COMMIT_HASH__  !== "undefined" ? __COMMIT_HASH__  : "";
   const [copied, setCopied] = useState(false);
@@ -30,9 +32,18 @@ export function StatusBar({ swUpdate, eiv }: Props) {
 
   return (
     <div className="flex items-center justify-between px-3 py-1 bg-elevated border-t border-line shrink-0">
-      <div>
+      <div className="flex items-center gap-2">
         {swUpdate && (
           <Button size="sm" onClick={applySwUpdate}>{t("updateApp")}</Button>
+        )}
+        {!online && (
+          <span
+            className="inline-flex items-center gap-1 text-fg-muted text-[0.62rem] font-medium"
+            aria-label="Нет интернета"
+            role="status"
+          >
+            <span aria-hidden="true">⚡</span> Офлайн
+          </span>
         )}
       </div>
       <button

@@ -93,15 +93,34 @@ const DEMO_CONTEXTS: Record<string, ContextsResponse> = {
   },
 };
 
+// Stale-while-revalidate persist:
+//  - на mount возвращаем то что есть (cache / localStorage) сразу, без сети
+//  - в фоне дёргаем RPC и обновляем
+//  - на сетевую ошибку — продолжаем работать с тем что было (stale = true)
+//
+// Кеш в localStorage переживает F5 и offline-старт PWA с домашнего экрана.
+
+const LS_KEY = "eios_contexts_cache_v1";
+
 let _cache: ContextsResponse | null = null;
+let _stale = false;
 let _inFlight: Promise<ContextsResponse> | null = null;
+
+function readLs(): ContextsResponse | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) as ContextsResponse : null;
+  } catch { return null; }
+}
+
+function writeLs(c: ContextsResponse): void {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(c)); } catch { /* quota / private mode */ }
+}
 
 export async function loadContexts(): Promise<ContextsResponse> {
   if (_cache) return _cache;
 
-  // Demo-режим — без RPC. Возвращаем mock по DEMO_PERSONA.
-  // Старый Auth0 access_token может торчать в localStorage от прошлой сессии,
-  // но дёргать его в demo бессмысленно — glue его отклонит.
+  // Demo-режим — без RPC и без LS. Возвращаем mock по DEMO_PERSONA.
   if (USE_MOCK) {
     _cache = DEMO_CONTEXTS[DEMO_PERSONA] ?? EMPTY;
     return _cache;
@@ -109,39 +128,67 @@ export async function loadContexts(): Promise<ContextsResponse> {
 
   if (_inFlight) return _inFlight;
   _inFlight = rpc<ContextsResponse>("identity.contexts.get")
-    .then((r) => { _cache = r; return r; })
+    .then((r) => { _cache = r; _stale = false; writeLs(r); return r; })
     .finally(() => { _inFlight = null; });
   return _inFlight;
 }
 
-/** Сбросить кеш (вызывать при logout). */
+/** Сбросить кеш + localStorage (вызывать при logout). */
 export function resetContexts(): void {
   _cache = null;
+  _stale = false;
   _inFlight = null;
+  try { localStorage.removeItem(LS_KEY); } catch { /* */ }
 }
 
 export interface ContextsState {
   contexts: ContextsResponse | null;
   loading:  boolean;
   error:    string | null;
+  /** true если данные из localStorage-кеша и свежий RPC не удался.
+   *  UI может показать «оффлайн» индикатор. */
+  stale:    boolean;
 }
 
 export function useContexts(): ContextsState {
-  const [state, setState] = useState<ContextsState>(() => ({
-    contexts: _cache,
-    loading:  _cache === null,
-    error:    null,
-  }));
+  const [state, setState] = useState<ContextsState>(() => {
+    if (_cache) return { contexts: _cache, loading: false, error: null, stale: _stale };
+    if (USE_MOCK) return { contexts: null, loading: true, error: null, stale: false };
+    // Synchronously hydrate из localStorage чтобы AppShell не моргал спиннером
+    // на холодном offline-старте — сразу даём stale-данные.
+    const ls = readLs();
+    if (ls) {
+      _cache = ls; _stale = true;
+      return { contexts: ls, loading: false, error: null, stale: true };
+    }
+    return { contexts: null, loading: true, error: null, stale: false };
+  });
 
   useEffect(() => {
-    if (_cache) return;
+    if (USE_MOCK) {
+      if (!_cache) {
+        _cache = DEMO_CONTEXTS[DEMO_PERSONA] ?? EMPTY;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- demo hydration once
+        setState({ contexts: _cache, loading: false, error: null, stale: false });
+      }
+      return;
+    }
+
     let cancelled = false;
-    loadContexts()
-      .then((c) => { if (!cancelled) setState({ contexts: c, loading: false, error: null }); })
+    // Всегда пробуем фоновый refresh — даже если показываем stale.
+    rpc<ContextsResponse>("identity.contexts.get")
+      .then((c) => {
+        if (cancelled) return;
+        _cache = c; _stale = false; writeLs(c);
+        setState({ contexts: c, loading: false, error: null, stale: false });
+      })
       .catch((e: unknown) => {
         if (cancelled) return;
+        // Если в state уже есть данные (из LS-кеша) — оставляем их, помечаем stale
         const msg = e instanceof RpcError ? `${e.message} (${e.code})` : String(e);
-        setState({ contexts: EMPTY, loading: false, error: msg });
+        setState((prev) => prev.contexts
+          ? { ...prev, stale: true, loading: false, error: null }
+          : { contexts: EMPTY, loading: false, error: msg, stale: false });
       });
     return () => { cancelled = true; };
   }, []);
