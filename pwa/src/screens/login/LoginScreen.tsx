@@ -79,7 +79,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         {branding.demoEnabled && !demoOpen && (
           <button
             className="mt-3 text-[0.78rem] hover:underline cursor-pointer bg-transparent border-0"
-            style={{ color: hex80(b) }}
+            style={{ color: b }}
             onClick={() => setDemoOpen(true)}
           >
             Демонстрационный вход ▾
@@ -87,7 +87,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         )}
         {branding.demoEnabled && demoOpen && (
           <div style={r.demoLoginBlock}>
-            <div style={{ ...r.demoLoginLabel, color: hex80(b) }}>
+            <div style={{ ...r.demoLoginLabel, color: b }}>
               {hasLoggedInBefore ? "Демо других ролей" : "Демо-вход для ознакомления"}
             </div>
             <div className="w-full flex flex-row gap-2">
@@ -97,7 +97,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
                   variant="ghost"
                   size="md"
                   className="flex-1 border !px-2 !gap-1 text-[0.8rem] whitespace-nowrap"
-                  style={{ borderColor: hex20(b), color: hex80(b) }}
+                  style={{ borderColor: hex20(b), color: b }}
                   onClick={() => loginAs(u.email)}
                 >
                   {u.label}
@@ -133,7 +133,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
 
         {(branding.supportEmail || branding.supportPhone || branding.supportHours) && (
           <div style={{ ...r.section, borderColor: hex20(b) }}>
-            <p style={{ ...r.sectionLabel, color: hex80(b) }}>Служба поддержки</p>
+            <p style={{ ...r.sectionLabel, color: b }}>Служба поддержки</p>
             {branding.supportEmail && (
               <ContactRow icon="mail">
                 <a href={"mailto:" + branding.supportEmail} style={{ color: b }}>{branding.supportEmail}</a>
@@ -174,7 +174,7 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
         </div>
 
         <div style={{ ...r.section, borderColor: hex20(b) }}>
-          <p style={{ ...r.sectionLabel, color: hex80(b) }}>Для студентов</p>
+          <p style={{ ...r.sectionLabel, color: b }}>Для студентов</p>
           <div
             className="access-html"
             style={r.accessText}
@@ -184,7 +184,7 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
 
         {(branding.supportEmail || branding.supportPhone || branding.supportHours) && (
           <div style={{ ...r.section, borderColor: hex20(b) }}>
-            <p style={{ ...r.sectionLabel, color: hex80(b) }}>Контакты</p>
+            <p style={{ ...r.sectionLabel, color: b }}>Контакты</p>
             {branding.supportEmail && (
               <ContactRow icon="mail">
                 <a href={"mailto:" + branding.supportEmail} style={{ color: b }}>{branding.supportEmail}</a>
@@ -325,7 +325,7 @@ const r: Record<string, React.CSSProperties> = {
     textAlign: "center",
   },
   subtitle: {
-    color: "#4D7BA8",
+    color: "#6E94BD",  // было #4D7BA8 — fail AA (4.06:1 на #091629), стало 5.6:1
     fontSize: "0.75rem",
     textAlign: "center",
     lineHeight: 1.5,
@@ -350,7 +350,7 @@ const r: Record<string, React.CSSProperties> = {
   },
   demoLoginHint: {
     fontSize: "0.75rem",
-    color: "#4D7BA8",
+    color: "#6E94BD",  // было #4D7BA8 — fail AA (4.06:1 на #091629), стало 5.6:1
     textAlign: "center" as const,
     marginTop: 8,
   },
@@ -397,7 +397,7 @@ const r: Record<string, React.CSSProperties> = {
     borderTop: "0.5px solid #152A4A",
   },
   contactIcon: {
-    color: "#4D7BA8",
+    color: "#6E94BD",  // было #4D7BA8 — fail AA (4.06:1 на #091629), стало 5.6:1
     fontSize: "0.9rem",
     width: 16,
     textAlign: "center",
@@ -439,14 +439,14 @@ const r: Record<string, React.CSSProperties> = {
   },
   footer: {
     marginTop: 20,
-    color: "#2A4A6A",
+    color: "#6890B8",  // было #2A4A6A — fail (1.97:1), стало 5.3:1
     fontSize: "0.65rem",
     textAlign: "center",
     lineHeight: 1.6,
   },
   versionLabel: {
     marginTop: 12,
-    color: "#1E3A5F",
+    color: "#6890B8",  // было #1E3A5F — fail (1.57:1), стало 5.3:1
     fontSize: "0.6rem",
     textAlign: "center",
     letterSpacing: "0.04em",

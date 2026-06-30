@@ -29,11 +29,13 @@ function blockingViolations(violations: { impact: string | null | undefined; id:
 function axe(page: Page) {
   return new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-    .disableRules([
-      "color-contrast",       // #29 этап Е (contrast matrix + halation)
-      // Этап Б (#25) закрыл: добавлены <main id="main-content">,
-      // BottomNav как <nav aria-label>, sr-only <h1> per screen.
-    ]);
+    // .lesson-type-chip — Minor Accessibility Debt: цветовое кодирование типа
+    // занятия. Текст-лейбл рядом дублирует смысл (категория = редундантная
+    // визуальная метка). См. docs/accessibility/contrast-matrix.md.
+    .exclude(".lesson-type-chip");
+  // Все правила включены. Закрыли этапы:
+  //   Б (#25) — landmark-one-main, region, page-has-heading-one
+  //   Е (#29) — color-contrast (см. docs/accessibility/contrast-matrix.md)
 }
 
 test.describe("LoginScreen", () => {

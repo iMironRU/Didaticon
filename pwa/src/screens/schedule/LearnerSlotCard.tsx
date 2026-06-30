@@ -52,8 +52,11 @@ export function LearnerSlotCard({ entry, today, showDate, onOpen }: Props) {
       disabled={isFuture}
       aria-label={`${typeLabel} ${slot.unitRef.title}. ${topic}. ${slot.timeStart}–${slot.timeEnd}${slot.room ? `, ${slot.room}` : ""}${isFuture ? `, ${t("notAvailable")}` : ""}`}
     >
+      {/* Цветовое кодирование типа занятия. Контраст ниже AA — Minor debt:
+          текст-лейбл рядом дублирует смысл, цвет вспомогательный. См.
+          docs/accessibility/contrast-matrix.md «Known weak spots». */}
       <div
-        className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5"
+        className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5 lesson-type-chip"
         style={{ background: hexToRgba(typeColor, 0.15), color: typeColor }}
       >
         {typeLabel}

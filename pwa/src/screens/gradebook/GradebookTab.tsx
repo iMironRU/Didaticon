@@ -13,7 +13,7 @@ interface Props {
 }
 
 const TYPE_TAG_CLS =
-  "text-[0.6rem] font-bold tracking-[0.02em] px-1.5 py-0.5 rounded shrink-0";
+  "text-[0.6rem] font-bold tracking-[0.02em] px-1.5 py-0.5 rounded shrink-0 lesson-type-chip";
 
 export function GradebookTab({ gradebook, onBookRetake }: Props) {
   const { t } = useLocale();

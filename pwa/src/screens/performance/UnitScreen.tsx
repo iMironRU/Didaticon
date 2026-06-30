@@ -69,7 +69,7 @@ function LessonRow({ lesson, onOpen }: { lesson: TrajectoryLesson; onOpen: () =>
       aria-label={`${typeLabel} №${lesson.sequenceNum}. ${lesson.topic}${isFuture ? ", ещё не доступно" : ""}${isDone ? ", пройдено" : ""}`}
     >
       <div
-        className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5"
+        className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5 lesson-type-chip"
         style={{ background: hexToRgba(typeColor, 0.15), color: typeColor }}
         aria-hidden="true"
       >

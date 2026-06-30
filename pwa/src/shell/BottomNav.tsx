@@ -22,7 +22,9 @@ export function BottomNav({ tabs, activeId, onTap }: Props) {
     >
       {tabs.map(it => {
         const active = it.id === activeId;
-        const colorCls = active ? "text-accent" : "text-fg-dim";
+        // Inactive вкладки — text-fg-muted (4.5:1+ на bg-elevated в обеих темах).
+        // Раньше text-fg-dim (3.x:1) — fail contrast §7.6 для tiny текста.
+        const colorCls = active ? "text-accent" : "text-fg-muted";
         const ariaLabel = it.badge != null && it.badge > 0
           ? `${it.label}, ${it.badge} новых`
           : it.label;

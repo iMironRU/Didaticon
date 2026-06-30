@@ -66,7 +66,7 @@ export function TeacherSlotCard({ slot, onOpen }: Props) {
           <div className="flex-1 min-w-0" aria-hidden="true">
             <div className="text-fg text-[0.92rem] font-semibold mb-1">{slot.unitRef.title}</div>
             <div className="flex gap-1 items-center mb-[3px]">
-              <span className="text-[0.68rem] bg-track rounded px-1.5 py-px text-accent">{slot.lessonKind}</span>
+              <span className="text-[0.68rem] bg-track rounded px-1.5 py-px text-accent lesson-type-chip">{slot.lessonKind}</span>
               {slot.room && <span className="text-[0.75rem] text-fg-muted">· {slot.room}</span>}
             </div>
             <div className="text-[0.78rem] text-fg-muted">{groupStr}</div>

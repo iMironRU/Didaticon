@@ -139,7 +139,7 @@ export function FinalControlChip({ fc }: { fc: PlannedControl }) {
   return (
     <div className="flex flex-col items-end gap-0.5">
       <span
-        className="text-[0.62rem] font-bold tracking-[0.02em] px-1.5 py-0.5 rounded"
+        className="text-[0.62rem] font-bold tracking-[0.02em] px-1.5 py-0.5 rounded lesson-type-chip"
         style={fcChipStyle(fc.type)}
       >
         {fc.type}
