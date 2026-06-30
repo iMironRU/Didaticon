@@ -10,13 +10,13 @@ import type { Route } from "./router.js";
 import type { Role } from "./data/source.js";
 
 const STUDENT_ROUTES = new Set<Route["name"]>([
-  "schedule", "performance", "gradebook", "profile", "contexts",
+  "today", "schedule", "performance", "gradebook", "profile", "contexts",
   "notifications", "notification", "lesson", "unit", "group",
   "estudent",
 ]);
 
 const TEACHER_ROUTES = new Set<Route["name"]>([
-  "schedule", "tasks", "profile", "lesson",
+  "today", "schedule", "tasks", "profile", "lesson",
 ]);
 
 const ROUTES_BY_ROLE: Record<Role, Set<Route["name"]>> = {
