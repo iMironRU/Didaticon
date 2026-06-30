@@ -15,6 +15,21 @@ services:
       timeout: 3s
       retries: 10
 
+  mock-univerkon:
+    build:
+      context: .
+      dockerfile: mock-univerkon/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "9000"
+      SQLITE_PATH: /data/mock.sqlite
+      UNIVERKON_SERVICE_TOKEN: ${UNIVERKON_SERVICE_TOKEN:-ci-token}
+      MOCK_ADMIN_TOKEN: ${MOCK_ADMIN_TOKEN:-mock-admin-dev}
+    volumes:
+      - mockdata:/data
+    ports:
+      - "9000:9000"
+
   glue:
     build: ./glue
     restart: unless-stopped
@@ -31,6 +46,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mock-univerkon:
+        condition: service_started
     ports:
       - "8080:8080"
 
@@ -52,3 +69,4 @@ volumes:
   pgdata:
   gluedata:
   scormdata:
+  mockdata:

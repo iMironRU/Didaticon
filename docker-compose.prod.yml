@@ -19,6 +19,13 @@ services:
     depends_on:
       - static
 
+  mock-univerkon:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-mock-univerkon:latest
+    build: !reset null
+    ports: !reset []
+    environment:
+      MOCK_ADMIN_TOKEN: ${MOCK_ADMIN_TOKEN}
+
   glue:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-imironru}/didaticon-glue:latest
     build: !reset null
@@ -43,3 +50,4 @@ volumes:
   caddydata:
   caddyconfig:
   scormdata:
+  mockdata:

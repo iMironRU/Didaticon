@@ -59,8 +59,16 @@ jobs:
       - run: npm ci
       - run: npm run build -w @eios/contracts
 
+      - name: Install mock-univerkon deps
+        run: npm install --prefix mock-univerkon
+
       - name: Start mock Univerkon
-        run: npx tsx mock/univerkon.ts &
+        run: npx tsx mock-univerkon/src/index.ts &
+        env:
+          PORT: "9000"
+          SQLITE_PATH: ":memory:"
+          UNIVERKON_SERVICE_TOKEN: ci-token
+          MOCK_ADMIN_TOKEN: mock-admin-ci
 
       - name: Start glue
         run: npx tsx glue/src/index.ts &
@@ -205,6 +213,16 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
 
+      - name: Docker meta — mock-univerkon
+        id: meta-mock
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/didaticon-mock-univerkon
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
       - name: Docker meta — pwa
         id: meta-pwa
         uses: docker/metadata-action@v5
@@ -214,6 +232,15 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
+
+      - name: Build & push mock-univerkon
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: mock-univerkon/Dockerfile
+          push: true
+          tags: ${{ steps.meta-mock.outputs.tags }}
+          labels: ${{ steps.meta-mock.outputs.labels }}
 
       - name: Build & push glue
         uses: docker/build-push-action@v5
