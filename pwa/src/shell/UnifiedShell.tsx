@@ -46,7 +46,7 @@ import { ContextSwitcherScreen } from "../screens/profile/ContextSwitcherScreen.
 import { NotificationsScreen, NotificationDetailScreen } from "../screens/notifications/NotificationsScreen.js";
 import { EStudentScreen } from "../screens/EStudentScreen.js";
 import { TodayScreen } from "../screens/today/TodayScreen.js";
-import { CalIcon, BookIcon, GradebookIcon, PersonIcon, TodayIcon } from "../components/icons/index.js";
+import { CalIcon, BookIcon, GradebookIcon, PersonIcon, TodayIcon, TasksIcon } from "../components/icons/index.js";
 import * as source from "../data/source.js";
 
 interface Props {
@@ -390,7 +390,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
     ? [
         { id: "today"    as const, label: "Сегодня",    icon: <TodayIcon /> },
         { id: "schedule" as const, label: "Расписание", icon: <CalIcon /> },
-        { id: "tasks"    as const, label: "Задания",    icon: <span style={{ fontSize: 20 }}>📋</span> },
+        { id: "tasks"    as const, label: "Задания",    icon: <TasksIcon /> },
         { id: "profile"  as const, label: "Профиль",    icon: <PersonIcon /> },
       ]
     : [
@@ -452,7 +452,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         )}
         {isTeacher && tab === "tasks" && (
           <div style={st.stub}>
-            <div style={st.stubIcon} aria-hidden="true">📋</div>
+            <div style={st.stubIcon} aria-hidden="true"><TasksIcon /></div>
             <div style={st.stubTitle}>Очередь заданий</div>
             <div style={st.stubSub}>Здесь будут задания студентов на проверку от Тестикона</div>
           </div>

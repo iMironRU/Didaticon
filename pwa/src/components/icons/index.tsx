@@ -139,6 +139,16 @@ export function TodayIcon() {
   );
 }
 
+export function TasksIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="2" width="6" height="4" rx="1"/>
+      <path d="M4 6h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z"/>
+      <path d="M9 12l2 2 4-4"/>
+    </svg>
+  );
+}
+
 export function ThemeIcon({ mode }: { mode: ThemeMode }) {
   if (mode === "light") return <SunIcon />;
   if (mode === "dark")  return <MoonIcon />;

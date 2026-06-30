@@ -145,8 +145,8 @@ const MOCK_BY_EMAIL: Record<string, ContextsResponse> = {
   },
 
   "teacher@didacticon.test":         { student: [], parent: [], teacher: [{ context_id: "tch:t1",   kind: "instructor"    }], examiner: [], applicant: [] },
-  "teacher-curator@didacticon.test": { student: [], parent: [], teacher: [{ context_id: "tch:tc1",  kind: "curator"       }], examiner: [], applicant: [] },
-  "teacher-senior@didacticon.test":  { student: [], parent: [], teacher: [{ context_id: "tch:tsg1", kind: "senior_grader" }], examiner: [], applicant: [] },
+  "teacher-curator@didacticon.test": { student: [], parent: [], teacher: [{ context_id: "tch:curator-1", kind: "curator"       }], examiner: [], applicant: [] },
+  "teacher-senior@didacticon.test":  { student: [], parent: [], teacher: [{ context_id: "tch:sg-1",      kind: "senior_grader" }], examiner: [], applicant: [] },
 
   "teacher-student@didacticon.test": {
     student: [{
