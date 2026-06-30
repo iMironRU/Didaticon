@@ -17,8 +17,15 @@ interface Props {
 export function Splash({ branding, message = "Загрузка ЭИОС…" }: Props) {
   const b = branding.brandColor;
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-6"
-         style={{ background: "#091629" }}>
+    <main
+      id="main-content"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={message}
+      className="min-h-[100dvh] flex flex-col items-center justify-center px-6 gap-6"
+      style={{ background: "#091629" }}
+    >
       <div
         className="w-20 h-20 rounded-2xl flex items-center justify-center"
         style={{ background: "#0F2545", border: `0.5px solid ${b}33` }}
@@ -32,7 +39,7 @@ export function Splash({ branding, message = "Загрузка ЭИОС…" }: P
         <Spinner size={18} />
         <span style={{ color: "#7FA4CC" }} className="text-sm">{message}</span>
       </div>
-    </div>
+    </main>
   );
 }
 

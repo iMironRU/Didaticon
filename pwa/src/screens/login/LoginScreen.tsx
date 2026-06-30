@@ -45,7 +45,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
 
   return (
     <div style={r.root}>
-      <div style={r.inner}>
+      <main id="main-content" style={r.inner}>
 
         <div style={{ ...r.logoWrap, border: "0.5px solid " + hex20(b) }}>
           {branding.logoUrl
@@ -160,7 +160,7 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
           v{typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0"}
           {typeof __COMMIT_HASH__ !== "undefined" && __COMMIT_HASH__ ? ` · ${__COMMIT_HASH__}` : ""}
         </p>
-      </div>
+      </main>
     </div>
   );
 }
@@ -170,10 +170,10 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
 
   return (
     <div style={r.root}>
-      <div style={r.inner}>
+      <main id="main-content" style={r.inner}>
         <div style={r.accessHeader}>
           <button style={{ ...r.backBtn, color: b }} onClick={onBack}>
-            <span style={{ fontSize: 18, lineHeight: 1 }}>‹</span> Назад
+            <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true">‹</span> Назад
           </button>
           <h1 style={{ ...r.title, fontSize: "1.2rem", marginTop: 10, textAlign: "left" }}>
             Как получить доступ
@@ -201,7 +201,7 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
             {branding.supportHours && <ContactRow icon="clock">{branding.supportHours}</ContactRow>}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

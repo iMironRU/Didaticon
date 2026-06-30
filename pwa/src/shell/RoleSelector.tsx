@@ -47,11 +47,15 @@ function countLabel(role: AvailableRole, c: ContextsResponse): string {
 export function RoleSelector({ identity, contexts, available, onPick, onLogout }: Props) {
   const personIdLabel = usePersonIdLabel();
   return (
-    <div className="min-h-screen flex flex-col bg-canvas px-4 py-8">
+    <main id="main-content" className="min-h-screen flex flex-col bg-canvas px-4 py-8">
+      <h1 className="sr-only">Выбор роли</h1>
       <div className="max-w-md mx-auto w-full">
         {/* Шапка */}
         <div className="mb-8 text-center">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-accent text-white text-lg font-bold flex items-center justify-center">
+          <div
+            className="w-14 h-14 mx-auto mb-3 rounded-full bg-accent text-white text-lg font-bold flex items-center justify-center"
+            aria-hidden="true"
+          >
             {identity.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
           </div>
           <div className="text-fg text-base font-semibold">{identity.name}</div>
@@ -80,7 +84,7 @@ export function RoleSelector({ identity, contexts, available, onPick, onLogout }
                     {countLabel(role, contexts)}
                   </div>
                 </div>
-                <div className="text-fg-dim text-xl shrink-0">›</div>
+                <div className="text-fg-dim text-xl shrink-0" aria-hidden="true">›</div>
               </Card>
             </button>
           ))}
@@ -93,6 +97,6 @@ export function RoleSelector({ identity, contexts, available, onPick, onLogout }
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

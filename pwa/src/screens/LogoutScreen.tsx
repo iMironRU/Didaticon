@@ -22,12 +22,16 @@ export function LogoutScreen({ branding, onLoginAgain }: Props) {
   const b = branding.brandColor;
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6"
-         style={{ background: "#091629" }}>
+    <main
+      id="main-content"
+      className="min-h-[100dvh] flex flex-col items-center justify-center px-6"
+      style={{ background: "#091629" }}
+    >
       <div className="w-full max-w-sm flex flex-col items-center text-center gap-5">
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
           style={{ background: "#0F2545", border: `0.5px solid ${b}33` }}
+          aria-hidden="true"
         >
           👋
         </div>
@@ -53,10 +57,10 @@ export function LogoutScreen({ branding, onLoginAgain }: Props) {
           className="w-full rounded-lg px-4 py-3 text-[0.78rem] leading-relaxed text-left"
           style={{ background: "#0F2545", border: "0.5px solid #1A3560", color: "#7FA4CC" }}
         >
-          ⚠ <span style={{ color: "#A9C5E0" }}>Если устройство общее</span> —
+          <span aria-hidden="true">⚠</span> <span style={{ color: "#A9C5E0" }}>Если устройство общее</span> —
           закройте вкладку браузера, чтобы посторонние не получили доступ к вашему профилю.
         </div>
       </div>
-    </div>
+    </main>
   );
 }
