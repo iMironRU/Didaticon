@@ -260,3 +260,20 @@ jobs:
           tags: ${{ steps.meta-pwa.outputs.tags }}
           labels: ${{ steps.meta-pwa.outputs.labels }}
           build-args: COMMIT_HASH=${{ github.sha }}
+
+  # ── 4. Deploy на VPS ─────────────────────────────────────────────────────
+  deploy:
+    needs: images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: 176.122.27.25
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ~/eios
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
