@@ -106,7 +106,12 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
   // ── Рендеринг ────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-canvas">
+      <div
+        className="min-h-screen flex items-center justify-center bg-canvas"
+        role="status"
+        aria-busy="true"
+        aria-label="Загрузка контекстов"
+      >
         <div className="flex items-center gap-3 text-fg-muted">
           <Spinner size={20} /> Загрузка контекстов…
         </div>

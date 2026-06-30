@@ -30,6 +30,8 @@ import { BottomNav } from "./BottomNav.js";
 import { StatusBar } from "./StatusBar.js";
 import { NetworkStatus } from "./NetworkStatus.js";
 import { SkipLink } from "./SkipLink.js";
+import { RouteAnnouncer } from "./RouteAnnouncer.js";
+import { useDocumentTitle } from "../useDocumentTitle.js";
 import { ScheduleScreen } from "../screens/schedule/ScheduleScreen.js";
 import { LearnerSlotCard, type LearnerSlotEntry } from "../screens/schedule/LearnerSlotCard.js";
 import { TeacherSlotCard } from "../screens/schedule/TeacherSlotCard.js";
@@ -172,9 +174,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       const found = findTeacherSlotById(tSchedule, route.id);
       if (found) {
         const att = attendance[found.slot.slotId]?.students ?? [];
+        const title = `Занятие · ${found.slot.unitRef.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <MainContent title={`Занятие · ${found.slot.unitRef.title}`}>
+          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+            <MainContent title={title}>
               <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />
             </MainContent>
           </Frame>
@@ -187,9 +190,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       const entry     = lessonMap.get(route.id);
       const slotInfo  = findSlotByLessonId(schedule, route.id);
       if (entry) {
+        const title = `Занятие · ${entry.unitTitle}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <MainContent title={`Занятие · ${entry.unitTitle}`}>
+          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+            <MainContent title={title}>
               <LearnerLessonScreen
                 lesson={entry.lesson}
                 slot={slotInfo?.slot ?? null}
@@ -210,7 +214,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
   //   но карту выпускает Univerkon на конкретного физика) ─────────────────
   if (!isTeacher && role === "student" && route.name === "estudent" && urlCtx) {
     return (
-      <Frame swUpdate={swUpdate} eiv={person.eiv}>
+      <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle="Студенческий билет">
         <MainContent title="Студенческий билет">
           <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
         </MainContent>
@@ -223,9 +227,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
     if (route.name === "unit") {
       const unit = findUnitById(learner?.units ?? [], route.id);
       if (unit) {
+        const title = `Дисциплина · ${unit.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <MainContent title={`Дисциплина · ${unit.title}`}>
+          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+            <MainContent title={title}>
               <UnitScreen unit={unit} onBack={() => history.back()}
                 onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
             </MainContent>
@@ -236,9 +241,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
     if (route.name === "group") {
       const group = findGroupById(learner?.units ?? [], route.id);
       if (group) {
+        const title = `ПМ · ${group.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <MainContent title={`ПМ · ${group.title}`}>
+          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+            <MainContent title={title}>
               <GroupScreen group={group} onBack={() => history.back()}
                 onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
             </MainContent>
@@ -247,15 +253,16 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       }
     }
     if (route.name === "contexts") {
+      const title = person.personType === "parent" ? "Мои дети" : "Мои профили обучения";
       return (
-        <Frame swUpdate={swUpdate} eiv={person.eiv}>
+        <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
           <Header
             initials={initials}
             onAvatarTap={() => navigate({ name: "profile" })}
             bell={{ unreadCount, onTap: () => navigate({ name: "notifications" }) }}
             middle={<ContextLabel text={person.personType === "parent" ? t("myChildren") : t("learnersTitle")} />}
           />
-          <MainContent title={person.personType === "parent" ? "Мои дети" : "Мои профили обучения"}>
+          <MainContent title={title}>
             <ContextSwitcherScreen
               person={person}
               learners={allLearners}
@@ -271,9 +278,10 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
     if (route.name === "notification") {
       const n = notifs.find(n => n.notificationId === route.id);
       if (n) {
+        const title = `Уведомление · ${n.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv}>
-            <MainContent title={`Уведомление · ${n.title}`}>
+          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+            <MainContent title={title}>
               <NotificationDetailScreen notification={n} onBack={() => history.back()} />
             </MainContent>
           </Frame>
@@ -282,7 +290,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
     }
     if (route.name === "notifications") {
       return (
-        <Frame swUpdate={swUpdate} eiv={person.eiv}>
+        <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle="Уведомления">
           <MainContent title="Уведомления">
             <NotificationsScreen
               notifications={notifs}
@@ -400,7 +408,7 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
       ) : <ContextLabel text="—" />);
 
   return (
-    <Frame swUpdate={swUpdate} eiv={person.eiv}>
+    <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={tabHeading(tab, isTeacher)}>
       <Header
         initials={initials}
         onAvatarTap={() => navigate({ name: "profile" })}
@@ -462,19 +470,26 @@ export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
 // ── Frame — обёртка корня + StatusBar для всех веток ────────────────────
 /**
  * Frame — корневой layout. Содержит общий chrome (skip-link, network-status,
- * status-bar) + единый landmark `<main id="main-content">` для skip-link
- * назначения. Header/BottomNav это уже свои landmarks (`<header>`/`<nav>`),
- * рендерятся внутри children — снаружи main. Чтобы это работало, Frame
- * НЕ оборачивает children в main автоматически — главные ветки (tab-шаблон,
- * lesson, contexts, ...) сами размечают свой `<main>`.
+ * route-announcer, status-bar) + единый landmark `<main id="main-content">`.
  *
- * Helper `mainContent` ниже — обёртка для одноразового использования: добавляет
- * `<main>` + sr-only `<h1>` за один вызов.
+ * SPA focus management (a11y §5.3):
+ *  - `useDocumentTitle(screenTitle)` обновляет вкладку браузера + первичный
+ *    источник для AT
+ *  - `<RouteAnnouncer>` объявляет смену экрана через aria-live
  */
-function Frame({ swUpdate, eiv, children }: { swUpdate: boolean; eiv: string; children: React.ReactNode }) {
+interface FrameProps {
+  swUpdate:    boolean;
+  eiv:         string;
+  /** Заголовок экрана — для document.title + RouteAnnouncer + main-aria-label. */
+  screenTitle: string;
+  children:    React.ReactNode;
+}
+function Frame({ swUpdate, eiv, screenTitle, children }: FrameProps) {
+  useDocumentTitle(screenTitle);
   return (
     <div style={st.root}>
       <SkipLink />
+      <RouteAnnouncer routeKey={screenTitle} message={screenTitle} />
       <NetworkStatus />
       {children}
       <StatusBar swUpdate={swUpdate} eiv={eiv} />

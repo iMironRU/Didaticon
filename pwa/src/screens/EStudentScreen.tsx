@@ -96,7 +96,12 @@ export function EStudentScreen({ contextId, onBack }: Props) {
 
       {/* Content */}
       {state.kind === "loading" && (
-        <div className="flex-1 flex items-center justify-center">
+        <div
+          className="flex-1 flex items-center justify-center"
+          role="status"
+          aria-busy="true"
+          aria-label="Загрузка карты студенческого"
+        >
           <div className="flex items-center gap-3" style={{ color: "#4A6888" }}>
             <Spinner size={20} /> Загрузка карты…
           </div>

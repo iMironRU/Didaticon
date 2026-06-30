@@ -39,6 +39,7 @@ export function StatusBar({ swUpdate, eiv }: Props) {
         className="bg-transparent border-0 cursor-pointer p-0"
         onClick={copySupportInfo}
         title={t("copyForSupport")}
+        aria-label={t("copyForSupport")}
       >
         {copied
           ? <span className="text-success text-[0.62rem]">✓ {t("copied")}</span>

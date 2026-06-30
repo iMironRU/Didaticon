@@ -115,8 +115,9 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
                     setTimeout(() => setPwCopied(false), 1500);
                   });
                 }}
+                aria-label={pwCopied ? "Пароль скопирован" : "Скопировать пароль"}
               >
-                {pwCopied ? "✓" : "⧉"}
+                <span aria-hidden="true">{pwCopied ? "✓" : "⧉"}</span>
               </button>
             </p>
           </div>
