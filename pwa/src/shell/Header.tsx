@@ -50,7 +50,7 @@ export function Header({ middle, initials, onAvatarTap, bell }: Props) {
         ? <button
             className="bg-transparent border-0 p-0 cursor-pointer shrink-0 rounded-full"
             onClick={onAvatarTap}
-            aria-label="Профиль"
+            aria-label={`${initials} — Профиль`}
           >
             <div className={AVATAR_CLS} aria-hidden="true">{initials}</div>
           </button>
@@ -82,7 +82,9 @@ export function ContextSwitcher({ programType, group, periodLabel, onTap }: {
       <button
         className="flex-1 min-w-0 bg-transparent border-0 px-2 py-1 rounded-lg cursor-pointer"
         onClick={onTap}
-        aria-label={`Сменить контекст обучения. Сейчас: ${programType}, ${group}, ${periodLabel}`}
+        // Видимый текст ({programType} · {group}, {periodLabel}) идёт в начале —
+        // WCAG 2.5.3 Label in Name.
+        aria-label={`${programType} · ${group}, ${periodLabel}. Сменить контекст обучения`}
       >
         <div className="flex items-center gap-1.5 min-w-0" aria-hidden="true">
           {inner}

@@ -129,7 +129,10 @@ export function ScheduleScreen<T extends { date: string }>({
           const d = parseLocalDate(iso);
           const wdLabel = d.toLocaleDateString("ru", { weekday: "short" });
           const num     = d.getDate();
-          const ariaLabel = d.toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long" })
+          // Видимый текст ("сб 20") должен идти в начале aria-label —
+          // WCAG 2.5.3 Label in Name + Lighthouse label-content-name-mismatch.
+          const ariaLabel = `${wdLabel} ${num}, ` +
+            d.toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long" })
             + (isToday ? ", сегодня" : "")
             + (hasEntries ? ", есть занятия" : "");
           return (
