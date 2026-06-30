@@ -73,15 +73,18 @@ export function ContentTab() {
 
       {/* Загрузка */}
       <Card className="p-4">
-        <h3 className="text-fg text-sm font-semibold mb-2">Загрузить SCORM (.zip)</h3>
-        <input
-          type="file"
-          accept=".zip"
-          disabled={uploading}
-          onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
-          className="block w-full text-sm text-fg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-accent file:text-white file:cursor-pointer file:text-sm file:font-medium"
-        />
-        {uploading && <div className="flex items-center gap-2 mt-3 text-fg-muted text-sm"><Spinner /> Загрузка…</div>}
+        <label className="block">
+          <span className="block text-fg text-sm font-semibold mb-2">Загрузить SCORM (.zip)</span>
+          <input
+            type="file"
+            accept=".zip"
+            disabled={uploading}
+            onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
+            aria-label="Файл SCORM в формате ZIP"
+            className="block w-full text-sm text-fg file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-accent file:text-white file:cursor-pointer file:text-sm file:font-medium file:min-h-[44px]"
+          />
+        </label>
+        {uploading && <div role="status" aria-live="polite" className="flex items-center gap-2 mt-3 text-fg-muted text-sm"><Spinner aria-hidden="true" /> Загрузка…</div>}
       </Card>
 
       {/* Список */}

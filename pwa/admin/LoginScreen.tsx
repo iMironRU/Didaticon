@@ -53,23 +53,37 @@ export function LoginScreen({ onLogin }: Props) {
           Введите ADMIN_TOKEN или, в будущем, войдите через Auth0.
         </p>
 
-        <div className="space-y-3">
-          <Input
-            type="password"
-            placeholder="ADMIN_TOKEN"
-            value={tok}
-            onChange={e => setTok(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && submit()}
-            disabled={busy}
-            autoFocus
-          />
-          <Button onClick={submit} disabled={busy || !tok.trim()} className="w-full">
+        <form
+          className="space-y-3"
+          onSubmit={e => { e.preventDefault(); void submit(); }}
+        >
+          <label className="block">
+            <span className="block text-fg-muted text-xs mb-1">ADMIN_TOKEN</span>
+            <Input
+              type="password"
+              name="admin-token"
+              autoComplete="current-password"
+              value={tok}
+              onChange={e => setTok(e.target.value)}
+              disabled={busy}
+              required
+              aria-describedby={error ? "admin-login-error" : undefined}
+              aria-invalid={error ? true : undefined}
+              // eslint-disable-next-line jsx-a11y/no-autofocus -- one-off страница входа, фокус ожидаем
+              autoFocus
+            />
+          </label>
+          <Button type="submit" disabled={busy || !tok.trim()} className="w-full">
             {busy ? "Проверка…" : "Войти"}
           </Button>
-        </div>
+        </form>
 
         {error && (
-          <div className="mt-4 px-3 py-2 bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] border border-danger rounded-lg text-danger text-sm">
+          <div
+            id="admin-login-error"
+            role="alert"
+            className="mt-4 px-3 py-2 bg-[color-mix(in_srgb,var(--c-danger)_10%,transparent)] border border-danger rounded-lg text-danger text-sm"
+          >
             {error}
           </div>
         )}
