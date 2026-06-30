@@ -201,6 +201,16 @@ export function ProfileTab({
       {/* Установка PWA */}
       <InstallSection />
 
+      {/* Декларация доступности */}
+      <div className="mb-6">
+        <a
+          href="/accessibility"
+          className="block text-center text-accent text-xs no-underline hover:underline"
+        >
+          Декларация доступности ↗
+        </a>
+      </div>
+
       {/* Выход */}
       {onLogout && (
         <div className="mt-8">

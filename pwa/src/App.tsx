@@ -12,14 +12,17 @@
 import { useState } from "react";
 import { useAuth, USE_MOCK, DEMO_PERSONA } from "./auth/useAuth.js";
 import { useBranding } from "./branding/useBranding.js";
+import { useRoute } from "./router.js";
 import { AppShell } from "./shell/AppShell.js";
 import { LoginScreen } from "./screens/login/LoginScreen.js";
 import { Splash } from "./screens/Splash.js";
 import { LogoutScreen } from "./screens/LogoutScreen.js";
+import { AccessibilityScreen } from "./screens/AccessibilityScreen.js";
 
 export function App() {
   const { auth, login, logout } = useAuth();
   const branding = useBranding();
+  const route = useRoute();
 
   // Однократный logout-флаг (живёт пока пользователь не кликнул "Войти снова"
   // или не обновил вкладку — после React-mount читаем в useState, потом удаляем
@@ -29,6 +32,12 @@ export function App() {
     if (flag) sessionStorage.removeItem("eios_just_logged_out");
     return flag;
   });
+
+  // Декларация доступности — публичная, доступна без auth
+  // (политика §7.5, формальная точка проверки аккредитации).
+  if (route.name === "accessibility") {
+    return <AccessibilityScreen branding={branding} />;
+  }
 
   if (auth.phase === "authenticated") {
     return (

@@ -145,8 +145,15 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         )}
 
         <button style={{ ...r.accessLink, color: b }} onClick={() => setScreen("access")}>
-          Как получить доступ <span style={{ fontSize: 16 }}>›</span>
+          Как получить доступ <span style={{ fontSize: 16 }} aria-hidden="true">›</span>
         </button>
+
+        <a
+          href="/accessibility"
+          style={{ ...r.accessLink, color: b, textDecoration: "none" }}
+        >
+          Доступность <span style={{ fontSize: 16 }} aria-hidden="true">›</span>
+        </a>
 
         <p style={r.footer}>{footer}</p>
         <p style={r.versionLabel}>
