@@ -40,10 +40,17 @@ export function LearnerSlotCard({ entry, today, showDate, onOpen }: Props) {
   const isDone     = date < today;
 
   return (
-    <div
-      className="bg-surface rounded-lg border border-line p-3 mb-2 flex items-start gap-2.5 cursor-pointer"
-      style={{ opacity: isFuture ? 0.55 : 1, cursor: isFuture ? "default" : "pointer" }}
-      onClick={isFuture ? undefined : onOpen}
+    <button
+      type="button"
+      className={
+        "w-full text-left bg-surface rounded-lg border border-line p-3 mb-2 " +
+        "flex items-start gap-2.5 cursor-pointer min-h-[44px] " +
+        "disabled:cursor-default disabled:opacity-55 " +
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      }
+      onClick={onOpen}
+      disabled={isFuture}
+      aria-label={`${typeLabel} ${slot.unitRef.title}. ${topic}. ${slot.timeStart}–${slot.timeEnd}${slot.room ? `, ${slot.room}` : ""}${isFuture ? `, ${t("notAvailable")}` : ""}`}
     >
       <div
         className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5"
@@ -71,8 +78,8 @@ export function LearnerSlotCard({ entry, today, showDate, onOpen }: Props) {
           <div className="text-fg-dim text-[0.7rem] mt-1">{t("notAvailable")}</div>
         )}
       </div>
-      {!isFuture && <div className="text-fg-dim text-xl leading-none shrink-0 self-center">›</div>}
-      {isDone && <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1" />}
-    </div>
+      {!isFuture && <div className="text-fg-dim text-xl leading-none shrink-0 self-center" aria-hidden="true">›</div>}
+      {isDone && <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1" aria-hidden="true" />}
+    </button>
   );
 }

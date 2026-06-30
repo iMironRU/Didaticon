@@ -109,27 +109,39 @@ function EntryRow({ entry, onBook }: { entry: GradebookEntry; onBook?: Props["on
   const [expanded, setExpanded] = useState(false);
   const expandable = fc.state === "failed_retake_scheduled";
 
+  const rowClassName =
+    "w-full text-left flex items-center gap-2 px-3.5 py-2.5 bg-surface rounded-lg border border-line mb-1.5 min-h-[44px] " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
+  const rowContent = (
+    <>
+      <div className={TYPE_TAG_CLS} style={fcChipStyle(fc.type)} aria-hidden="true">{fc.type}</div>
+      <div className="flex-1 text-fg text-[0.82rem] leading-tight">
+        {entry.code && (
+          <span className="block text-accent text-[0.65rem] font-bold tracking-[0.03em] mb-px">
+            {entry.code}
+          </span>
+        )}
+        {entry.title}
+      </div>
+      <div className="text-fg-dim text-[0.7rem] shrink-0">{entry.credits} {t("creditsUnit")}</div>
+      <GradeCell fc={fc} />
+    </>
+  );
+
   return (
     <>
-      <div
-        className={
-          "flex items-center gap-2 px-3.5 py-2.5 bg-surface rounded-lg border border-line mb-1.5 " +
-          (expandable ? "cursor-pointer" : "")
-        }
-        onClick={expandable ? () => setExpanded(e => !e) : undefined}
-      >
-        <div className={TYPE_TAG_CLS} style={fcChipStyle(fc.type)}>{fc.type}</div>
-        <div className="flex-1 text-fg text-[0.82rem] leading-tight">
-          {entry.code && (
-            <span className="block text-accent text-[0.65rem] font-bold tracking-[0.03em] mb-px">
-              {entry.code}
-            </span>
-          )}
-          {entry.title}
-        </div>
-        <div className="text-fg-dim text-[0.7rem] shrink-0">{entry.credits} {t("creditsUnit")}</div>
-        <GradeCell fc={fc} />
-      </div>
+      {expandable ? (
+        <button
+          type="button"
+          className={`${rowClassName} cursor-pointer`}
+          onClick={() => setExpanded(e => !e)}
+          aria-expanded={expanded}
+        >
+          {rowContent}
+        </button>
+      ) : (
+        <div className={rowClassName}>{rowContent}</div>
+      )}
 
       {expanded && fc.state === "failed_retake_scheduled" && (
         <div className="bg-[color-mix(in_srgb,var(--c-danger)_6%,transparent)] border border-danger rounded-lg px-3.5 py-2.5 -mt-1 mb-1.5">

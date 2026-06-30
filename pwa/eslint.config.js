@@ -56,11 +56,10 @@ export default tseslint.config(
       "jsx-a11y/aria-proptypes":                 "error",
       "jsx-a11y/aria-role":                      "error",
       "jsx-a11y/aria-unsupported-elements":      "error",
-      // TODO(#27 этап Г hit-targets): эти 2 правила выявили 9 нарушений на старте —
-      // `<div onClick>` вместо `<button>` в SlotCard'ах, ContextSwitcher и пр.
-      // Поднять до "error" после Г.
-      "jsx-a11y/click-events-have-key-events":   "warn",
-      "jsx-a11y/no-static-element-interactions": "warn",
+      // Этап Г (#27) закрыл: SlotCard'ы / ContextSwitcher / UnitScreen /
+      // NotificationsScreen / GradebookTab переписаны на <button>.
+      "jsx-a11y/click-events-have-key-events":   "error",
+      "jsx-a11y/no-static-element-interactions": "error",
       "jsx-a11y/interactive-supports-focus":     "error",
       "jsx-a11y/label-has-associated-control":   "error",
       "jsx-a11y/no-noninteractive-element-interactions": "error",

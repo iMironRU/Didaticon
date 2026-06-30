@@ -97,3 +97,24 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
   --color-danger:       var(--c-danger);
   --color-purple:       var(--c-purple);
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * Accessibility — scroll-margin под sticky Header (~52px) и BottomNav (~64px).
+ * Без этого focus при Tab-навигации уходит под липкие элементы.
+ * WCAG 2.2 §2.4.11 Focus Not Obscured (AA) — обязательное.
+ * ────────────────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  scroll-margin-top:    60px;
+  scroll-margin-bottom: 80px;
+}
+
+/* prefers-reduced-motion — отключаем анимации для людей с вестибулярными
+ * нарушениями (a11y политика §5.13, WCAG 2.3.3 Animation from Interactions). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:  0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior:     auto !important;
+  }
+}

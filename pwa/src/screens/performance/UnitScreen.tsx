@@ -56,18 +56,26 @@ function LessonRow({ lesson, onOpen }: { lesson: TrajectoryLesson; onOpen: () =>
   const isDone    = lesson.status === "done";
 
   return (
-    <div
-      className="bg-surface rounded-lg border border-line p-3 mb-2 flex items-start gap-2.5"
-      style={{ opacity: isFuture ? 0.55 : 1, cursor: isFuture ? "default" : "pointer" }}
-      onClick={isFuture ? undefined : onOpen}
+    <button
+      type="button"
+      className={
+        "w-full text-left bg-surface rounded-lg border border-line p-3 mb-2 " +
+        "flex items-start gap-2.5 cursor-pointer min-h-[44px] " +
+        "disabled:cursor-default disabled:opacity-55 " +
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+      }
+      onClick={onOpen}
+      disabled={isFuture}
+      aria-label={`${typeLabel} №${lesson.sequenceNum}. ${lesson.topic}${isFuture ? ", ещё не доступно" : ""}${isDone ? ", пройдено" : ""}`}
     >
       <div
         className="rounded px-1.5 py-0.5 text-[0.65rem] font-bold tracking-[0.04em] shrink-0 mt-0.5"
         style={{ background: hexToRgba(typeColor, 0.15), color: typeColor }}
+        aria-hidden="true"
       >
         {typeLabel}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0" aria-hidden="true">
         <div className="text-[0.65rem] text-fg-muted mb-0.5">№{lesson.sequenceNum}</div>
         <div
           className="text-[0.85rem] font-medium leading-tight"
@@ -77,8 +85,8 @@ function LessonRow({ lesson, onOpen }: { lesson: TrajectoryLesson; onOpen: () =>
         </div>
         {isFuture && <div className="text-fg-dim text-[0.7rem] mt-1">Ещё не доступно</div>}
       </div>
-      {!isFuture && <div className="text-fg-dim text-xl leading-none shrink-0 self-center">›</div>}
-      {isDone && <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1" />}
-    </div>
+      {!isFuture && <div className="text-fg-dim text-xl leading-none shrink-0 self-center" aria-hidden="true">›</div>}
+      {isDone && <div className="w-1.5 h-1.5 rounded-full bg-success shrink-0 mt-1" aria-hidden="true" />}
+    </button>
   );
 }

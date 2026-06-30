@@ -44,26 +44,40 @@ export function TeacherSlotCard({ slot, onOpen }: Props) {
   return (
     <>
       <div
-        className="bg-surface rounded-xl px-3.5 py-3 flex gap-3 items-start cursor-pointer mb-2"
-        style={{ opacity: refused ? 0.5 : 1, cursor: refused ? "default" : "pointer" }}
-        onClick={() => !refused && onOpen()}
+        className="bg-surface rounded-xl px-3.5 py-3 flex gap-3 items-start mb-2"
+        style={{ opacity: refused ? 0.5 : 1 }}
       >
-        <div className="text-fg-muted text-[0.75rem] min-w-[72px] pt-0.5">
-          {slot.timeStart}–{slot.timeEnd}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-fg text-[0.92rem] font-semibold mb-1">{slot.unitRef.title}</div>
-          <div className="flex gap-1 items-center mb-[3px]">
-            <span className="text-[0.68rem] bg-track rounded px-1.5 py-px text-accent">{slot.lessonKind}</span>
-            {slot.room && <span className="text-[0.75rem] text-fg-muted">· {slot.room}</span>}
+        {/* Основная кликабельная зона карточки = button. Refuse-кнопка идёт
+            рядом sibling'ом — нельзя класть кнопку внутри кнопки (валидность HTML). */}
+        <button
+          type="button"
+          className={
+            "flex-1 min-w-0 flex gap-3 items-start text-left bg-transparent border-0 cursor-pointer min-h-[44px] " +
+            "disabled:cursor-default " +
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:rounded-lg"
+          }
+          onClick={onOpen}
+          disabled={refused}
+          aria-label={`${slot.lessonKind} ${slot.unitRef.title}. ${slot.timeStart}–${slot.timeEnd}${slot.room ? `, ${slot.room}` : ""}. Группы: ${groupStr}${refused ? ". Отказ подан" : ""}`}
+        >
+          <div className="text-fg-muted text-[0.75rem] min-w-[72px] pt-0.5" aria-hidden="true">
+            {slot.timeStart}–{slot.timeEnd}
           </div>
-          <div className="text-[0.78rem] text-fg-muted">{groupStr}</div>
-          {refused && <div className="text-[0.72rem] text-danger mt-1">Отказ подан</div>}
-        </div>
+          <div className="flex-1 min-w-0" aria-hidden="true">
+            <div className="text-fg text-[0.92rem] font-semibold mb-1">{slot.unitRef.title}</div>
+            <div className="flex gap-1 items-center mb-[3px]">
+              <span className="text-[0.68rem] bg-track rounded px-1.5 py-px text-accent">{slot.lessonKind}</span>
+              {slot.room && <span className="text-[0.75rem] text-fg-muted">· {slot.room}</span>}
+            </div>
+            <div className="text-[0.78rem] text-fg-muted">{groupStr}</div>
+            {refused && <div className="text-[0.72rem] text-danger mt-1">Отказ подан</div>}
+          </div>
+        </button>
         {!refused && slot.canRefuse && (
           <button
-            className="shrink-0 bg-transparent border border-danger rounded-lg text-danger text-[0.72rem] px-2.5 py-1.5 cursor-pointer self-center"
-            onClick={e => { e.stopPropagation(); setOpen(true); setReason(null); }}
+            type="button"
+            className="shrink-0 bg-transparent border border-danger rounded-lg text-danger text-[0.72rem] px-2.5 py-1.5 cursor-pointer self-center min-h-[44px]"
+            onClick={() => { setOpen(true); setReason(null); }}
           >
             Отказаться
           </button>

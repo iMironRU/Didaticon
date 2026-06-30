@@ -68,13 +68,18 @@ export function NotificationsScreen({ notifications, onBack, onOpen, onRead, onR
           notifications.map(n => {
             const hasDetail = !!n.fullText;
             return (
-              <div
+              <button
                 key={n.notificationId}
-                className="bg-surface rounded-lg border border-line px-3.5 py-3 mb-2"
-                style={{ opacity: n.read ? 0.6 : 1, cursor: hasDetail ? "pointer" : "default" }}
+                type="button"
+                className={
+                  "w-full text-left bg-surface rounded-lg border border-line px-3.5 py-3 mb-2 cursor-pointer min-h-[44px] " +
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+                }
+                style={{ opacity: n.read ? 0.6 : 1 }}
                 onClick={() => hasDetail ? onOpen(n) : onRead(n.notificationId)}
+                aria-label={`${labels[n.category]}: ${n.title}. ${n.body}${n.read ? "" : ". Не прочитано"}`}
               >
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex items-center gap-2 mb-1.5" aria-hidden="true">
                   <span
                     className="text-[0.65rem] font-bold tracking-[0.04em]"
                     style={{ color: CATEGORY_COLOR[n.category] }}
@@ -86,7 +91,7 @@ export function NotificationsScreen({ notifications, onBack, onOpen, onRead, onR
                   </span>
                   {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
                 </div>
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2" aria-hidden="true">
                   <div className="flex-1 min-w-0">
                     <div className="text-fg text-[0.85rem] font-medium mb-1">{n.title}</div>
                     <div className="text-fg-muted text-[0.78rem] leading-normal">{n.body}</div>
@@ -96,7 +101,7 @@ export function NotificationsScreen({ notifications, onBack, onOpen, onRead, onR
                   </div>
                   {hasDetail && <span className="text-fg-dim text-xl leading-snug shrink-0">›</span>}
                 </div>
-              </div>
+              </button>
             );
           })
         )}

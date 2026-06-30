@@ -29,8 +29,12 @@ const buttonVariants = cva(
         danger:    "bg-transparent text-danger border border-danger hover:bg-danger/10",
       },
       size: {
+        // sm — узкое исключение для chip-групп (тема/язык/шрифт) и
+        // секундарных мелких ссылок. Не для основных CTA.
         sm: "h-7 px-3 text-xs",
-        md: "h-10 px-4 text-sm",
+        // md — дефолт. 44px = минимум по политике §7.6 (тап-цель).
+        md: "h-11 px-4 text-sm",
+        // lg — для основных CTA (login, primary actions).
         lg: "h-12 px-6 text-base",
       },
     },

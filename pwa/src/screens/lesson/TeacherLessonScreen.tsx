@@ -97,19 +97,27 @@ export function TeacherLessonScreen({ slot, date, students: initialStudents, onB
             {initialStudents.map(st => {
               const isAbsent = absent.has(st.studentId);
               return (
-                <div
+                <button
                   key={st.studentId}
+                  type="button"
                   className={
-                    "flex items-center gap-2.5 px-2 py-2.5 rounded-lg cursor-pointer " +
+                    "w-full text-left flex items-center gap-2.5 px-2 py-2.5 rounded-lg cursor-pointer min-h-[44px] " +
+                    "bg-transparent border-0 " +
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
                     (isAbsent ? "bg-[rgba(255,59,48,.06)]" : "")
                   }
                   onClick={() => toggleAbsent(st.studentId)}
+                  aria-pressed={isAbsent}
+                  aria-label={`${st.name} — ${isAbsent ? "отмечен отсутствующим" : "присутствует"}`}
                 >
-                  <span className={"text-[0.9rem] w-4 text-center shrink-0 " + (isAbsent ? "text-danger" : "text-fg-dim")}>
+                  <span
+                    className={"text-[0.9rem] w-4 text-center shrink-0 " + (isAbsent ? "text-danger" : "text-fg-dim")}
+                    aria-hidden="true"
+                  >
                     {isAbsent ? "●" : "○"}
                   </span>
                   <span className="text-[0.88rem] text-fg">{st.name}</span>
-                </div>
+                </button>
               );
             })}
           </div>
