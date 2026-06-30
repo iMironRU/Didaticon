@@ -25,12 +25,16 @@ export function availableRoles(c: ContextsResponse): AvailableRole[] {
   return out;
 }
 
-/** Дефолтный контекст для роли — первый в списке (Block I §10.2). */
+/** Дефолтный контекст для роли — первый в списке (Block I §10.2).
+ *  Для teacher: предпочитаем instructor, остальные kinds как fallback. */
 export function firstContextOf(role: AvailableRole, c: ContextsResponse): string | null {
   switch (role) {
     case "student":   return c.student[0]?.context_id   ?? null;
     case "parent":    return c.parent[0]?.context_id    ?? null;
-    case "teacher":   return c.teacher[0]?.context_id   ?? null;
+    case "teacher": {
+      const instructor = c.teacher.find(t => t.kind === "instructor");
+      return (instructor ?? c.teacher[0])?.context_id ?? null;
+    }
     case "examiner":  return c.examiner[0]?.context_id  ?? null;
     case "applicant": return c.applicant[0]?.context_id ?? null;
   }

@@ -34,6 +34,7 @@ interface ParentContext {
 
 interface TeacherContext {
   context_id: string;
+  kind: "instructor" | "senior_grader" | "curator";
 }
 
 interface ExaminerContext {
@@ -143,9 +144,9 @@ const MOCK_BY_EMAIL: Record<string, ContextsResponse> = {
     teacher: [], examiner: [], applicant: [],
   },
 
-  "teacher@didacticon.test":         { student: [], parent: [], teacher: [{ context_id: "tch:t1" }], examiner: [], applicant: [] },
-  "teacher-curator@didacticon.test": { student: [], parent: [], teacher: [{ context_id: "tch:tc1" }], examiner: [], applicant: [] },
-  "teacher-senior@didacticon.test":  { student: [], parent: [], teacher: [{ context_id: "tch:tsg1" }], examiner: [], applicant: [] },
+  "teacher@didacticon.test":         { student: [], parent: [], teacher: [{ context_id: "tch:t1",   kind: "instructor"    }], examiner: [], applicant: [] },
+  "teacher-curator@didacticon.test": { student: [], parent: [], teacher: [{ context_id: "tch:tc1",  kind: "curator"       }], examiner: [], applicant: [] },
+  "teacher-senior@didacticon.test":  { student: [], parent: [], teacher: [{ context_id: "tch:tsg1", kind: "senior_grader" }], examiner: [], applicant: [] },
 
   "teacher-student@didacticon.test": {
     student: [{
@@ -156,7 +157,7 @@ const MOCK_BY_EMAIL: Record<string, ContextsResponse> = {
       },
       year_of_admission: 2025, current_semester: 2,
     }],
-    parent: [], teacher: [{ context_id: "tch:ts1" }], examiner: [], applicant: [],
+    parent: [], teacher: [{ context_id: "tch:ts1", kind: "instructor" }], examiner: [], applicant: [],
   },
 
   "examiner@didacticon.test": {

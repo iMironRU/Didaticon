@@ -12,7 +12,7 @@
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
 import { login, logout, getUser, type RoleName, type PersonIdentity } from "./oidc.js";
-import { USE_MOCK, DEMO_PERSONA } from "./mock.js";
+import { USE_MOCK, DEMO_PERSONA, personaToRole } from "./mock.js";
 import { resetContexts } from "../data/contexts.js";
 
 // Re-export для backward-compat с App.tsx и другими consumers
@@ -58,7 +58,7 @@ export interface AuthHook {
 export function useAuth(): AuthHook {
   const [auth, setAuth] = useState<AuthState>(
     USE_MOCK
-      ? { phase: "authenticated", studentId: "s-mock" as StudentId, role: DEMO_PERSONA, name: "" }
+      ? { phase: "authenticated", studentId: "s-mock" as StudentId, role: personaToRole(DEMO_PERSONA), name: "" }
       : { phase: "checking" }
   );
 

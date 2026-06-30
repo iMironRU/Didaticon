@@ -49,10 +49,12 @@ import { CalIcon, BookIcon, GradebookIcon, PersonIcon } from "../components/icon
 import * as source from "../data/source.js";
 
 interface Props {
-  role:      "student" | "parent" | "teacher";
-  authName:  string;
-  lkUrl?:    string;
-  onLogout?: () => void;
+  role:         "student" | "parent" | "teacher";
+  /** Block I v1.1: kind активного teacher-контекста. Undefined для student/parent. */
+  teacherKind?: "instructor" | "senior_grader" | "curator";
+  authName:     string;
+  lkUrl?:       string;
+  onLogout?:    () => void;
 }
 
 // ── Утилиты ─────────────────────────────────────────────────────────────────
@@ -119,7 +121,7 @@ function findTeacherSlotById(schedule: TeacherScheduleResponse, slotId: string):
 }
 
 // ── Главный компонент ───────────────────────────────────────────────────────
-export function UnifiedShell({ role, authName, lkUrl, onLogout }: Props) {
+export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: Props) {
   const route = useRoute();
   const urlCtx = useRouteContext();
   const { t, locale, changeLocale } = useLocale();

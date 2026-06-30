@@ -19,6 +19,7 @@ import { LocaleProvider } from "../locale.js";
 import { useContexts } from "../data/contexts.js";
 import { useEStudentBackground } from "../data/useEStudentBackground.js";
 import { USE_MOCK } from "../auth/mock.js";
+import type { TeacherContext } from "../data/contexts.js";
 import { Spinner } from "../ui/Spinner.js";
 import { Card } from "../ui/Card.js";
 import { Button } from "../ui/Button.js";
@@ -64,6 +65,15 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
     available.length === 1 ? available[0] :
     null;
   const dispatchRole = toLegacyRole(inferredRole ?? (legacyRole as AvailableRole));
+
+  // Определяем kind активного teacher-контекста (Block I v1.1).
+  // Нужен для маршрутизации на нужный дашборд в Block II.
+  const activeContextId = urlCtx?.contextId ?? (contexts && inferredRole === "teacher"
+    ? firstContextOf("teacher", contexts) : null);
+  const teacherKind: TeacherContext["kind"] | null =
+    dispatchRole === "teacher" && contexts
+      ? (contexts.teacher.find(t => t.context_id === activeContextId)?.kind ?? contexts.teacher[0]?.kind ?? null)
+      : null;
 
   // Effect: каноникализация URL — если контекст определён но в URL префикса нет,
   // дописываем /{role}/{contextId}/ через replaceState (не плодим history).
@@ -168,6 +178,7 @@ export function AppShell({ role: legacyRole, authName, lkUrl, onLogout }: Props)
     <LocaleProvider>
       <UnifiedShell
         role={dispatchRole}
+        teacherKind={teacherKind ?? undefined}
         authName={authName}
         lkUrl={lkUrl}
         onLogout={handleLogout}

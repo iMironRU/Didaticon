@@ -11,6 +11,7 @@
  */
 import { useState } from "react";
 import { useAuth, USE_MOCK, DEMO_PERSONA } from "./auth/useAuth.js";
+import { personaToRole } from "./auth/mock.js";
 import { useBranding } from "./branding/useBranding.js";
 import { useRoute } from "./router.js";
 import { AppShell } from "./shell/AppShell.js";
@@ -42,7 +43,7 @@ export function App() {
   if (auth.phase === "authenticated") {
     return (
       <AppShell
-        role={USE_MOCK ? DEMO_PERSONA : auth.role}
+        role={USE_MOCK ? personaToRole(DEMO_PERSONA) : auth.role}
         authName={USE_MOCK ? "" : auth.name}
         lkUrl={branding.lkUrl ?? undefined}
         onLogout={logout}

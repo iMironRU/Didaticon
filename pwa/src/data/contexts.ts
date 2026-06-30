@@ -35,6 +35,7 @@ export interface ParentContext {
 
 export interface TeacherContext {
   context_id: string;
+  kind: "instructor" | "senior_grader" | "curator";
 }
 
 export interface ExaminerContext {
@@ -88,7 +89,17 @@ const DEMO_CONTEXTS: Record<string, ContextsResponse> = {
   },
   teacher: {
     student: [], parent: [],
-    teacher: [{ context_id: "tch:demo-1" }],
+    teacher: [{ context_id: "tch:demo-1", kind: "instructor" }],
+    examiner: [], applicant: [],
+  },
+  curator: {
+    student: [], parent: [],
+    teacher: [{ context_id: "tch:demo-curator", kind: "curator" }],
+    examiner: [], applicant: [],
+  },
+  "senior-grader": {
+    student: [], parent: [],
+    teacher: [{ context_id: "tch:demo-sg", kind: "senior_grader" }],
     examiner: [], applicant: [],
   },
 };
@@ -120,8 +131,8 @@ function writeLs(c: ContextsResponse): void {
 export async function loadContexts(): Promise<ContextsResponse> {
   if (_cache) return _cache;
 
-  // Demo-режим — без RPC и без LS. Возвращаем mock по DEMO_PERSONA.
   if (USE_MOCK) {
+    // curator / senior-grader → используем teacher-роль в AppShell, данные из соотв. ключа
     _cache = DEMO_CONTEXTS[DEMO_PERSONA] ?? EMPTY;
     return _cache;
   }
@@ -168,8 +179,7 @@ export function useContexts(): ContextsState {
     if (USE_MOCK) {
       if (!_cache) {
         _cache = DEMO_CONTEXTS[DEMO_PERSONA] ?? EMPTY;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- demo hydration once
-        setState({ contexts: _cache, loading: false, error: null, stale: false });
+        setState({ contexts: _cache, loading: false, error: null, stale: false }); // eslint-disable-line react-hooks/set-state-in-effect
       }
       return;
     }
