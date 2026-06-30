@@ -207,9 +207,202 @@ function getMockCards(contextId: string) {
           scope_hint: "own",
         },
       },
+      {
+        id: "card-ted-1",
+        kind: "teacher_event_debt",
+        source: "local",
+        urgency: 68,
+        due_at: offsetISO(24 * 60),
+        title: "Не отмечена посещаемость",
+        subtitle: "Семинар · вчера · ИВТ-21",
+        action: { kind: "open_attendance", target_id: "evt:tch-mock-sem" },
+        details: {
+          event_id: "evt:tch-mock-sem",
+          event_date: offsetISO(-24 * 60).slice(0, 10),
+          event_kind: "seminar",
+          discipline_title: "Алгоритмы и структуры данных",
+          group_name: "ИВТ-21",
+          debt_kind: "attendance_not_marked",
+        },
+      },
+      {
+        id: "card-mcr-1",
+        kind: "module_close_required",
+        source: "local",
+        urgency: 55,
+        due_at: offsetISO(3 * 24 * 60),
+        title: "Завершить модуль 3",
+        subtitle: "Операционные системы · ИВТ-22 · 2 незакрытых занятия",
+        action: { kind: "open_module", target_id: "mod:os-3" },
+        details: {
+          module_id: "mod:os-3",
+          discipline_title: "Операционные системы",
+          group_name: "ИВТ-22",
+          due_at: offsetISO(3 * 24 * 60),
+          unclosed_slots: 2,
+        },
+      },
     ];
   }
 
-  // Пустой фид для неизвестных/куратор
+  // Куратор
+  if (contextId.includes("curator")) {
+    return [
+      {
+        id: "card-sar-1",
+        kind: "student_at_risk",
+        source: "targeted",
+        urgency: 92,
+        due_at: null,
+        title: "Петров А.С. — риск отчисления",
+        subtitle: "ИС-21-1 · 3 задолженности · посещаемость 41%",
+        action: { kind: "open_student", target_id: "s-fail-1" },
+        details: {
+          student_id: "s-fail-1",
+          student_name: "Петров Алексей Сергеевич",
+          group_name: "ИС-21-1",
+          risk_reason: "3 академические задолженности + низкая посещаемость",
+          debts_count: 3,
+          attendance_rate: 0.41,
+        },
+      },
+      {
+        id: "card-gas-1",
+        kind: "group_attendance_summary",
+        source: "local",
+        urgency: 70,
+        due_at: null,
+        title: "Посещаемость ИС-21-1 ниже нормы",
+        subtitle: "Неделя · 58% (порог 75%)",
+        action: { kind: "open_group_attendance", target_id: "grp:is21-1" },
+        details: {
+          group_name: "ИС-21-1",
+          period: new Date().toISOString().slice(0, 10),
+          attendance_rate: 0.58,
+          threshold: 0.75,
+          at_risk_count: 4,
+          total_students: 25,
+        },
+      },
+      {
+        id: "card-gds-1",
+        kind: "group_debts_summary",
+        source: "local",
+        urgency: 65,
+        due_at: offsetISO(7 * 24 * 60),
+        title: "Долги по Математическому анализу",
+        subtitle: "ИС-21-1 · 7 студентов · 2 критических",
+        action: { kind: "open_group_debts", target_id: "grp:is21-1" },
+        details: {
+          group_name: "ИС-21-1",
+          discipline_title: "Математический анализ",
+          debts_count: 7,
+          critical_count: 2,
+          total_students: 25,
+        },
+      },
+    ];
+  }
+
+  // Старший методист / senior_grader
+  if (contextId.includes("sg") || contextId.includes("tsg")) {
+    return [
+      {
+        id: "card-stg-sg-1",
+        kind: "submissions_to_grade",
+        source: "local",
+        urgency: 90,
+        due_at: offsetISO(24 * 60),
+        title: "47 работ на проверке",
+        subtitle: "Ближайший дедлайн: завтра · по кафедре",
+        action: { kind: "open_submissions_to_grade", scope: "department" },
+        details: {
+          queue_size: 47,
+          by_discipline: [
+            { discipline_id: "disc:asd", discipline_title: "Алгоритмы и структуры данных", count: 30 },
+            { discipline_id: "disc:os",  discipline_title: "Операционные системы", count: 17 },
+          ],
+          oldest_pending_at: offsetISO(-10 * 24 * 60),
+          nearest_deadline_at: offsetISO(24 * 60),
+          scope_hint: "department",
+        },
+      },
+      {
+        id: "card-app-1",
+        kind: "appeals",
+        source: "local",
+        urgency: 78,
+        due_at: offsetISO(2 * 24 * 60),
+        title: "3 апелляции ожидают рассмотрения",
+        subtitle: "Дискретная математика · срок через 2 дня",
+        action: { kind: "open_appeals", target_id: "disc:dm" },
+        details: {
+          count: 3,
+          discipline_id: "disc:dm",
+          discipline_title: "Дискретная математика",
+          deadline_at: offsetISO(2 * 24 * 60),
+        },
+      },
+      {
+        id: "card-gop-1",
+        kind: "grade_override_pending",
+        source: "local",
+        urgency: 60,
+        due_at: offsetISO(5 * 24 * 60),
+        title: "Пересмотр оценки — 2 запроса",
+        subtitle: "Алгоритмы и структуры данных · Петров В.А.",
+        action: { kind: "open_grade_overrides" },
+        details: {
+          count: 2,
+          discipline_title: "Алгоритмы и структуры данных",
+          requested_by: "Петров В.А.",
+          requested_at: offsetISO(-24 * 60),
+        },
+      },
+    ];
+  }
+
+  // Родитель
+  if (contextId.startsWith("par:")) {
+    return [
+      {
+        id: "card-caa-1",
+        kind: "child_attendance_alert",
+        source: "targeted",
+        urgency: 85,
+        due_at: null,
+        title: "Мария пропустила занятие",
+        subtitle: "Сегодня · Операционные системы · лекция",
+        action: { kind: "open_child_attendance", target_id: "s-test-1" },
+        details: {
+          child_student_id: "s-test-1",
+          child_name: "Иванова Мария",
+          missed_today: 1,
+          event_kind: "lecture",
+          discipline_title: "Операционные системы",
+          event_date: new Date().toISOString().slice(0, 10),
+        },
+      },
+      {
+        id: "card-cda-1",
+        kind: "child_debts_alert",
+        source: "local",
+        urgency: 72,
+        due_at: offsetISO(15 * 24 * 60),
+        title: "Задолженность: Дискретная математика",
+        subtitle: "Мария · пересдача до 15 июля",
+        action: { kind: "open_child_debt", target_id: "s-test-1" },
+        details: {
+          child_student_id: "s-test-1",
+          child_name: "Иванова Мария",
+          discipline_title: "Дискретная математика",
+          debt_kind: "retake",
+          retake_at: offsetISO(15 * 24 * 60),
+        },
+      },
+    ];
+  }
+
+  // Неизвестный контекст
   return [];
 }

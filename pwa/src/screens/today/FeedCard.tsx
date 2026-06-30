@@ -8,6 +8,10 @@ import type {
   EventCard, FormDeadlineCard, EventDebtCard,
   AcademicDebtCard, DeliveryRequiredCard, ActiveAttemptCard,
   ExternalActionCard,
+  SubmissionsToGradeCard, TeacherEventDebtCard, ModuleCloseRequiredCard,
+  AppealsCard, GradeOverridePendingCard,
+  GroupAttendanceSummaryCard, GroupDebtsSummaryCard, StudentAtRiskCard,
+  ChildAttendanceAlertCard, ChildDebtsAlertCard, ChildAtRiskCard,
 } from "../../api/feed.js";
 
 // ── Форматирование времени ────────────────────────────────────────────────────
@@ -112,6 +116,109 @@ function ExternalDetails({ card }: { card: ExternalActionCard }) {
   return <span className="text-xs text-fg-muted mt-1">Внешнее действие · {card.details.source_system}</span>;
 }
 
+// ── Teacher detail renderers ──────────────────────────────────────────────────
+
+function SubmissionsDetails({ card }: { card: SubmissionsToGradeCard }) {
+  const d = card.details;
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+      {d.by_discipline.slice(0, 2).map(b => (
+        <span key={b.discipline_id} className="text-xs text-fg-muted">{b.discipline_title}: {b.count}</span>
+      ))}
+    </div>
+  );
+}
+
+function TeacherEventDebtDetails({ card }: { card: TeacherEventDebtCard }) {
+  const d = card.details;
+  const label = d.debt_kind === "attendance_not_marked" ? "Посещаемость не отмечена"
+    : "Материал не загружен";
+  return (
+    <div className="mt-1 flex gap-3">
+      <span className="text-xs text-fg-muted">{label}</span>
+      <span className="text-xs text-fg-muted">{d.group_name}</span>
+    </div>
+  );
+}
+
+function ModuleCloseDetails({ card }: { card: ModuleCloseRequiredCard }) {
+  const d = card.details;
+  return (
+    <div className="mt-1 flex gap-3">
+      <span className="text-xs text-fg-muted">{d.group_name}</span>
+      <span className="text-xs text-amber-600 dark:text-amber-400">{d.unclosed_slots} незакрытых занятий</span>
+    </div>
+  );
+}
+
+function AppealsDetails({ card }: { card: AppealsCard }) {
+  return <span className="text-xs text-fg-muted mt-1">{card.details.discipline_title} · {card.details.count} апелляций</span>;
+}
+
+function GradeOverrideDetails({ card }: { card: GradeOverridePendingCard }) {
+  return <span className="text-xs text-fg-muted mt-1">{card.details.discipline_title} · {card.details.count} запросов · {card.details.requested_by}</span>;
+}
+
+// ── Curator/senior_grader detail renderers ────────────────────────────────────
+
+function GroupAttendanceDetails({ card }: { card: GroupAttendanceSummaryCard }) {
+  const d = card.details;
+  const pct = Math.round(d.attendance_rate * 100);
+  const thr = Math.round(d.threshold * 100);
+  const bad = pct < thr;
+  return (
+    <div className="mt-1 flex gap-3 items-center">
+      <span className={`text-xs font-semibold ${bad ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+        {pct}% посещаемость
+      </span>
+      {d.at_risk_count > 0 && <span className="text-xs text-rose-500">{d.at_risk_count} под риском</span>}
+    </div>
+  );
+}
+
+function GroupDebtsDetails({ card }: { card: GroupDebtsSummaryCard }) {
+  const d = card.details;
+  return (
+    <div className="mt-1 flex gap-3">
+      <span className="text-xs text-fg-muted">{d.group_name}</span>
+      {d.critical_count > 0 && <span className="text-xs text-red-500">{d.critical_count} критических</span>}
+    </div>
+  );
+}
+
+function StudentAtRiskDetails({ card }: { card: StudentAtRiskCard }) {
+  const d = card.details;
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+      <span className="text-xs text-fg-muted">{d.group_name}</span>
+      <span className="text-xs text-rose-500">{d.debts_count} задолженностей</span>
+      <span className="text-xs text-fg-muted">{Math.round(d.attendance_rate * 100)}% посещаемость</span>
+    </div>
+  );
+}
+
+// ── Parent detail renderers ───────────────────────────────────────────────────
+
+function ChildAbsenceDetails({ card }: { card: ChildAttendanceAlertCard }) {
+  const d = card.details;
+  return <span className="text-xs text-fg-muted mt-1">{d.discipline_title} · {d.event_kind === "lecture" ? "лекция" : d.event_kind}</span>;
+}
+
+function ChildDebtDetails({ card }: { card: ChildDebtsAlertCard }) {
+  const d = card.details;
+  return <span className="text-xs text-fg-muted mt-1">{d.discipline_title} · {d.debt_kind === "retake" ? "пересдача" : d.debt_kind}</span>;
+}
+
+function ChildAtRiskDetails({ card }: { card: ChildAtRiskCard }) {
+  const d = card.details;
+  return (
+    <div className="mt-1 flex gap-3">
+      <span className="text-xs text-rose-500">{d.debts_count} задолженностей</span>
+      <span className="text-xs text-fg-muted">{Math.round(d.attendance_rate * 100)}% посещаемость</span>
+    </div>
+  );
+}
+
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
 export function FeedCardSkeleton() {
@@ -166,13 +273,24 @@ export function FeedCard({ card, onTap }: Props) {
       <div className="text-xs text-fg-muted mt-0.5 leading-snug">{card.subtitle}</div>
 
       {/* Kind-специфичные детали */}
-      {card.kind === "event"             && <EventDetails card={card as EventCard} />}
-      {card.kind === "form_deadline"     && <FormDeadlineDetails card={card as FormDeadlineCard} />}
-      {card.kind === "event_debt"        && <EventDebtDetails card={card as EventDebtCard} />}
-      {card.kind === "academic_debt"     && <AcademicDebtDetails card={card as AcademicDebtCard} />}
-      {card.kind === "delivery_required" && <DeliveryDetails card={card as DeliveryRequiredCard} />}
-      {card.kind === "active_attempt"    && <ActiveAttemptDetails card={card as ActiveAttemptCard} />}
-      {card.kind === "external_action"   && <ExternalDetails card={card as ExternalActionCard} />}
+      {card.kind === "event"                    && <EventDetails card={card as EventCard} />}
+      {card.kind === "form_deadline"            && <FormDeadlineDetails card={card as FormDeadlineCard} />}
+      {card.kind === "event_debt"               && <EventDebtDetails card={card as EventDebtCard} />}
+      {card.kind === "academic_debt"            && <AcademicDebtDetails card={card as AcademicDebtCard} />}
+      {card.kind === "delivery_required"        && <DeliveryDetails card={card as DeliveryRequiredCard} />}
+      {card.kind === "active_attempt"           && <ActiveAttemptDetails card={card as ActiveAttemptCard} />}
+      {card.kind === "external_action"          && <ExternalDetails card={card as ExternalActionCard} />}
+      {card.kind === "submissions_to_grade"     && <SubmissionsDetails card={card as SubmissionsToGradeCard} />}
+      {card.kind === "teacher_event_debt"       && <TeacherEventDebtDetails card={card as TeacherEventDebtCard} />}
+      {card.kind === "module_close_required"    && <ModuleCloseDetails card={card as ModuleCloseRequiredCard} />}
+      {card.kind === "appeals"                  && <AppealsDetails card={card as AppealsCard} />}
+      {card.kind === "grade_override_pending"   && <GradeOverrideDetails card={card as GradeOverridePendingCard} />}
+      {card.kind === "group_attendance_summary" && <GroupAttendanceDetails card={card as GroupAttendanceSummaryCard} />}
+      {card.kind === "group_debts_summary"      && <GroupDebtsDetails card={card as GroupDebtsSummaryCard} />}
+      {card.kind === "student_at_risk"          && <StudentAtRiskDetails card={card as StudentAtRiskCard} />}
+      {card.kind === "child_attendance_alert"   && <ChildAbsenceDetails card={card as ChildAttendanceAlertCard} />}
+      {card.kind === "child_debts_alert"        && <ChildDebtDetails card={card as ChildDebtsAlertCard} />}
+      {card.kind === "child_at_risk"            && <ChildAtRiskDetails card={card as ChildAtRiskCard} />}
     </button>
   );
 }

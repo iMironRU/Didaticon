@@ -310,7 +310,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
 
   // ── Основной шаблон с табами ──────────────────────────────────────────
   const tab = isTeacher
-    ? (route.name === "tasks" || route.name === "profile" ? route.name : "schedule")
+    ? (route.name === "today" || route.name === "tasks" || route.name === "profile" ? route.name : "schedule")
     : (route.name === "today"       ? "today"
        : route.name === "performance" ? "performance"
        : route.name === "gradebook" ? "gradebook"
@@ -388,6 +388,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
   // Tabs config
   const tabs = isTeacher
     ? [
+        { id: "today"    as const, label: "Сегодня",    icon: <TodayIcon /> },
         { id: "schedule" as const, label: "Расписание", icon: <CalIcon /> },
         { id: "tasks"    as const, label: "Задания",    icon: <span style={{ fontSize: 20 }}>📋</span> },
         { id: "profile"  as const, label: "Профиль",    icon: <PersonIcon /> },
@@ -424,9 +425,13 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
             при переходе по табам. Визуально не нужен (есть BottomNav). */}
         <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>
-        {!isTeacher && tab === "today" && (
-          <TodayScreen contextId={urlCtx?.contextId ?? "stu:demo-1"} />
-        )}
+        {tab === "today" && (() => {
+          const defaultCtx = isTeacher
+            ? (teacherKind === "curator" ? "tch:demo-curator" : teacherKind === "senior_grader" ? "tch:demo-sg" : "tch:demo-1")
+            : role === "parent" ? "par:demo-child1"
+            : "stu:demo-1";
+          return <TodayScreen contextId={urlCtx?.contextId ?? defaultCtx} />;
+        })()}
         {tab === "schedule" && (
           <div className={isTeacher ? "px-4 py-2.5" : ""}>{scheduleNode}</div>
         )}

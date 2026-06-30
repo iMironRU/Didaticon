@@ -131,6 +131,135 @@ export interface ExternalActionCard extends CardBase {
   };
 }
 
+// ── Teacher cards ─────────────────────────────────────────────────────────────
+
+export interface SubmissionsToGradeCard extends CardBase {
+  kind: "submissions_to_grade";
+  details: {
+    queue_size:          number;
+    by_discipline:       Array<{ discipline_id: string; discipline_title: string; count: number }>;
+    oldest_pending_at:   string;
+    nearest_deadline_at: string;
+    scope_hint:          "own" | "department";
+  };
+}
+
+export interface TeacherEventDebtCard extends CardBase {
+  kind: "teacher_event_debt";
+  details: {
+    event_id:         string;
+    event_date:       string;
+    event_kind:       string;
+    discipline_title: string;
+    group_name:       string;
+    debt_kind:        "attendance_not_marked" | "material_not_uploaded";
+  };
+}
+
+export interface ModuleCloseRequiredCard extends CardBase {
+  kind: "module_close_required";
+  details: {
+    module_id:        string;
+    discipline_title: string;
+    group_name:       string;
+    due_at:           string;
+    unclosed_slots:   number;
+  };
+}
+
+export interface AppealsCard extends CardBase {
+  kind: "appeals";
+  details: {
+    count:         number;
+    discipline_id: string;
+    discipline_title: string;
+    deadline_at:   string;
+  };
+}
+
+export interface GradeOverridePendingCard extends CardBase {
+  kind: "grade_override_pending";
+  details: {
+    count:            number;
+    discipline_title: string;
+    requested_by:     string;
+    requested_at:     string;
+  };
+}
+
+// ── Curator / senior_grader cards ─────────────────────────────────────────────
+
+export interface GroupAttendanceSummaryCard extends CardBase {
+  kind: "group_attendance_summary";
+  details: {
+    group_name:        string;
+    period:            string;
+    attendance_rate:   number;  // 0..1
+    threshold:         number;  // 0..1 — порог тревоги
+    at_risk_count:     number;
+    total_students:    number;
+  };
+}
+
+export interface GroupDebtsSummaryCard extends CardBase {
+  kind: "group_debts_summary";
+  details: {
+    group_name:        string;
+    discipline_title:  string;
+    debts_count:       number;
+    critical_count:    number;  // риск отчисления
+    total_students:    number;
+  };
+}
+
+export interface StudentAtRiskCard extends CardBase {
+  kind: "student_at_risk";
+  details: {
+    student_id:    string;
+    student_name:  string;
+    group_name:    string;
+    risk_reason:   string;
+    debts_count:   number;
+    attendance_rate: number;
+  };
+}
+
+// ── Parent cards ──────────────────────────────────────────────────────────────
+
+export interface ChildAttendanceAlertCard extends CardBase {
+  kind: "child_attendance_alert";
+  details: {
+    child_student_id: string;
+    child_name:       string;
+    missed_today:     number;
+    event_kind:       string;
+    discipline_title: string;
+    event_date:       string;
+  };
+}
+
+export interface ChildDebtsAlertCard extends CardBase {
+  kind: "child_debts_alert";
+  details: {
+    child_student_id: string;
+    child_name:       string;
+    discipline_title: string;
+    debt_kind:        string;
+    retake_at:        string | null;
+  };
+}
+
+export interface ChildAtRiskCard extends CardBase {
+  kind: "child_at_risk";
+  details: {
+    child_student_id: string;
+    child_name:       string;
+    risk_reason:      string;
+    debts_count:      number;
+    attendance_rate:  number;
+  };
+}
+
 // ── Union ─────────────────────────────────────────────────────────────────────
 
 export type FeedCard =
@@ -141,6 +270,17 @@ export type FeedCard =
   | DeliveryRequiredCard
   | ActiveAttemptCard
   | ExternalActionCard
+  | SubmissionsToGradeCard
+  | TeacherEventDebtCard
+  | ModuleCloseRequiredCard
+  | AppealsCard
+  | GradeOverridePendingCard
+  | GroupAttendanceSummaryCard
+  | GroupDebtsSummaryCard
+  | StudentAtRiskCard
+  | ChildAttendanceAlertCard
+  | ChildDebtsAlertCard
+  | ChildAtRiskCard
   | (CardBase & { kind: FeedCardKind; details: Record<string, unknown> });
 
 export interface FeedResponse {

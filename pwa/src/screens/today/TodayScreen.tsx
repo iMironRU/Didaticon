@@ -17,8 +17,17 @@ import { useDocumentTitle } from "../../useDocumentTitle.js";
 import { navigate } from "../../router.js";
 import { USE_MOCK } from "../../auth/mock.js";
 
-// Demo-мок для ?demo=student без реального RPC
-const DEMO_FEED: FeedResponse = {
+// Demo-фиды для разных ролей (определяются по prefixe contextId)
+function getDemoFeed(contextId: string): FeedResponse {
+  if (contextId.includes("curator")) return DEMO_FEED_CURATOR;
+  if (contextId.includes("sg"))      return DEMO_FEED_SG;
+  if (contextId.startsWith("tch:")) return DEMO_FEED_INSTRUCTOR;
+  if (contextId.startsWith("par:")) return DEMO_FEED_PARENT;
+  return DEMO_FEED_STUDENT;
+}
+
+// ── Demo: студент ─────────────────────────────────────────────────────────────
+const DEMO_FEED_STUDENT: FeedResponse = {
   cards: [
     {
       id: "demo-evt-1",
@@ -126,6 +135,264 @@ const DEMO_FEED: FeedResponse = {
   cache_ttl_seconds: 60,
 };
 
+// ── Demo: instructor ──────────────────────────────────────────────────────────
+const DEMO_FEED_INSTRUCTOR: FeedResponse = {
+  cards: [
+    {
+      id: "di-stg-1",
+      kind: "submissions_to_grade",
+      source: "local",
+      urgency: 88,
+      due_at: new Date(Date.now() + 2 * 86400_000).toISOString(),
+      title: "24 работы ждут проверки",
+      subtitle: "Ближайший дедлайн: через 2 дня",
+      action: { kind: "open_submissions_to_grade", scope: "own" },
+      details: {
+        queue_size: 24,
+        by_discipline: [
+          { discipline_id: "disc:asd", discipline_title: "Алгоритмы и структуры данных", count: 18 },
+          { discipline_id: "disc:os",  discipline_title: "Операционные системы", count: 6 },
+        ],
+        oldest_pending_at: new Date(Date.now() - 5 * 86400_000).toISOString(),
+        nearest_deadline_at: new Date(Date.now() + 2 * 86400_000).toISOString(),
+        scope_hint: "own",
+      },
+    },
+    {
+      id: "di-evt-1",
+      kind: "event",
+      source: "local",
+      urgency: 80,
+      due_at: new Date(Date.now() + 90 * 60_000).toISOString(),
+      title: "Алгоритмы и структуры данных",
+      subtitle: "Лекция · ИС-21-1, ИС-21-2 · ауд. 301 · через 1 ч 30 мин",
+      action: { kind: "open_event_teacher", target_id: "evt:tch-demo-1" },
+      details: {
+        event_id: "evt:tch-demo-1",
+        event_kind: "lecture",
+        discipline_id: "disc:asd",
+        discipline_title: "Алгоритмы и структуры данных",
+        teacher_name: null,
+        format: "offline",
+        room: "301",
+        meeting_url: null,
+        package_ref: null,
+        has_pre_event_bonus: false,
+        related_debts: { count: 0, kinds: [] },
+      },
+    },
+    {
+      id: "di-ted-1",
+      kind: "teacher_event_debt",
+      source: "local",
+      urgency: 72,
+      due_at: new Date(Date.now() + 86400_000).toISOString(),
+      title: "Не отмечена посещаемость",
+      subtitle: "Семинар · вчера · ИС-21-1",
+      action: { kind: "open_attendance", target_id: "evt:tch-demo-sem" },
+      details: {
+        event_id: "evt:tch-demo-sem",
+        event_date: new Date(Date.now() - 86400_000).toISOString().slice(0, 10),
+        event_kind: "seminar",
+        discipline_title: "Алгоритмы и структуры данных",
+        group_name: "ИС-21-1",
+        debt_kind: "attendance_not_marked",
+      },
+    },
+    {
+      id: "di-mcr-1",
+      kind: "module_close_required",
+      source: "local",
+      urgency: 65,
+      due_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
+      title: "Завершить модуль 3",
+      subtitle: "Операционные системы · ИС-21-2 · 2 незакрытых занятия",
+      action: { kind: "open_module", target_id: "mod:os-3" },
+      details: {
+        module_id: "mod:os-3",
+        discipline_title: "Операционные системы",
+        group_name: "ИС-21-2",
+        due_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
+        unclosed_slots: 2,
+      },
+    },
+  ],
+  total_actionable: 4,
+  has_more: false,
+  generated_at: new Date().toISOString(),
+  cache_ttl_seconds: 60,
+};
+
+// ── Demo: curator ─────────────────────────────────────────────────────────────
+const DEMO_FEED_CURATOR: FeedResponse = {
+  cards: [
+    {
+      id: "dc-sar-1",
+      kind: "student_at_risk",
+      source: "targeted",
+      urgency: 92,
+      due_at: null,
+      title: "Петров А.С. — риск отчисления",
+      subtitle: "ИС-21-1 · 3 задолженности · посещаемость 41%",
+      action: { kind: "open_student", target_id: "s-fail-1" },
+      details: {
+        student_id: "s-fail-1",
+        student_name: "Петров Алексей Сергеевич",
+        group_name: "ИС-21-1",
+        risk_reason: "3 академические задолженности + низкая посещаемость",
+        debts_count: 3,
+        attendance_rate: 0.41,
+      },
+    },
+    {
+      id: "dc-gas-1",
+      kind: "group_attendance_summary",
+      source: "local",
+      urgency: 70,
+      due_at: null,
+      title: "Посещаемость группы ИС-21-1 ниже нормы",
+      subtitle: "Неделя · 58% (порог 75%)",
+      action: { kind: "open_group_attendance", target_id: "grp:is21-1" },
+      details: {
+        group_name: "ИС-21-1",
+        period: "2026-06-24–2026-06-30",
+        attendance_rate: 0.58,
+        threshold: 0.75,
+        at_risk_count: 4,
+        total_students: 25,
+      },
+    },
+    {
+      id: "dc-gds-1",
+      kind: "group_debts_summary",
+      source: "local",
+      urgency: 65,
+      due_at: new Date(Date.now() + 7 * 86400_000).toISOString(),
+      title: "Долги по Математическому анализу",
+      subtitle: "ИС-21-1 · 7 студентов · 2 критических",
+      action: { kind: "open_group_debts", target_id: "grp:is21-1" },
+      details: {
+        group_name: "ИС-21-1",
+        discipline_title: "Математический анализ",
+        debts_count: 7,
+        critical_count: 2,
+        total_students: 25,
+      },
+    },
+  ],
+  total_actionable: 3,
+  has_more: false,
+  generated_at: new Date().toISOString(),
+  cache_ttl_seconds: 60,
+};
+
+// ── Demo: senior_grader ───────────────────────────────────────────────────────
+const DEMO_FEED_SG: FeedResponse = {
+  cards: [
+    {
+      id: "sg-stg-1",
+      kind: "submissions_to_grade",
+      source: "local",
+      urgency: 90,
+      due_at: new Date(Date.now() + 86400_000).toISOString(),
+      title: "47 работ на проверке",
+      subtitle: "Ближайший дедлайн: завтра · по кафедре",
+      action: { kind: "open_submissions_to_grade", scope: "department" },
+      details: {
+        queue_size: 47,
+        by_discipline: [
+          { discipline_id: "disc:asd", discipline_title: "Алгоритмы и структуры данных", count: 30 },
+          { discipline_id: "disc:os",  discipline_title: "Операционные системы", count: 17 },
+        ],
+        oldest_pending_at: new Date(Date.now() - 10 * 86400_000).toISOString(),
+        nearest_deadline_at: new Date(Date.now() + 86400_000).toISOString(),
+        scope_hint: "department",
+      },
+    },
+    {
+      id: "sg-app-1",
+      kind: "appeals",
+      source: "local",
+      urgency: 78,
+      due_at: new Date(Date.now() + 2 * 86400_000).toISOString(),
+      title: "3 апелляции ожидают рассмотрения",
+      subtitle: "Дискретная математика · срок через 2 дня",
+      action: { kind: "open_appeals", target_id: "disc:dm" },
+      details: {
+        count: 3,
+        discipline_id: "disc:dm",
+        discipline_title: "Дискретная математика",
+        deadline_at: new Date(Date.now() + 2 * 86400_000).toISOString(),
+      },
+    },
+    {
+      id: "sg-gop-1",
+      kind: "grade_override_pending",
+      source: "local",
+      urgency: 60,
+      due_at: new Date(Date.now() + 5 * 86400_000).toISOString(),
+      title: "Пересмотр оценки ожидает решения",
+      subtitle: "Запрос от Петров В.А. · 2 записи",
+      action: { kind: "open_grade_overrides" },
+      details: {
+        count: 2,
+        discipline_title: "Алгоритмы и структуры данных",
+        requested_by: "Петров В.А.",
+        requested_at: new Date(Date.now() - 86400_000).toISOString(),
+      },
+    },
+  ],
+  total_actionable: 3,
+  has_more: false,
+  generated_at: new Date().toISOString(),
+  cache_ttl_seconds: 60,
+};
+
+// ── Demo: parent ──────────────────────────────────────────────────────────────
+const DEMO_FEED_PARENT: FeedResponse = {
+  cards: [
+    {
+      id: "dp-caa-1",
+      kind: "child_attendance_alert",
+      source: "targeted",
+      urgency: 85,
+      due_at: null,
+      title: "Мария пропустила занятие",
+      subtitle: "Сегодня · Операционные системы · лекция",
+      action: { kind: "open_child_attendance", target_id: "s-test-1" },
+      details: {
+        child_student_id: "s-test-1",
+        child_name: "Иванова Мария",
+        missed_today: 1,
+        event_kind: "lecture",
+        discipline_title: "Операционные системы",
+        event_date: new Date().toISOString().slice(0, 10),
+      },
+    },
+    {
+      id: "dp-cda-1",
+      kind: "child_debts_alert",
+      source: "local",
+      urgency: 72,
+      due_at: new Date(Date.now() + 15 * 86400_000).toISOString(),
+      title: "Задолженность: Дискретная математика",
+      subtitle: "Мария · пересдача до 15 июля",
+      action: { kind: "open_child_debt", target_id: "s-test-1" },
+      details: {
+        child_student_id: "s-test-1",
+        child_name: "Иванова Мария",
+        discipline_title: "Дискретная математика",
+        debt_kind: "retake",
+        retake_at: new Date(Date.now() + 15 * 86400_000).toISOString(),
+      },
+    },
+  ],
+  total_actionable: 2,
+  has_more: false,
+  generated_at: new Date().toISOString(),
+  cache_ttl_seconds: 60,
+};
+
 interface Props {
   contextId: string;
 }
@@ -146,8 +413,8 @@ export function TodayScreen({ contextId }: Props) {
     enabled: !USE_MOCK,
   });
 
-  // В demo-режиме используем статичный мок напрямую
-  const feed: FeedResponse | null = USE_MOCK ? DEMO_FEED : data;
+  // В demo-режиме используем статичный мок напрямую (по роли из contextId)
+  const feed: FeedResponse | null = USE_MOCK ? getDemoFeed(contextId) : data;
   const isLoading = !USE_MOCK && loading && !feed;
 
   function handleCardTap(card: FeedCardType) {
