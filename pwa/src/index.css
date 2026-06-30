@@ -122,3 +122,49 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
     scroll-behavior:     auto !important;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ * accessibility_preferences (политика §7.1, didakticon-accessibility.md §7.1)
+ * Применяются через data-* атрибуты на <html> из pwa/src/accessibility/prefs.ts.
+ * ────────────────────────────────────────────────────────────────────────────── */
+
+/* Снижение анимаций — явно выбрано пользователем (поверх prefers-reduced-motion ОС). */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration:  0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior:     auto !important;
+}
+
+/* Высокая контрастность — толще границы, ярче текст, сильнее focus-ring. */
+:root[data-contrast="high"] {
+  --c-border: var(--c-text-secondary);  /* границы цветом подзаголовка — много контраста */
+}
+:root[data-contrast="high"] .border-line,
+:root[data-contrast="high"] .border-l,
+:root[data-contrast="high"] .border-r,
+:root[data-contrast="high"] .border-t,
+:root[data-contrast="high"] .border-b,
+:root[data-contrast="high"] .border-y,
+:root[data-contrast="high"] .border-x,
+:root[data-contrast="high"] .border {
+  border-width: 1.5px;
+}
+:root[data-contrast="high"] :focus-visible {
+  outline: 3px solid var(--c-accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* Шрифт для дислексии — letter/word-spacing увеличены. */
+:root[data-dyslexia="true"] body {
+  letter-spacing: 0.05em;
+  word-spacing:   0.1em;
+}
+:root[data-dyslexia="true"] p,
+:root[data-dyslexia="true"] li,
+:root[data-dyslexia="true"] td,
+:root[data-dyslexia="true"] th {
+  line-height: 1.7;
+}

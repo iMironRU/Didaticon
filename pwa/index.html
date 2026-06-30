@@ -7,18 +7,22 @@
     <title>ЭИОС</title>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     <script>
-      // FOUC prevention — применяем тему и размер шрифта ДО загрузки React,
-      // иначе у тёмного юзера моргает светлая, а у L/S — мелкий или крупный
-      // шрифт сначала рендерится в дефолтном 16px.
+      // FOUC prevention — применяем тему / размер шрифта / accessibility prefs
+      // ДО загрузки React. Иначе при включённом high_contrast / dyslexia /
+      // reduced_motion / large font UI моргает дефолтным состоянием.
       (function(){
+        var html  = document.documentElement;
         var saved = localStorage.getItem("eios_theme") || "auto";
         var mode  = saved === "auto"
           ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
           : saved;
-        document.documentElement.setAttribute("data-theme", mode);
+        html.setAttribute("data-theme", mode);
         var fs = localStorage.getItem("eios_font_size");
-        if (fs === "s") document.documentElement.style.fontSize = "14px";
-        else if (fs === "l") document.documentElement.style.fontSize = "18px";
+        if (fs === "s") html.style.fontSize = "14px";
+        else if (fs === "l") html.style.fontSize = "18px";
+        if (localStorage.getItem("eios_a11y_contrast") === "1") html.dataset.contrast = "high";
+        if (localStorage.getItem("eios_a11y_motion")   === "1") html.dataset.motion   = "reduce";
+        if (localStorage.getItem("eios_a11y_dyslexia") === "1") html.dataset.dyslexia = "true";
       })();
     </script>
     <script src="/config.js"></script>

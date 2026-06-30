@@ -5,6 +5,7 @@ import { App } from "./App.js";
 import { handleCallback } from "./auth/oidc.js";
 import { initSwUpdateCheck } from "./sw-update.js";
 import { initTheme } from "./theme.js";
+import { applyPrefs } from "./accessibility/prefs.js";
 import { flush as flushOutbox } from "./offline/outbox.js";
 
 // @axe-core/react в DEV — нарушения a11y выводятся в DevTools console
@@ -22,6 +23,7 @@ window.addEventListener("online", () => { void flushOutbox(); });
 
 async function bootstrap() {
   initTheme();
+  applyPrefs(); // accessibility-настройки. FOUC-script их тоже выставляет, тут страховка
   initSwUpdateCheck(); // до любого await — иначе controllerchange может прийти раньше
   if (window.location.pathname === "/callback") {
     // Флаг "только что вернулись с Auth0" — App.tsx покажет Splash с правильным

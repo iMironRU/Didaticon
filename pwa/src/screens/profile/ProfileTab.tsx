@@ -3,6 +3,14 @@ import type { Person, Learner } from "@eios/contracts";
 import type { ThemeMode } from "../../theme.js";
 import { ThemeIcon } from "../../components/icons/index.js";
 import { getFontSize, setFontSize, FONT_SIZE_LABELS, type FontSize } from "../../fontSize.js";
+import {
+  getPrefs,
+  setHighContrast,
+  setReducedMotion,
+  setDyslexiaFriendly,
+  setScreenReader,
+  setExtendedTestTime,
+} from "../../accessibility/prefs.js";
 import { useLocale, LOCALES, type Locale } from "../../locale.js";
 import { Card } from "../../ui/Card.js";
 import { Button } from "../../ui/Button.js";
@@ -54,6 +62,14 @@ export function ProfileTab({
   // Размер шрифта — accessibility-настройка (S/M/L → 14/16/18 px на root)
   const [fontSize, setFontSizeState] = useState<FontSize>(getFontSize);
   function handleFontSize(s: FontSize) { setFontSize(s); setFontSizeState(s); }
+
+  // Остальные accessibility-настройки (политика §7.1, didakticon-accessibility.md §7.1)
+  const [a11yPrefs, setA11yPrefs] = useState(() => getPrefs());
+  function toggleHighContrast(v: boolean)     { setHighContrast(v);     setA11yPrefs(p => ({ ...p, high_contrast:      v })); }
+  function toggleReducedMotion(v: boolean)    { setReducedMotion(v);    setA11yPrefs(p => ({ ...p, reduced_motion:     v })); }
+  function toggleDyslexia(v: boolean)         { setDyslexiaFriendly(v); setA11yPrefs(p => ({ ...p, dyslexia_friendly:  v })); }
+  function toggleScreenReader(v: boolean)     { setScreenReader(v);     setA11yPrefs(p => ({ ...p, screen_reader:      v })); }
+  function toggleExtendedTestTime(v: boolean) { setExtendedTestTime(v); setA11yPrefs(p => ({ ...p, extended_test_time: v })); }
 
   return (
     <div>
@@ -195,6 +211,44 @@ export function ProfileTab({
         </div>
       </div>
 
+      {/* Остальные accessibility-настройки */}
+      <div className="mb-6">
+        <div className={SECTION_LABEL_CLS}>Настройки доступности</div>
+        <ToggleRow
+          label="Высокая контрастность"
+          description="Толще границы и focus-ring"
+          checked={a11yPrefs.high_contrast}
+          onChange={toggleHighContrast}
+        />
+        <ToggleRow
+          label="Снижение анимаций"
+          description="Отключает переходы и автозапуск"
+          checked={a11yPrefs.reduced_motion}
+          onChange={toggleReducedMotion}
+        />
+        <ToggleRow
+          label="Шрифт для дислексии"
+          description="Увеличенный межбуквенный и межсловный интервал"
+          checked={a11yPrefs.dyslexia_friendly}
+          onChange={toggleDyslexia}
+        />
+        <ToggleRow
+          label="Пользуюсь скринридером"
+          description="Используется для более ассертивных объявлений"
+          checked={a11yPrefs.screen_reader}
+          onChange={toggleScreenReader}
+        />
+        <ToggleRow
+          label="Нужно больше времени на тестах"
+          description="Применяется при выполнении контрольных в Тестиконе"
+          checked={a11yPrefs.extended_test_time}
+          onChange={toggleExtendedTestTime}
+        />
+        <div className="text-fg-dim text-xs mt-3">
+          Настройки сохраняются на устройстве. См. <a href="/accessibility" className="text-accent hover:underline">декларацию доступности</a>.
+        </div>
+      </div>
+
       {/* Мои роли и контексты (из identity.contexts.get) */}
       <MyRolesSection />
 
@@ -219,6 +273,38 @@ export function ProfileTab({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * ToggleRow — строка с label, описанием и нативным checkbox-switch'ем.
+ * Используется в секции accessibility-настроек. Нативный input для AT.
+ */
+function ToggleRow({ label, description, checked, onChange }: {
+  label:       string;
+  description: string;
+  checked:     boolean;
+  onChange:    (v: boolean) => void;
+}) {
+  const id   = "a11y-" + label.replace(/\s+/g, "-").toLowerCase();
+  const dsId = id + "-desc";
+  return (
+    <div className="flex items-start gap-3 py-2.5 border-b border-line last:border-0 min-h-[44px]">
+      <input
+        id={id}
+        type="checkbox"
+        className="mt-1 w-5 h-5 accent-accent cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        aria-describedby={dsId}
+      />
+      <div className="flex-1 min-w-0">
+        <label htmlFor={id} className="block text-fg text-sm font-medium cursor-pointer">
+          {label}
+        </label>
+        <span id={dsId} className="block text-fg-muted text-xs mt-0.5">{description}</span>
+      </div>
     </div>
   );
 }
