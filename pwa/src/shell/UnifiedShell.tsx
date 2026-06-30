@@ -179,7 +179,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         const att = attendance[found.slot.slotId]?.students ?? [];
         const title = `Занятие · ${found.slot.unitRef.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+          <Frame swUpdate={swUpdate} screenTitle={title}>
             <MainContent title={title}>
               <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />
             </MainContent>
@@ -195,7 +195,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       if (entry) {
         const title = `Занятие · ${entry.unitTitle}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+          <Frame swUpdate={swUpdate} screenTitle={title}>
             <MainContent title={title}>
               <LearnerLessonScreen
                 lesson={entry.lesson}
@@ -217,7 +217,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
   //   но карту выпускает Univerkon на конкретного физика) ─────────────────
   if (!isTeacher && role === "student" && route.name === "estudent" && urlCtx) {
     return (
-      <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle="Студенческий билет">
+      <Frame swUpdate={swUpdate} screenTitle="Студенческий билет">
         <MainContent title="Студенческий билет">
           <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
         </MainContent>
@@ -232,7 +232,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       if (unit) {
         const title = `Дисциплина · ${unit.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+          <Frame swUpdate={swUpdate} screenTitle={title}>
             <MainContent title={title}>
               <UnitScreen unit={unit} onBack={() => history.back()}
                 onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
@@ -246,7 +246,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       if (group) {
         const title = `ПМ · ${group.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+          <Frame swUpdate={swUpdate} screenTitle={title}>
             <MainContent title={title}>
               <GroupScreen group={group} onBack={() => history.back()}
                 onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
@@ -258,7 +258,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
     if (route.name === "contexts") {
       const title = person.personType === "parent" ? "Мои дети" : "Мои профили обучения";
       return (
-        <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+        <Frame swUpdate={swUpdate} screenTitle={title}>
           <Header
             initials={initials}
             onAvatarTap={() => navigate({ name: "profile" })}
@@ -283,7 +283,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       if (n) {
         const title = `Уведомление · ${n.title}`;
         return (
-          <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={title}>
+          <Frame swUpdate={swUpdate} screenTitle={title}>
             <MainContent title={title}>
               <NotificationDetailScreen notification={n} onBack={() => history.back()} />
             </MainContent>
@@ -293,7 +293,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
     }
     if (route.name === "notifications") {
       return (
-        <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle="Уведомления">
+        <Frame swUpdate={swUpdate} screenTitle="Уведомления">
           <MainContent title="Уведомления">
             <NotificationsScreen
               notifications={notifs}
@@ -414,7 +414,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       ) : <ContextLabel text="—" />);
 
   return (
-    <Frame swUpdate={swUpdate} eiv={person.eiv} screenTitle={tabHeading(tab, isTeacher)}>
+    <Frame swUpdate={swUpdate} screenTitle={tabHeading(tab, isTeacher)}>
       <Header
         initials={initials}
         onAvatarTap={() => navigate({ name: "profile" })}
@@ -492,12 +492,11 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
  */
 interface FrameProps {
   swUpdate:    boolean;
-  eiv:         string;
   /** Заголовок экрана — для document.title + RouteAnnouncer + main-aria-label. */
   screenTitle: string;
   children:    React.ReactNode;
 }
-function Frame({ swUpdate, eiv, screenTitle, children }: FrameProps) {
+function Frame({ swUpdate, screenTitle, children }: FrameProps) {
   useDocumentTitle(screenTitle);
   return (
     <div style={st.root}>
@@ -505,7 +504,7 @@ function Frame({ swUpdate, eiv, screenTitle, children }: FrameProps) {
       <RouteAnnouncer routeKey={screenTitle} message={screenTitle} />
       <NetworkStatus />
       {children}
-      <StatusBar swUpdate={swUpdate} eiv={eiv} />
+      <StatusBar swUpdate={swUpdate} />
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { LogoIcon, BellIcon, SwitchIcon } from "../components/icons/index.js";
 
+declare const __APP_VERSION__: string;
+declare const __COMMIT_HASH__: string;
+
 interface Props {
   /** Что показывается между логотипом и правым блоком — контекст ученика или role-label педагога */
   middle:         ReactNode;
@@ -24,7 +27,13 @@ export function Header({ middle, initials, onAvatarTap, bell }: Props) {
     <header className="flex items-center gap-2 px-3.5 py-2.5 bg-elevated border-b border-line shrink-0">
       <div className="flex items-center gap-1.5 shrink-0">
         <LogoIcon />
-        <span className="text-fg text-[0.85rem] font-bold">ЭИОС</span>
+        <div className="flex flex-col leading-tight">
+          <span className="text-fg text-[0.85rem] font-bold">ЭИОС</span>
+          <span className="text-fg-dim text-[0.62rem]">
+            {"ЭИОС v" + (typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0")}
+            {typeof __COMMIT_HASH__ !== "undefined" && __COMMIT_HASH__ ? ` · ${__COMMIT_HASH__}` : ""}
+          </span>
+        </div>
       </div>
       {middle}
       {bell && (
