@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { applySwUpdate } from "../sw-update.js";
+import { isPhone } from "./isPhone.js";
 import { useLocale } from "../locale.js";
 import { usePersonIdLabel } from "../branding/usePersonIdLabel.js";
 import { Button } from "../ui/Button.js";
@@ -31,7 +32,7 @@ export function StatusBar({ swUpdate, eiv }: Props) {
   return (
     <div className="flex items-center justify-between px-3 py-1 bg-elevated border-t border-line shrink-0">
       <div>
-        {swUpdate && (
+        {swUpdate && isPhone() && (
           <Button size="sm" onClick={applySwUpdate}>{t("updateApp")}</Button>
         )}
       </div>
