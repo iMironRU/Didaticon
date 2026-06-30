@@ -135,7 +135,7 @@ export function AccessibilityScreen({ branding }: Props) {
               href="https://github.com/iMironRU/Didaticon/issues?q=label%3Aaccessibility"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent hover:underline"
+              className="text-accent underline"
             >
               Дидактикона, метка «accessibility»
             </a>.
@@ -151,9 +151,9 @@ export function AccessibilityScreen({ branding }: Props) {
           </p>
           <a
             href={`mailto:${supportEmail}?subject=${encodeURIComponent("Доступность Дидактикона")}`}
-            className="inline-block px-4 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold no-underline min-h-[44px]"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface border-2 border-accent text-accent text-sm font-semibold no-underline min-h-[44px]"
           >
-            ✉ Написать об ограничении ({supportEmail})
+            <span aria-hidden="true">✉</span> Написать об ограничении ({supportEmail})
           </a>
           {branding.supportPhone && (
             <p className="text-fg-muted text-xs mt-2">
@@ -180,7 +180,7 @@ export function AccessibilityScreen({ branding }: Props) {
               href="https://github.com/iMironRU/Didaticon/tree/main/docs/accessibility"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent hover:underline"
+              className="text-accent underline"
             >
               docs/accessibility
             </a>{" "}
