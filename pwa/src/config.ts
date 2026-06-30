@@ -43,11 +43,56 @@ export const DEFAULT_BRANDING: Branding = {
 // Версия: v2 — принудительная смена хэша бандла после перехода на runtime config.
 export const EIOS_BUNDLE_VER = "v2";
 
-const _defaults = { oidcIssuer: "", oidcClientId: "eios-pwa" };
+// Резервное хранилище конфига для offline-cold-start.
+//
+// Цепочка fallback'ов (в порядке убывания свежести):
+//   1. window.__EIOS_CONFIG__   ← /config.js (свежий, генерится nginx'ом)
+//   2. localStorage             ← последний успешный config с прошлой сессии
+//   3. import.meta.env          ← билд-тайм фолбэк (обычно пустой в prod)
+//
+// Без (2) при offline-cold-start, когда SW не успел закешировать /config.js
+// (например, очень первый запуск без сети — крайний случай), OIDC issuer
+// оставался "", UserManager ломался, useAuth уходил в anonymous.
+
+const LS_CONFIG_KEY = "eios_config_v1";
+const _envDefaults = { oidcIssuer: "", oidcClientId: "eios-pwa" };
+
+interface PersistedConfig { oidcIssuer: string; oidcClientId: string; branding?: Partial<Branding> }
+
+function readPersistedConfig(): PersistedConfig | null {
+  try {
+    const raw = localStorage.getItem(LS_CONFIG_KEY);
+    return raw ? JSON.parse(raw) as PersistedConfig : null;
+  } catch { return null; }
+}
+function writePersistedConfig(c: PersistedConfig): void {
+  try { localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(c)); } catch { /* */ }
+}
+
+const _liveConfig = window.__EIOS_CONFIG__;
+const _persisted  = readPersistedConfig();
+
 export const config: { oidcIssuer: string; oidcClientId: string } =
-  (window.__EIOS_CONFIG__ != null)
-    ? window.__EIOS_CONFIG__
-    : {
-        oidcIssuer:   import.meta.env.VITE_OIDC_ISSUER   || _defaults.oidcIssuer,
-        oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID || _defaults.oidcClientId,
-      };
+  _liveConfig != null
+    ? _liveConfig
+    : _persisted != null
+      ? { oidcIssuer: _persisted.oidcIssuer, oidcClientId: _persisted.oidcClientId }
+      : {
+          oidcIssuer:   import.meta.env.VITE_OIDC_ISSUER   || _envDefaults.oidcIssuer,
+          oidcClientId: import.meta.env.VITE_OIDC_CLIENT_ID || _envDefaults.oidcClientId,
+        };
+
+// Сохраняем свежий config в LS чтобы следующий offline-cold-start имел fallback.
+if (_liveConfig != null && _liveConfig.oidcIssuer) {
+  writePersistedConfig({
+    oidcIssuer:   _liveConfig.oidcIssuer,
+    oidcClientId: _liveConfig.oidcClientId,
+    branding:     _liveConfig.branding,
+  });
+}
+
+/** Branding из persisted config — для useBranding fallback'а. */
+export function getPersistedBranding(): Partial<Branding> | null {
+  if (_liveConfig?.branding) return _liveConfig.branding;
+  return _persisted?.branding ?? null;
+}

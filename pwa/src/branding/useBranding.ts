@@ -1,13 +1,15 @@
 /**
  * Брендинг — три источника, мерджатся слева направо (правый перекрывает):
  *
- *   DEFAULT_BRANDING  ←  window.__EIOS_CONFIG__.branding (config.js)  ←  /api/branding (glue)
+ *   DEFAULT_BRANDING  ←  window.__EIOS_CONFIG__.branding (config.js)
+ *                        | fallback: getPersistedBranding() из LS (offline)
+ *                        ←  /api/branding (glue)
  *
  * Также применяет акцент-цвет как CSS-переменную и обновляет favicon
  * если организация задала свой логотип.
  */
 import { useEffect, useState } from "react";
-import { DEFAULT_BRANDING, type Branding } from "../config.js";
+import { DEFAULT_BRANDING, type Branding, getPersistedBranding } from "../config.js";
 
 export function useBranding(): Branding {
   const [remote, setRemote] = useState<Partial<Branding>>({});
@@ -44,7 +46,7 @@ export function useBranding(): Branding {
 
   return {
     ...DEFAULT_BRANDING,
-    ...(window.__EIOS_CONFIG__?.branding ?? {}),
+    ...(window.__EIOS_CONFIG__?.branding ?? getPersistedBranding() ?? {}),
     ...remote,
   };
 }

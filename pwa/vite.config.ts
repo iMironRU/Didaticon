@@ -61,6 +61,21 @@ export default defineConfig({
         ],
         runtimeCaching: [
           {
+            // /config.js — генерируется nginx'ом при старте контейнера, поэтому
+            // ИСКЛЮЧЁН из precache (хэш не меняется). Но index.html синхронно
+            // запрашивает его до рендера React: без сети + без runtime cache →
+            // window.__EIOS_CONFIG__ undefined → пустой OIDC issuer → useAuth
+            // catch → LoginScreen без рабочей авторизации.
+            // SWR кеширует первый успешный ответ; меняется только при changes
+            // env vars контейнера (редко).
+            urlPattern: /\/config\.js$/,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "runtime-config",
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+          {
             // /branding — стараемся свежий, иначе из кеша. Без него на холодном
             // оффлайн-старте useBranding падает в catch (default-бренд).
             urlPattern: /\/api\/branding$/,
