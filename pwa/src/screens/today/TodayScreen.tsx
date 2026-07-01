@@ -434,7 +434,11 @@ export function TodayScreen({ contextId }: Props) {
   }
 
   return (
-    <div className="px-4 py-4 space-y-3">
+    <div className="px-4 py-4 space-y-3 md:max-w-2xl md:mx-auto md:py-8">
+      {/* Десктоп (issue #62): фаза 0 — просто шире + читаемая ширина
+          (max-w-2xl, центрировано), без отдельной правой панели.
+          "Умная" правая панель (ближайшее событие/сводка недели) —
+          отдельный issue на будущее, если понадобится. */}
       {/* Pull-to-refresh индикатор — растёт вместе с оттягиванием пальца,
           жест дублирует кнопку "Обновить" ниже, не заменяет её. */}
       {(pullDistance > 0 || refreshing) && (
