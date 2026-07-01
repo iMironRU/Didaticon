@@ -27,6 +27,7 @@ import { useLocale } from "../locale.js";
 import { onSwUpdate } from "../sw-update.js";
 import { Header, ContextSwitcher, ContextLabel } from "./Header.js";
 import { BottomNav } from "./BottomNav.js";
+import { LeftRail } from "./LeftRail.js";
 import { StatusBar } from "./StatusBar.js";
 import { NetworkStatus } from "./NetworkStatus.js";
 import { SkipLink } from "./SkipLink.js";
@@ -421,9 +422,15 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         bell={isTeacher ? undefined : { unreadCount, onTap: () => navigate({ name: "notifications" }) }}
         middle={middle}
       />
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
+      <LeftRail
+        activeId={tab}
+        onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
+        tabs={tabs}
+      />
       <main id="main-content" style={st.body} aria-labelledby="page-h1">
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
-            при переходе по табам. Визуально не нужен (есть BottomNav). */}
+            при переходе по табам. Визуально не нужен (есть BottomNav / LeftRail). */}
         <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>
         {tab === "today" && (() => {
           const defaultCtx = isTeacher
@@ -471,6 +478,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
           />
         )}
       </main>
+      </div>
       <BottomNav
         activeId={tab}
         onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}

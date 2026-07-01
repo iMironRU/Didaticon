@@ -1,28 +1,26 @@
 import { type NavTab, navAriaLabel, NavIcon } from "./navTab.js";
 
-export type { NavTab as BottomNavTab };
-
 interface Props {
   tabs:     NavTab[];
   activeId: string;
   onTap:    (id: string) => void;
 }
 
-export function BottomNav({ tabs, activeId, onTap }: Props) {
+/** Десктопный аналог BottomNav (≥768px) — та же навигация, вертикальная
+ *  панель слева вместо таб-бара снизу. См. didakticon_design.md §12. */
+export function LeftRail({ tabs, activeId, onTap }: Props) {
   return (
     <nav
-      className="flex md:hidden pt-1.5 pb-2.5 bg-elevated border-t border-line shrink-0"
+      className="hidden md:flex flex-col w-20 shrink-0 py-3 gap-1 bg-elevated border-r border-line overflow-y-auto"
       aria-label="Основная навигация"
     >
       {tabs.map(it => {
         const active = it.id === activeId;
-        // Inactive вкладки — text-fg-muted (4.5:1+ на bg-elevated в обеих темах).
-        // Раньше text-fg-dim (3.x:1) — fail contrast §7.6 для tiny текста.
         const colorCls = active ? "text-accent" : "text-fg-muted";
         return (
           <button
             key={it.id}
-            className="flex-1 flex flex-col items-center gap-[3px] bg-transparent border-0 py-1 cursor-pointer"
+            className="flex flex-col items-center gap-1 bg-transparent border-0 py-2.5 cursor-pointer"
             onClick={() => onTap(it.id)}
             aria-label={navAriaLabel(it)}
             aria-current={active ? "page" : undefined}
