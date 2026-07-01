@@ -65,6 +65,10 @@ export function parsePath(pathname: string): { route: Route; ctx: ContextRef | n
 
 function parseViewParts(parts: string[]): Route {
   const [seg0, seg1] = parts;
+  // "schedule" раньше НЕ имел явной проверки здесь — совпадал со старым
+  // fallback'ом случайно. Теперь fallback другой ("today"), явная проверка
+  // обязательна, иначе /schedule тоже резолвился бы в "today".
+  if (seg0 === "schedule")       return { name: "schedule" };
   if (seg0 === "performance")    return { name: "performance" };
   if (seg0 === "gradebook")      return { name: "gradebook" };
   if (seg0 === "tasks")          return { name: "tasks" };
@@ -105,15 +109,18 @@ function viewToPath(route: Route): string {
 
 export function routeToPath(route: Route, ctx?: ContextRef | null): string {
   if (!ctx) {
-    // Без контекста — bare path. Для "/" (schedule корень) возвращаем "/".
+    // Без контекста — bare path. "today" — дефолт-корень (см. parseViewParts),
+    // раньше был "schedule" — при смене дефолта забыли поправить эту сторону,
+    // из-за чего navigate({name:"schedule"}) и navigate({name:"today"})
+    // схлопывались в один и тот же URL (issue найден 2026-07-01).
     const view = viewToPath(route);
-    return view === "/schedule" ? "/" : view;
+    return view === "/today" ? "/" : view;
   }
   // contextId не кодируем — формат glue ("stu:s1", "par:p1-c1") URL-safe
   // (":" и "-" разрешены в path-сегментах по RFC 3986).
   const prefix = `/${ctx.role}/${ctx.contextId}`;
-  // Schedule = "корневой" вид контекста, его путь = только префикс.
-  return route.name === "schedule" ? prefix : `${prefix}${viewToPath(route)}`;
+  // "today" = "корневой" вид контекста, его путь = только префикс.
+  return route.name === "today" ? prefix : `${prefix}${viewToPath(route)}`;
 }
 
 const NAV_EVENT = "eios:navigation";

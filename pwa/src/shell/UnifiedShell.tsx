@@ -428,7 +428,12 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
         onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
         tabs={tabs}
       />
-      <main id="main-content" style={st.body} aria-labelledby="page-h1">
+      <main
+        id="main-content"
+        style={st.body}
+        className="md:max-w-2xl md:mx-auto md:w-full"
+        aria-labelledby="page-h1"
+      >
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
             при переходе по табам. Визуально не нужен (есть BottomNav / LeftRail). */}
         <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>

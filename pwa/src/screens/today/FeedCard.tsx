@@ -55,9 +55,9 @@ function EventDetails({ card }: { card: EventCard }) {
     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
       {d.room && <span className="text-xs text-fg-muted">📍 {d.room}</span>}
       {d.format === "online" && d.meeting_url && <span className="text-xs text-accent">🔗 Онлайн</span>}
-      {d.has_pre_event_bonus && <span className="text-xs text-emerald-600 dark:text-emerald-400">✦ Бонус за ранний старт</span>}
+      {d.has_pre_event_bonus && <span className="text-xs text-emerald-700 dark:text-emerald-400">✦ Бонус за ранний старт</span>}
       {d.related_debts.count > 0 && (
-        <span className="text-xs text-rose-500">{d.related_debts.count} долг{d.related_debts.count > 1 ? "а" : ""}</span>
+        <span className="text-xs text-rose-700 dark:text-rose-400">{d.related_debts.count} долг{d.related_debts.count > 1 ? "а" : ""}</span>
       )}
     </div>
   );
@@ -80,7 +80,7 @@ function EventDebtDetails({ card }: { card: EventDebtCard }) {
         <span className="text-xs text-fg-muted">Отработка: {d.recovery_options.offline.slots_count ?? ""} слот(ов)</span>
       )}
       {!d.recovery_options.offline.available && !d.recovery_options.online.available && (
-        <span className="text-xs text-rose-500">Отработка недоступна</span>
+        <span className="text-xs text-rose-700 dark:text-rose-400">Отработка недоступна</span>
       )}
     </div>
   );
@@ -104,7 +104,7 @@ function ActiveAttemptDetails({ card }: { card: ActiveAttemptCard }) {
   const urgent = d.remaining_minutes < 15;
   return (
     <div className="flex items-center gap-2 mt-1">
-      <span className={`text-xs font-semibold ${urgent ? "text-red-600 dark:text-red-400" : "text-fg-secondary"}`}>
+      <span className={`text-xs font-semibold ${urgent ? "text-red-700 dark:text-red-400" : "text-fg-secondary"}`}>
         ⏱ {d.remaining_minutes} мин осталось
       </span>
       <span className="text-xs text-fg-muted">{d.discipline_title}</span>
@@ -146,7 +146,7 @@ function ModuleCloseDetails({ card }: { card: ModuleCloseRequiredCard }) {
   return (
     <div className="mt-1 flex gap-3">
       <span className="text-xs text-fg-muted">{d.group_name}</span>
-      <span className="text-xs text-amber-600 dark:text-amber-400">{d.unclosed_slots} незакрытых занятий</span>
+      <span className="text-xs text-amber-800 dark:text-amber-400">{d.unclosed_slots} незакрытых занятий</span>
     </div>
   );
 }
@@ -168,10 +168,10 @@ function GroupAttendanceDetails({ card }: { card: GroupAttendanceSummaryCard }) 
   const bad = pct < thr;
   return (
     <div className="mt-1 flex gap-3 items-center">
-      <span className={`text-xs font-semibold ${bad ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+      <span className={`text-xs font-semibold ${bad ? "text-rose-600 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-400"}`}>
         {pct}% посещаемость
       </span>
-      {d.at_risk_count > 0 && <span className="text-xs text-rose-500">{d.at_risk_count} под риском</span>}
+      {d.at_risk_count > 0 && <span className="text-xs text-rose-700 dark:text-rose-400">{d.at_risk_count} под риском</span>}
     </div>
   );
 }
@@ -181,7 +181,7 @@ function GroupDebtsDetails({ card }: { card: GroupDebtsSummaryCard }) {
   return (
     <div className="mt-1 flex gap-3">
       <span className="text-xs text-fg-muted">{d.group_name}</span>
-      {d.critical_count > 0 && <span className="text-xs text-red-500">{d.critical_count} критических</span>}
+      {d.critical_count > 0 && <span className="text-xs text-red-700 dark:text-red-400">{d.critical_count} критических</span>}
     </div>
   );
 }
@@ -191,7 +191,7 @@ function StudentAtRiskDetails({ card }: { card: StudentAtRiskCard }) {
   return (
     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
       <span className="text-xs text-fg-muted">{d.group_name}</span>
-      <span className="text-xs text-rose-500">{d.debts_count} задолженностей</span>
+      <span className="text-xs text-rose-700 dark:text-rose-400">{d.debts_count} задолженностей</span>
       <span className="text-xs text-fg-muted">{Math.round(d.attendance_rate * 100)}% посещаемость</span>
     </div>
   );
@@ -213,7 +213,7 @@ function ChildAtRiskDetails({ card }: { card: ChildAtRiskCard }) {
   const d = card.details;
   return (
     <div className="mt-1 flex gap-3">
-      <span className="text-xs text-rose-500">{d.debts_count} задолженностей</span>
+      <span className="text-xs text-rose-700 dark:text-rose-400">{d.debts_count} задолженностей</span>
       <span className="text-xs text-fg-muted">{Math.round(d.attendance_rate * 100)}% посещаемость</span>
     </div>
   );
@@ -258,7 +258,7 @@ export function FeedCard({ card, onTap }: Props) {
           {meta.label}
         </span>
         {dueLabel && (
-          <span className={`text-xs font-medium ${isUrgent ? "text-rose-500 dark:text-rose-400" : "text-fg-muted"}`}>
+          <span className={`text-xs font-medium ${isUrgent ? "text-rose-700 dark:text-rose-400" : "text-fg-muted"}`}>
             {dueLabel}
           </span>
         )}
