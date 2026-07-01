@@ -11,7 +11,8 @@
 import { useCallback, useState } from "react";
 import { rpc } from "../../data/rpc.js";
 import { useSwrCache, formatRelativeTime } from "../../data/cache.js";
-import type { FeedResponse, FeedCard as FeedCardType } from "../../api/feed.js";
+import type { FeedResponse, FeedCard as FeedCardType, FeedGroup } from "../../api/feed.js";
+import { groupFeedCards } from "../../api/feed.js";
 import { FeedCard, FeedCardSkeleton } from "./FeedCard.js";
 import { useDocumentTitle } from "../../useDocumentTitle.js";
 import { navigate } from "../../router.js";
@@ -20,6 +21,13 @@ import { usePullToRefresh } from "../../usePullToRefresh.js";
 import { Spinner } from "../../ui/Spinner.js";
 import { Button } from "../../ui/Button.js";
 import { login } from "../../auth/oidc.js";
+
+const GROUP_ORDER: FeedGroup[] = ["upcoming", "overdue", "attention"];
+const GROUP_LABEL: Record<FeedGroup, string> = {
+  upcoming:  "Ближайшее",
+  overdue:   "Просрочено",
+  attention: "Требует внимания",
+};
 
 // Demo-фиды для разных ролей (определяются по prefixe contextId)
 function getDemoFeed(contextId: string): FeedResponse {
@@ -524,16 +532,30 @@ export function TodayScreen({ contextId }: Props) {
         </div>
       )}
 
-      {/* Карточки */}
-      {feed && feed.cards.length > 0 && (
-        <div className="space-y-3" role="list" aria-label="Карточки дашборда">
-          {feed.cards.map(card => (
-            <div key={card.id} role="listitem">
-              <FeedCard card={card} onTap={handleCardTap} />
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Карточки — сгруппированы по kind (обсуждено 2026-07-01), не единой
+          лентой вперемешку. Порядок групп: сначала то, что ещё можно успеть,
+          потом просроченное, потом мониторинг-алерты без чёткого дедлайна. */}
+      {feed && feed.cards.length > 0 && (() => {
+        const grouped = groupFeedCards(feed.cards);
+        return (
+          <>
+            {GROUP_ORDER.map(group => grouped[group].length > 0 && (
+              <div key={group} className="space-y-2">
+                <div className="text-fg-muted text-[0.68rem] tracking-[0.08em] uppercase font-semibold">
+                  {GROUP_LABEL[group]}
+                </div>
+                <div className="space-y-3" role="list" aria-label={GROUP_LABEL[group]}>
+                  {grouped[group].map(card => (
+                    <div key={card.id} role="listitem">
+                      <FeedCard card={card} onTap={handleCardTap} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        );
+      })()}
 
       {/* Empty state */}
       {feed && feed.cards.length === 0 && !isLoading && (

@@ -290,3 +290,47 @@ export interface FeedResponse {
   generated_at:     string;
   cache_ttl_seconds: number;
 }
+
+// ── Группировка ленты по kind ────────────────────────────────────────────────
+// Обсуждено 2026-07-01: студент/родитель должны видеть отдельно «то, что ещё
+// можно успеть» от «то, что уже просрочено» — раньше всё было одной лентой,
+// отсортированной по urgency вперемешку. Применяется на mobile И desktop
+// одинаково (issue про правую панель десктопа заменён этим).
+
+export type FeedGroup = "upcoming" | "overdue" | "attention";
+
+/** Источник истины — какой kind в какую группу попадает. Добавляя новый kind
+ *  в FeedCardKind, обязательно дополни эту карту (иначе TS не даст собрать). */
+export const FEED_GROUP_BY_KIND: Record<FeedCardKind, FeedGroup> = {
+  // "Ближайшее" — ещё есть время среагировать
+  event:                    "upcoming",
+  form_deadline:            "upcoming",
+  delivery_required:        "upcoming",
+  active_attempt:           "upcoming",
+  submissions_to_grade:     "upcoming",
+  module_close_required:    "upcoming",
+  appeals:                  "upcoming",
+  // "Просрочено" — дедлайн уже прошёл / долг уже есть
+  event_debt:               "overdue",
+  academic_debt:            "overdue",
+  teacher_event_debt:       "overdue",
+  group_debts_summary:      "overdue",
+  child_attendance_alert:   "overdue",
+  child_debts_alert:        "overdue",
+  // "Требует внимания" — мониторинг/алерт без чёткого дедлайна
+  external_action:          "attention",
+  grade_override_pending:   "attention",
+  group_attendance_summary: "attention",
+  student_at_risk:          "attention",
+  child_at_risk:            "attention",
+};
+
+/** Раскладывает карточки по группам, сохраняя внутригрупповой порядок
+ *  (сервер уже отсортировал по urgency). */
+export function groupFeedCards(cards: FeedCard[]): Record<FeedGroup, FeedCard[]> {
+  const result: Record<FeedGroup, FeedCard[]> = { upcoming: [], overdue: [], attention: [] };
+  for (const card of cards) {
+    result[FEED_GROUP_BY_KIND[card.kind]].push(card);
+  }
+  return result;
+}
