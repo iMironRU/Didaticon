@@ -27,7 +27,7 @@ export function LogoutScreen({ branding, onLoginAgain }: Props) {
       className="min-h-[100dvh] flex flex-col items-center justify-center px-6"
       style={{ background: "#091629" }}
     >
-      <div className="w-full max-w-sm flex flex-col items-center text-center gap-5">
+      <div className="w-full max-w-sm flex flex-col items-center text-center gap-5 md:p-10 md:my-8 md:bg-[#0F2545] md:rounded-2xl md:shadow-2xl md:border md:border-white/10">
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
           style={{ background: "#0F2545", border: `0.5px solid ${b}33` }}

@@ -46,8 +46,12 @@ export function LoginScreen({ auth, onLogin, onLoginAs, branding }: Props) {
   const footer = branding.footerText || ("© " + new Date().getFullYear() + " " + branding.orgName + " · ЭИОС");
 
   return (
-    <div style={r.root}>
-      <main id="main-content" style={r.inner}>
+    <div style={r.root} className="justify-start md:justify-center">
+      <main
+        id="main-content"
+        style={r.inner}
+        className="pt-12 px-6 pb-0 md:p-10 md:my-8 md:bg-[#0F2545] md:rounded-2xl md:shadow-2xl md:border md:border-white/10"
+      >
 
         <div style={{ ...r.logoWrap, border: "0.5px solid " + hex20(b) }}>
           {branding.logoUrl
@@ -178,8 +182,12 @@ function AccessScreen({ branding, onBack }: { branding: Branding; onBack: () => 
   const b = branding.brandColor;
 
   return (
-    <div style={r.root}>
-      <main id="main-content" style={r.inner}>
+    <div style={r.root} className="justify-start md:justify-center">
+      <main
+        id="main-content"
+        style={r.inner}
+        className="pt-12 px-6 pb-0 md:p-10 md:my-8 md:bg-[#0F2545] md:rounded-2xl md:shadow-2xl md:border md:border-white/10"
+      >
         <div style={r.accessHeader}>
           <button style={{ ...r.backBtn, color: b }} onClick={onBack}>
             <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true">‹</span> Назад
@@ -301,7 +309,8 @@ const r: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start",
+    // justifyContent — через className (justify-start md:justify-center),
+    // иначе inline-style перебивает Tailwind md:-класс.
     padding: "0 0 32px",
     fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
     overflowY: "auto",
@@ -309,7 +318,7 @@ const r: Record<string, React.CSSProperties> = {
   inner: {
     width: "100%",
     maxWidth: 420,
-    padding: "48px 24px 0",
+    // padding — через className, см. root выше (нужен разный на mobile/md+)
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
