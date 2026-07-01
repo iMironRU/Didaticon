@@ -52,11 +52,13 @@ export default defineConfig({
     terserOptions: {
       mangle: { reserved: ["of", "in", "do", "if", "for", "let", "new", "try", "var"] },
     },
-    // Multi-page: PWA на /, admin на /admin/. Отдельные бандлы, общий src/.
+    // Multi-page: PWA на /, admin на /admin/, silent-renew на /silent-renew.html
+    // (лёгкая страница для скрытого iframe automaticSilentRenew — см. oidc.ts).
     rollupOptions: {
       input: {
-        main:  resolve(__dirname, "index.html"),
-        admin: resolve(__dirname, "admin/index.html"),
+        main:        resolve(__dirname, "index.html"),
+        admin:       resolve(__dirname, "admin/index.html"),
+        silentRenew: resolve(__dirname, "silent-renew.html"),
       },
     },
   },

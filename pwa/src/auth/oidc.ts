@@ -36,6 +36,12 @@ const mgr = new UserManager({
   client_id: config.oidcClientId,
   redirect_uri: window.location.origin + "/callback",
   popup_redirect_uri: window.location.origin + "/callback",
+  // Без явного silent_redirect_uri он по умолчанию = redirect_uri ("/callback"),
+  // то есть весь React-бандл + наш popup/redirect-детект из main.tsx грузился
+  // бы внутри СКРЫТОГО iframe automaticSilentRenew — конфликтует с обработкой
+  // обычного /callback и мешает токену обновляться вовремя. Отдельная лёгкая
+  // страница (silent-renew.ts) убирает эту неоднозначность.
+  silent_redirect_uri: window.location.origin + "/silent-renew.html",
   post_logout_redirect_uri: window.location.origin + "/",
   scope: "openid profile email",
   response_type: "code",   // code + PKCE
@@ -97,6 +103,13 @@ export async function handleCallback(): Promise<void> {
  *  (window.opener есть) — открывшее окно само закроет popup после этого. */
 export async function handlePopupCallback(): Promise<void> {
   await mgr.signinPopupCallback();
+}
+
+/** Вызывается из silent-renew.ts — это скрытый iframe, отдаёт результат
+ *  назад в основное окно через internal postMessage/BroadcastChannel
+ *  oidc-client-ts. Ничего не рендерит и никак не взаимодействует с /callback. */
+export async function handleSilentCallback(): Promise<void> {
+  await mgr.signinSilentCallback();
 }
 
 /**

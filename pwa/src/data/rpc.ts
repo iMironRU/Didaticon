@@ -34,9 +34,16 @@ export class RpcError extends Error {
 
 let _seq = 0;
 
+// -32001 — зарезервирован под auth-ошибки с обеих сторон (client: нет/просрочен
+// токен локально; glue: verifyBearerToken отклонил токен, напр. "exp" claim
+// timestamp check failed при рассинхроне часов клиента с сервером или сбое
+// silent renew). Сообщение всегда заменяем на понятное — сырые тексты вроде
+// "OIDC token rejected: ..." не должны утекать в UI.
+const AUTH_ERROR_MESSAGE = "Сессия истекла — обновите страницу и войдите снова";
+
 export async function rpc<T>(method: string, params: Record<string, unknown> = {}): Promise<T> {
   const t = await token();
-  if (!t) throw new RpcError(-32001, "Не авторизован");
+  if (!t) throw new RpcError(-32001, AUTH_ERROR_MESSAGE);
 
   const body: JsonRpcRequest = { jsonrpc: "2.0", method, params, id: ++_seq };
   const r = await fetch("/api/rpc", {
@@ -50,7 +57,10 @@ export async function rpc<T>(method: string, params: Record<string, unknown> = {
   }
 
   const data = await r.json() as JsonRpcResponse<T>;
-  if (data.error) throw new RpcError(data.error.code, data.error.message, data.error.data);
+  if (data.error) {
+    if (data.error.code === -32001) throw new RpcError(-32001, AUTH_ERROR_MESSAGE, data.error.data);
+    throw new RpcError(data.error.code, data.error.message, data.error.data);
+  }
   if (data.result === undefined) throw new RpcError(-32603, "Пустой result");
   return data.result;
 }
