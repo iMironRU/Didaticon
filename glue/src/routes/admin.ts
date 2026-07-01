@@ -5,6 +5,7 @@ import { createRequire } from "module";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { Config } from "../config.js";
 import type { SettingsStore } from "../store/settings.js";
+import { sendProblem, Problems } from "../errors.js";
 
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -43,12 +44,12 @@ const CONFIG_KEYS: { key: string; label: string; tab: string; secret?: boolean; 
 
 function requireAdmin(cfg: Config, req: FastifyRequest, reply: FastifyReply): boolean {
   if (!cfg.adminToken) {
-    reply.status(403).send({ error: "ADMIN_TOKEN не задан — панель управления отключена" });
+    sendProblem(reply, Problems.adminDisabled());
     return false;
   }
   const auth = (req.headers.authorization as string | undefined) ?? "";
   if (auth !== `Bearer ${cfg.adminToken}`) {
-    reply.status(401).send({ error: "Неверный токен администратора" });
+    sendProblem(reply, Problems.adminUnauthorized());
     return false;
   }
   return true;
@@ -146,11 +147,11 @@ export function registerAdmin(
     if (!requireAdmin(cfg, req, reply)) return;
 
     const data = await (req as FastifyRequest & { file: () => Promise<{filename: string; toBuffer: () => Promise<Buffer>}> }).file();
-    if (!data) return reply.status(400).send({ error: "Файл не получен" });
+    if (!data) return sendProblem(reply, Problems.validation("Файл не получен"));
 
     const originalName = data.filename;
     const pkgId = path.basename(originalName, ".zip").replace(/[^a-zA-Z0-9_-]/g, "_");
-    if (!pkgId) return reply.status(400).send({ error: "Некорректное имя файла" });
+    if (!pkgId) return sendProblem(reply, Problems.validation("Некорректное имя файла"));
 
     const buf = await data.toBuffer();
     const tmpFile = path.join(os.tmpdir(), `scorm-upload-${Date.now()}.zip`);
@@ -174,9 +175,9 @@ export function registerAdmin(
   app.delete("/admin/scorm/:id", async (req, reply) => {
     if (!requireAdmin(cfg, req, reply)) return;
     const { id } = req.params as { id: string };
-    if (!/^[a-zA-Z0-9_-]+$/.test(id)) return reply.status(400).send({ error: "Некорректный id" });
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) return sendProblem(reply, Problems.validation("Некорректный id"));
     const targetDir = path.join(cfg.scormPath, id);
-    if (!fs.existsSync(targetDir)) return reply.status(404).send({ error: "Пакет не найден" });
+    if (!fs.existsSync(targetDir)) return sendProblem(reply, Problems.notFound("Пакет не найден"));
     fs.rmSync(targetDir, { recursive: true, force: true });
     return { ok: true };
   });

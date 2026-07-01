@@ -13,16 +13,19 @@ import { registerProjection } from "./routes/projection.js";
 import { registerAdmin } from "./routes/admin.js";
 import { registerRpc } from "./routes/rpc.js";
 import { AuthError } from "./auth/index.js";
+import { sendProblem, Problems } from "./errors.js";
 
 const cfg = loadConfig();
 const app = Fastify({ logger: true });
 
 await app.register(multipart, { limits: { fileSize: 200 * 1024 * 1024 } }); // 200 МБ макс
 
-// AuthError → 401 (jose выкидывает на просроченном/неверном токене).
+// Единая точка для всех REST-ответов об ошибках — RFC 9457 Problem Details
+// (issue #66). /rpc сюда не попадает — там свой JSON-RPC error handling
+// внутри routes/rpc.ts, до этого хендлера долетают только REST-роуты.
 app.setErrorHandler((err, _req, reply) => {
-  if (err instanceof AuthError) return reply.status(401).send({ error: err.message });
-  reply.send(err);
+  if (err instanceof AuthError) return sendProblem(reply, Problems.authRejected(err.message));
+  sendProblem(reply, Problems.internal(err.message));
 });
 
 const store = makeStore(cfg);
@@ -77,7 +80,7 @@ app.get("/healthz", async () => ({ ok: true, role: cfg.role, version: process.en
 app.post("/admin/restart", async (req, reply) => {
   const token = (req.headers["x-admin-token"] as string) ?? "";
   if (!cfg.adminToken || token !== cfg.adminToken) {
-    return reply.status(401).send({ error: "unauthorized" });
+    return sendProblem(reply, Problems.adminUnauthorized());
   }
   reply.send({ ok: true, message: "Перезапуск через 300мс…" });
   setTimeout(() => process.exit(0), 300);

@@ -114,6 +114,33 @@ jobs:
           print('projection OK:', d['disciplineTitle'])
           "
 
+      - name: POST /commit with bad credential → RFC 9457 Problem Details
+        run: |
+          curl -s -X POST http://localhost:8080/commit \
+            -H "Content-Type: application/json" \
+            -w '\nHTTP_STATUS:%{http_code}\nCONTENT_TYPE:%{content_type}' \
+            -d '{
+              "eventId":    "event-smoke-bad-cred",
+              "attemptId":  "attempt-ci-bad",
+              "sequence":   1,
+              "closure":    "completion",
+              "scormVersion": "1.2",
+              "cmi":        {"cmi.core.lesson_status": "incomplete"},
+              "credential": {"kind": "oidc", "value": "not-a-real-jwt"}
+            }' > /tmp/bad-cred-response.txt
+          cat /tmp/bad-cred-response.txt
+          grep -q "HTTP_STATUS:401" /tmp/bad-cred-response.txt
+          grep -q "CONTENT_TYPE:application/problem+json" /tmp/bad-cred-response.txt
+          head -n1 /tmp/bad-cred-response.txt | python3 -c "
+          import sys, json
+          d = json.loads(sys.stdin.read())
+          assert d['status'] == 401, f'bad status field: {d}'
+          assert d['code']   == 'AUTH_REJECTED', f'bad code: {d}'
+          assert d['type']   == '/errors/auth-rejected', f'bad type: {d}'
+          assert d['action'] == 'relogin', f'bad action: {d}'
+          print('Problem Details shape OK')
+          "
+
       - name: POST /commit (incomplete — no boundary)
         run: |
           curl -sf -X POST http://localhost:8080/commit \
