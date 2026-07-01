@@ -23,6 +23,8 @@ jobs:
       - run: npm run test --if-present
       - name: OpenAPI-схема не разошлась с закоммиченной (issue #68)
         run: npm run openapi:check --workspace=@eios/glue
+      - name: OpenRPC-схема — валидный JSON (issue #69, руками написана)
+        run: node -e "JSON.parse(require('fs').readFileSync('docs/api/rpc.openrpc.json', 'utf-8')); console.log('OK')"
 
   # ── 2. Accessibility — Playwright + axe-core ─────────────────────────────
   a11y:

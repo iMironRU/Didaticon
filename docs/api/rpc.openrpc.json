@@ -1,0 +1,262 @@
+{
+  "openrpc": "1.2.6",
+  "info": {
+    "title": "ЭИОС glue JSON-RPC (/rpc, после Caddy — /api/rpc)",
+    "version": "0.1.0",
+    "description": "Issue #69. Отдельно от REST-поверхности (docs/api/glue.openapi.json, issue #68) — разные протоколы. Auth — JWT в Authorization: Bearer (тот же JWKS что и REST). Ошибки — см. components.errors и glue/src/routes/rpc/rpcError.ts (issue #67)."
+  },
+  "servers": [
+    { "name": "glue", "url": "/api/rpc" }
+  ],
+  "methods": [
+    {
+      "name": "identity.contexts.get",
+      "summary": "Boot-API контекстов физика (Block I §8) — все роли и контексты по claims JWT",
+      "params": [],
+      "result": {
+        "name": "ContextsResult",
+        "schema": { "$ref": "#/components/schemas/ContextsResponse" }
+      },
+      "errors": [
+        { "$ref": "#/components/errors/AuthRejected" },
+        { "$ref": "#/components/errors/InternalError" }
+      ]
+    },
+    {
+      "name": "identity.e_student.issue",
+      "summary": "Выпуск e-Student JWS на 24ч (Block I §9) — студенческий билет для офлайн-проверки",
+      "params": [
+        {
+          "name": "student_context_id",
+          "description": "context_id студенческого контекста из identity.contexts.get",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "result": {
+        "name": "EStudentResult",
+        "schema": { "$ref": "#/components/schemas/EStudentResponse" }
+      },
+      "errors": [
+        { "$ref": "#/components/errors/AuthRejected" },
+        { "$ref": "#/components/errors/InvalidParams" },
+        { "$ref": "#/components/errors/InternalError" }
+      ]
+    },
+    {
+      "name": "feed.get",
+      "summary": "Актуальные карточки дашборда «Сегодня» (Block II §9) — top-N по urgency",
+      "params": [
+        {
+          "name": "context_id",
+          "description": "Контекст (роль+сущность), напр. stu:s1 / tch:curator-1 / par:p1-c1",
+          "required": false,
+          "schema": { "type": "string" }
+        },
+        {
+          "name": "limit",
+          "description": "Сколько карточек вернуть, по убыванию urgency",
+          "required": false,
+          "schema": { "type": "number", "default": 5 }
+        }
+      ],
+      "result": {
+        "name": "FeedResult",
+        "schema": { "$ref": "#/components/schemas/FeedResponse" }
+      },
+      "errors": [
+        { "$ref": "#/components/errors/AuthRejected" },
+        { "$ref": "#/components/errors/InternalError" }
+      ]
+    }
+  ],
+  "components": {
+    "errors": {
+      "InvalidRequest": { "code": -32600, "message": "Invalid Request" },
+      "MethodNotFound": { "code": -32601, "message": "Method not found" },
+      "InvalidParams": {
+        "code": -32602, "message": "Invalid params",
+        "data": {
+          "type": "object",
+          "properties": { "field": { "type": "string", "description": "Какой именно параметр невалиден" } }
+        }
+      },
+      "InternalError": {
+        "code": -32603, "message": "Internal error",
+        "data": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string", "enum": ["retry_later"] },
+            "detail": { "type": "string", "description": "Текст исключения (мы не различаем dev/prod, см. issue #67)" }
+          }
+        }
+      },
+      "AuthRejected": {
+        "code": -32001, "message": "Authentication failed",
+        "data": {
+          "type": "object",
+          "properties": { "action": { "type": "string", "enum": ["relogin"] } }
+        }
+      }
+    },
+    "schemas": {
+      "EducationProgram": {
+        "type": "object",
+        "required": ["code", "title", "level", "form"],
+        "properties": {
+          "code":  { "type": "string" },
+          "title": { "type": "string" },
+          "level": { "type": "string", "description": "bachelor|master|specialist|spo|dpo — открытый список, клиент не должен падать на неизвестном" },
+          "form":  { "type": "string", "description": "full_time|part_time|distance — открытый список" }
+        }
+      },
+      "StudentContext": {
+        "type": "object",
+        "required": ["context_id", "education_program", "year_of_admission", "current_semester"],
+        "properties": {
+          "context_id":        { "type": "string" },
+          "education_program": { "$ref": "#/components/schemas/EducationProgram" },
+          "year_of_admission": { "type": "number" },
+          "current_semester":  { "type": "number" }
+        }
+      },
+      "ParentContext": {
+        "type": "object",
+        "required": ["context_id", "child"],
+        "properties": {
+          "context_id": { "type": "string" },
+          "child": {
+            "type": "object",
+            "required": ["fp_id", "name", "education_program"],
+            "properties": {
+              "fp_id":             { "type": "string" },
+              "name":              { "type": "string" },
+              "education_program": { "$ref": "#/components/schemas/EducationProgram" }
+            }
+          }
+        }
+      },
+      "TeacherContext": {
+        "type": "object",
+        "required": ["context_id", "kind"],
+        "properties": {
+          "context_id": { "type": "string" },
+          "kind":       { "type": "string", "enum": ["instructor", "senior_grader", "curator"] }
+        }
+      },
+      "ExaminerContext": {
+        "type": "object",
+        "required": ["context_id", "event"],
+        "properties": {
+          "context_id": { "type": "string" },
+          "event": {
+            "type": "object",
+            "required": ["id", "title", "dates"],
+            "properties": {
+              "id":    { "type": "string" },
+              "title": { "type": "string" },
+              "dates": {
+                "type": "object",
+                "required": ["from", "to"],
+                "properties": { "from": { "type": "string" }, "to": { "type": "string" } }
+              }
+            }
+          }
+        }
+      },
+      "ApplicantContext": {
+        "type": "object",
+        "required": ["context_id", "application"],
+        "properties": {
+          "context_id": { "type": "string" },
+          "application": {
+            "type": "object",
+            "required": ["id", "direction", "status"],
+            "properties": {
+              "id":        { "type": "string" },
+              "direction": { "type": "string" },
+              "status":    { "type": "string" }
+            }
+          }
+        }
+      },
+      "ContextsResponse": {
+        "type": "object",
+        "required": ["student", "parent", "teacher", "examiner", "applicant"],
+        "properties": {
+          "student":   { "type": "array", "items": { "$ref": "#/components/schemas/StudentContext" } },
+          "parent":    { "type": "array", "items": { "$ref": "#/components/schemas/ParentContext" } },
+          "teacher":   { "type": "array", "items": { "$ref": "#/components/schemas/TeacherContext" } },
+          "examiner":  { "type": "array", "items": { "$ref": "#/components/schemas/ExaminerContext" } },
+          "applicant": { "type": "array", "items": { "$ref": "#/components/schemas/ApplicantContext" } }
+        }
+      },
+      "EStudentResponse": {
+        "type": "object",
+        "required": ["token", "exp", "payload"],
+        "properties": {
+          "token": { "type": "string", "description": "JWS (HS256 mock, RS256 в реальном Univerkon) — TTL 24ч" },
+          "exp":   { "type": "number", "description": "unix timestamp истечения" },
+          "payload": {
+            "type": "object", "additionalProperties": true,
+            "description": "Дублирует claims токена для отрисовки без декодирования: iss/sub/iat/exp + name, ctx, education_program, year_of_admission, current_year, photo_url"
+          }
+        }
+      },
+      "FeedAction": {
+        "type": ["object", "null"],
+        "required": ["kind"],
+        "properties": {
+          "kind":         { "type": "string" },
+          "target_id":    { "type": "string" },
+          "tab":          { "type": "string" },
+          "filter":       { "type": "string" },
+          "scope":        { "type": "string", "enum": ["own", "department"] },
+          "deep_link":    { "type": "string" },
+          "fallback_url": { "type": "string" },
+          "focus_tab":    { "type": "string" }
+        }
+      },
+      "FeedCard": {
+        "type": "object",
+        "required": ["id", "kind", "source", "urgency", "due_at", "title", "subtitle", "action"],
+        "properties": {
+          "id":       { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "event", "form_deadline", "event_debt", "academic_debt",
+              "delivery_required", "active_attempt",
+              "teacher_event_debt", "submissions_to_grade",
+              "module_close_required", "appeals", "grade_override_pending",
+              "group_attendance_summary", "group_debts_summary", "student_at_risk",
+              "child_attendance_alert", "child_debts_alert", "child_at_risk",
+              "external_action"
+            ]
+          },
+          "source":   { "type": "string", "enum": ["local", "targeted", "critical"] },
+          "urgency":  { "type": "number", "description": "0-100, сортировка фида" },
+          "due_at":   { "type": ["string", "null"], "description": "ISO-8601 или null" },
+          "title":    { "type": "string" },
+          "subtitle": { "type": "string" },
+          "action":   { "$ref": "#/components/schemas/FeedAction" },
+          "details": {
+            "type": "object", "additionalProperties": true,
+            "description": "Форма зависит от kind — полный дискриминированный union 18 вариантов см. pwa/src/api/feed.ts (не дублируем здесь целиком, чтобы не разъезжалось с кодом)"
+          }
+        }
+      },
+      "FeedResponse": {
+        "type": "object",
+        "required": ["cards", "total_actionable", "has_more", "generated_at", "cache_ttl_seconds"],
+        "properties": {
+          "cards":             { "type": "array", "items": { "$ref": "#/components/schemas/FeedCard" } },
+          "total_actionable":  { "type": "number" },
+          "has_more":          { "type": "boolean" },
+          "generated_at":      { "type": "string", "description": "ISO-8601" },
+          "cache_ttl_seconds": { "type": "number" }
+        }
+      }
+    }
+  }
+}
