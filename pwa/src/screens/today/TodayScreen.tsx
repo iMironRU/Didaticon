@@ -18,6 +18,8 @@ import { navigate } from "../../router.js";
 import { USE_MOCK } from "../../auth/mock.js";
 import { usePullToRefresh } from "../../usePullToRefresh.js";
 import { Spinner } from "../../ui/Spinner.js";
+import { Button } from "../../ui/Button.js";
+import { login } from "../../auth/oidc.js";
 
 // Demo-фиды для разных ролей (определяются по prefixe contextId)
 function getDemoFeed(contextId: string): FeedResponse {
@@ -409,7 +411,7 @@ export function TodayScreen({ contextId }: Props) {
     [contextId, refreshKey],
   );
 
-  const { data, loading, stale, fetchedAt, error } = useSwrCache<FeedResponse>({
+  const { data, loading, stale, fetchedAt, error, isAuthError } = useSwrCache<FeedResponse>({
     key:     `feed_cache_v1_${contextId}`,
     fetcher,
     enabled: !USE_MOCK,
@@ -423,6 +425,18 @@ export function TodayScreen({ contextId }: Props) {
     () => setRefreshKey(k => k + 1),
     !USE_MOCK,
   );
+
+  const [reauthing, setReauthing] = useState(false);
+  async function handleReauth() {
+    setReauthing(true);
+    try {
+      await login(); // popup-флоу (#58) — не трогаем App-level auth state,
+      // токен в localStorage обновится сам, следующий fetcher() его подхватит
+      setRefreshKey(k => k + 1);
+    } finally {
+      setReauthing(false);
+    }
+  }
 
   function handleCardTap(card: FeedCardType) {
     // TODO Block III: маршрутизация по card.action.kind
@@ -491,7 +505,14 @@ export function TodayScreen({ contextId }: Props) {
 
       {/* Ошибка без кеша */}
       {error && !feed && (
-        <div className="text-sm text-danger text-center py-8">{error}</div>
+        <div className="flex flex-col items-center gap-3 py-8">
+          <div className="text-sm text-danger text-center">{error}</div>
+          {isAuthError && (
+            <Button variant="primary" size="sm" onClick={handleReauth} disabled={reauthing}>
+              {reauthing ? <><Spinner size={14} /> Входим…</> : "Войти снова"}
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Loading skeleton */}

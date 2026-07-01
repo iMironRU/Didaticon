@@ -16,6 +16,7 @@
  * stale=true → показать индикатор «офлайн» / «кеш».
  */
 import { useEffect, useState } from "react";
+import { RpcError } from "./rpc.js";
 
 interface Stored<T> {
   data:       T;
@@ -30,6 +31,9 @@ export interface SwrState<T> {
   stale:      boolean;
   /** Заполнен только когда кеша вообще нет И свежий запрос упал. */
   error:      string | null;
+  /** true → error вызван просрочкой токена (RpcError code -32001). UI должен
+   *  предложить «Войти снова» вместо голого текста ошибки. */
+  isAuthError: boolean;
 }
 
 function readLs<T>(key: string): Stored<T> | null {
@@ -70,13 +74,13 @@ interface Options<T> {
 export function useSwrCache<T>({ key, fetcher, enabled = true }: Options<T>): SwrState<T> {
   const [state, setState] = useState<SwrState<T>>(() => {
     if (!enabled) {
-      return { data: null, fetchedAt: null, loading: false, stale: false, error: null };
+      return { data: null, fetchedAt: null, loading: false, stale: false, error: null, isAuthError: false };
     }
     const ls = readLs<T>(key);
     if (ls) {
-      return { data: ls.data, fetchedAt: ls.fetchedAt, loading: false, stale: true, error: null };
+      return { data: ls.data, fetchedAt: ls.fetchedAt, loading: false, stale: true, error: null, isAuthError: false };
     }
-    return { data: null, fetchedAt: null, loading: true, stale: false, error: null };
+    return { data: null, fetchedAt: null, loading: true, stale: false, error: null, isAuthError: false };
   });
 
   useEffect(() => {
@@ -87,14 +91,15 @@ export function useSwrCache<T>({ key, fetcher, enabled = true }: Options<T>): Sw
         if (cancelled) return;
         const fetchedAt = Date.now();
         writeLs<T>(key, { data, fetchedAt });
-        setState({ data, fetchedAt, loading: false, stale: false, error: null });
+        setState({ data, fetchedAt, loading: false, stale: false, error: null, isAuthError: false });
       })
       .catch((e: unknown) => {
         if (cancelled) return;
         const msg = e instanceof Error ? e.message : String(e);
+        const isAuthError = e instanceof RpcError && e.code === -32001;
         setState((prev) => prev.data
-          ? { ...prev, stale: true, loading: false, error: null }
-          : { data: null, fetchedAt: null, loading: false, stale: false, error: msg }
+          ? { ...prev, stale: true, loading: false, error: null, isAuthError: false }
+          : { data: null, fetchedAt: null, loading: false, stale: false, error: msg, isAuthError }
         );
       });
     return () => { cancelled = true; };
