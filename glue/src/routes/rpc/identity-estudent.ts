@@ -21,6 +21,7 @@
  */
 import { SignJWT } from "jose";
 import type { JWTPayload } from "jose";
+import { RpcValidationError } from "./rpcError.js";
 
 const ISSUER = process.env.GLUE_ESTUDENT_ISSUER ?? "https://didacticon.test/estudent";
 const SECRET = new TextEncoder().encode(
@@ -71,10 +72,10 @@ interface EStudentResponse {
 export async function identityEStudentIssue(params: Record<string, unknown>, claims: JWTPayload): Promise<EStudentResponse> {
   const p = params as IssueParams;
   const ctx = typeof p.student_context_id === "string" ? p.student_context_id : "";
-  if (!ctx) throw new Error("missing student_context_id");
+  if (!ctx) throw new RpcValidationError("missing student_context_id", "student_context_id");
 
   const data = STUDENT_DATA[ctx];
-  if (!data) throw new Error(`unknown student context: ${ctx}`);
+  if (!data) throw new RpcValidationError(`unknown student context: ${ctx}`, "student_context_id");
 
   const now = Math.floor(Date.now() / 1000);
   const exp = now + TTL_SECONDS;

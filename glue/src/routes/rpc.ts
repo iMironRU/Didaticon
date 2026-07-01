@@ -12,9 +12,11 @@
  *   -32700 Parse error
  *   -32600 Invalid Request
  *   -32601 Method not found
- *   -32602 Invalid params
- *   -32603 Internal error
- *   -32001 Authentication failed (custom)
+ *   -32602 Invalid params    — хендлер бросил RpcValidationError, data.field
+ *   -32603 Internal error    — data.action="retry_later", data.detail=exception message
+ *   -32001 Authentication failed (custom) — data.action="relogin"
+ *
+ * error.data — см. RpcErrorData в ./rpc/rpcError.ts (issue #67).
  */
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { JWTPayload } from "jose";
@@ -23,6 +25,7 @@ import { AuthError, verifyBearerToken } from "../auth/index.js";
 import { identityContextsGet } from "./rpc/identity-contexts.js";
 import { identityEStudentIssue } from "./rpc/identity-estudent.js";
 import { feedGet } from "./rpc/feed-get.js";
+import { RpcValidationError, type RpcErrorData } from "./rpc/rpcError.js";
 
 interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -52,7 +55,7 @@ const methods: Record<string, Handler> = {
   "feed.get":                 feedGet,
 };
 
-function rpcError(id: JsonRpcRequest["id"], code: number, message: string, data?: unknown): JsonRpcResponse {
+function rpcError(id: JsonRpcRequest["id"], code: number, message: string, data?: RpcErrorData): JsonRpcResponse {
   return { jsonrpc: "2.0", id, error: { code, message, ...(data !== undefined ? { data } : {}) } };
 }
 
@@ -71,7 +74,7 @@ export function registerRpc(app: FastifyInstance, { cfg }: { cfg: Config }) {
       claims = result.claims;
     } catch (e) {
       if (e instanceof AuthError) {
-        return reply.send(rpcError(body.id, -32001, e.message));
+        return reply.send(rpcError(body.id, -32001, e.message, { action: "relogin" }));
       }
       throw e;
     }
@@ -86,9 +89,12 @@ export function registerRpc(app: FastifyInstance, { cfg }: { cfg: Config }) {
       const result = await handler(body.params ?? {}, claims);
       return reply.send({ jsonrpc: "2.0", id: body.id, result } satisfies JsonRpcResponse);
     } catch (e) {
+      if (e instanceof RpcValidationError) {
+        return reply.send(rpcError(body.id, -32602, e.message, { field: e.field }));
+      }
       const msg = e instanceof Error ? e.message : String(e);
       req.log.error({ err: e, method: body.method }, "RPC handler failed");
-      return reply.send(rpcError(body.id, -32603, "Internal error", msg));
+      return reply.send(rpcError(body.id, -32603, "Internal error", { action: "retry_later", detail: msg }));
     }
   });
 }
