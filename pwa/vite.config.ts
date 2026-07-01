@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -7,6 +7,34 @@ import { execSync } from "child_process";
 import { resolve } from "path";
 const { version } = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 const commitHash = (process.env.COMMIT_HASH || (() => { try { return execSync("git rev-parse --short HEAD").toString().trim(); } catch { return "dev"; } })()).slice(0, 7);
+
+// PageSpeed: render-blocking <link rel="stylesheet"> стоит лишнего round-trip
+// перед первой отрисовкой. Наш CSS маленький (~8 KB gzip) — инлайним целиком
+// вместо critical-path сплита. Файл на диске остаётся (общий чанк main+admin),
+// просто не ссылаемся на него из HTML — исключаем из workbox precache ниже.
+function inlineCss(): Plugin {
+  return {
+    name: "eios-inline-css",
+    apply: "build",
+    transformIndexHtml: {
+      order: "post",
+      handler(html, ctx) {
+        if (!ctx.bundle) return html;
+        let out = html;
+        for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
+          if (chunk.type !== "asset" || !fileName.endsWith(".css")) continue;
+          const css = typeof chunk.source === "string" ? chunk.source : chunk.source.toString();
+          const base = fileName.split("/").pop()!;
+          out = out.replace(
+            new RegExp(`<link[^>]*href="[^"]*${base}"[^>]*>`),
+            `<style>${css}</style>`,
+          );
+        }
+        return out;
+      },
+    },
+  };
+}
 
 export default defineConfig({
   define: {
@@ -35,6 +63,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    inlineCss(),
     VitePWA({
       registerType: "autoUpdate",
       // manifest читается из public/manifest.webmanifest — не дублируем здесь.
@@ -42,10 +71,12 @@ export default defineConfig({
       workbox: {
         // Прекешируем всё что нужно для холодного офлайн-старта:
         // - html (иначе на iOS PWA при offline-открытии чёрный экран — нет navigation fallback)
-        // - js, css, svg/png/ico (иконки, favicon, логотип в shell)
+        // - js, svg/png/ico (иконки, favicon, логотип в shell)
         // - webmanifest (для install metadata)
         // - woff/woff2 (если появятся свои шрифты)
-        globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff,woff2}"],
+        // css НЕТ — инлайнится в html (см. inlineCss() выше), файл на диске
+        // больше ничем не референсится, кешировать нечего.
+        globPatterns: ["**/*.{js,html,svg,png,ico,webmanifest,woff,woff2}"],
         // config.js генерируется nginx'ом из env vars при старте контейнера —
         // нельзя кешировать: хеш от placeholder'а не меняется между сборками.
         globIgnores: ["config.js", "**/admin/**"],

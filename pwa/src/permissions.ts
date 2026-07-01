@@ -30,5 +30,5 @@ export function canAccess(role: Role, route: Route): boolean {
 }
 
 export function defaultRoute(_role: Role): Route {
-  return { name: "schedule" };
+  return { name: "today" };
 }

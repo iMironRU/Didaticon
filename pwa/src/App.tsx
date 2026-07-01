@@ -58,6 +58,13 @@ export function App() {
     return <Splash branding={branding} message={wasCallback ? "Завершаем вход…" : "Проверка сессии…"} />;
   }
 
+  // signinRedirect() — это location.href, навигация происходит не мгновенно.
+  // Без этой ветки на долю секунды успевает мигнуть полный LoginScreen
+  // (лого + demo-кнопки) прежде чем браузер уйдёт на Auth0.
+  if (auth.phase === "logging_in") {
+    return <Splash branding={branding} message="Переход к форме входа…" />;
+  }
+
   if (showLogoutScreen) {
     return (
       <LogoutScreen
