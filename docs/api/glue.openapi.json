@@ -1,0 +1,296 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ЭИОС glue API",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/commit": {
+      "post": {
+        "tags": [
+          "scorm"
+        ],
+        "description": "Положить порцию CMI (idempotent по eventId+attemptId+sequence). Терминальный исход формирует свидетельство по правилу границы (docs/glue-contracts.md §4).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "attemptId",
+                  "sequence",
+                  "cmi",
+                  "closure",
+                  "scormVersion",
+                  "credential"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "attemptId": {
+                    "type": "string"
+                  },
+                  "sequence": {
+                    "type": "number",
+                    "description": "Монотонный счётчик коммита в попытке"
+                  },
+                  "cmi": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Снимок CMI-переменных SCORM"
+                  },
+                  "closure": {
+                    "type": "string",
+                    "enum": [
+                      "completion",
+                      "pass"
+                    ]
+                  },
+                  "scormVersion": {
+                    "type": "string",
+                    "enum": [
+                      "1.2",
+                      "2004"
+                    ]
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "passed",
+                      "completed",
+                      "failed",
+                      "incomplete"
+                    ]
+                  },
+                  "credential": {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "oidc",
+                          "mtls"
+                        ]
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "accepted"
+                  ],
+                  "properties": {
+                    "accepted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resume": {
+      "post": {
+        "tags": [
+          "scorm"
+        ],
+        "description": "Получить последнее СИНХРОНИЗИРОВАННОЕ состояние попытки для resume (кросс-девайс ограничение — только то, что уже долетело коммитом, §2).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "attemptId",
+                  "credential"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string"
+                  },
+                  "attemptId": {
+                    "type": "string"
+                  },
+                  "credential": {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "oidc",
+                          "mtls"
+                        ]
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "cmi"
+                  ],
+                  "properties": {
+                    "cmi": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "nullable": true,
+                      "description": "null = нет синхронизированного состояния"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projection": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/config": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/scorm": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/scorm/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/rpc": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/branding": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/admin/restart": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    }
+  }
+}

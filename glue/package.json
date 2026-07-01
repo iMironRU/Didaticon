@@ -10,11 +10,14 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "start": "node dist/index.js",
     "lint": "echo \"TODO(срез-1): eslint\"",
-    "test": "echo \"TODO(срез-1): tests\""
+    "test": "echo \"TODO(срез-1): tests\"",
+    "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "openapi:check": "tsx scripts/generate-openapi.ts && git diff --exit-code ../docs/api/glue.openapi.json"
   },
   "dependencies": {
     "@eios/contracts": "*",
     "@fastify/multipart": "^8.3.0",
+    "@fastify/swagger": "^8.15.0",
     "adm-zip": "^0.5.17",
     "better-sqlite3": "^11.3.0",
     "fastify": "^4.28.0",
