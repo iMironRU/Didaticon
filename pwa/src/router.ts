@@ -77,7 +77,11 @@ function parseViewParts(parts: string[]): Route {
   if (seg0 === "today")          return { name: "today" };
   if (seg0 === "estudent")       return { name: "estudent" };
   if (seg0 === "accessibility")  return { name: "accessibility" };
-  return { name: "schedule" };
+  // Пустой путь ("/" после логина) — держать в синхроне с defaultRoute()
+  // в permissions.ts. Раньше был "schedule" — permissions-guard в AppShell
+  // не редиректил, потому что "schedule" валиден для любой роли, и "Сегодня"
+  // как реальный дефолт после входа никогда не открывался.
+  return { name: "today" };
 }
 
 function viewToPath(route: Route): string {
