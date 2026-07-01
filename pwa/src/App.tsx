@@ -21,7 +21,7 @@ import { LogoutScreen } from "./screens/LogoutScreen.js";
 import { AccessibilityScreen } from "./screens/AccessibilityScreen.js";
 
 export function App() {
-  const { auth, login, logout } = useAuth();
+  const { auth, login, loginAs, logout } = useAuth();
   const branding = useBranding();
   const route = useRoute();
 
@@ -58,11 +58,11 @@ export function App() {
     return <Splash branding={branding} message={wasCallback ? "Завершаем вход…" : "Проверка сессии…"} />;
   }
 
-  // signinRedirect() — это location.href, навигация происходит не мгновенно.
-  // Без этой ветки на долю секунды успевает мигнуть полный LoginScreen
-  // (лого + demo-кнопки) прежде чем браузер уйдёт на Auth0.
+  // signinPopup() открывает Auth0 в отдельном окне — основное окно PWA всё
+  // это время остаётся на этом экране. Без этой ветки был бы виден полный
+  // LoginScreen (лого + demo-кнопки) параллельно с окном входа.
   if (auth.phase === "logging_in") {
-    return <Splash branding={branding} message="Переход к форме входа…" />;
+    return <Splash branding={branding} message="Выполните вход во всплывающем окне…" />;
   }
 
   if (showLogoutScreen) {
@@ -74,5 +74,5 @@ export function App() {
     );
   }
 
-  return <LoginScreen auth={auth} onLogin={login} branding={branding} />;
+  return <LoginScreen auth={auth} onLogin={login} onLoginAs={loginAs} branding={branding} />;
 }

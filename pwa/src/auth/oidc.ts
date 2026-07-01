@@ -35,6 +35,7 @@ const mgr = new UserManager({
   authority: config.oidcIssuer,
   client_id: config.oidcClientId,
   redirect_uri: window.location.origin + "/callback",
+  popup_redirect_uri: window.location.origin + "/callback",
   post_logout_redirect_uri: window.location.origin + "/",
   scope: "openid profile email",
   response_type: "code",   // code + PKCE
@@ -47,23 +48,55 @@ const KNOWN_ROLES: ReadonlySet<RoleName> = new Set([
   "student", "parent", "teacher", "examiner", "applicant",
 ]);
 
+/**
+ * Логин через popup (window.open), не через полный редирект.
+ *
+ * Раньше signinRedirect() уводил standalone-PWA на телефоне в системный
+ * браузер, откуда не было автоматического возврата — пользователь оставался
+ * залогиненным только в браузере, PWA подхватывала это лишь при повторном
+ * открытии (общий localStorage). window.open()-окно можно закрыть скриптом
+ * (в отличие от полной навигации) — oidc-client-ts делает это сам, как
+ * только popup отправит сообщение с результатом через postMessage.
+ *
+ * Fallback на signinRedirect(), если popup заблокирован браузером или
+ * платформа не поддерживает window.opener между popup и родителем
+ * (встречается в некоторых мобильных браузерах).
+ */
 export async function login(): Promise<void> {
-  await mgr.signinRedirect();
+  try {
+    await mgr.signinPopup();
+  } catch (e) {
+    console.warn("[eios] signinPopup failed, falling back to signinRedirect:", e);
+    await mgr.signinRedirect();
+  }
 }
 
 export async function loginAs(email: string): Promise<void> {
-  await mgr.signinRedirect({ login_hint: email });
+  try {
+    await mgr.signinPopup({ login_hint: email });
+  } catch (e) {
+    console.warn("[eios] signinPopup failed, falling back to signinRedirect:", e);
+    await mgr.signinRedirect({ login_hint: email });
+  }
 }
 
 export async function logout(): Promise<void> {
   await mgr.signoutRedirect();
 }
 
-/** Вызывается из main.tsx при заходе на /callback. */
+/** Вызывается из main.tsx при заходе на /callback без window.opener —
+ *  т.е. это top-level редирект (обычный `handleCallback`) или fallback-ветка
+ *  signinRedirect() из login()/loginAs() выше. */
 export async function handleCallback(): Promise<void> {
   await mgr.signinRedirectCallback();
   // Чистим query-string (?code=...&state=...) из URL.
   window.history.replaceState({}, document.title, "/");
+}
+
+/** Вызывается из main.tsx при заходе на /callback ВНУТРИ popup-окна
+ *  (window.opener есть) — открывшее окно само закроет popup после этого. */
+export async function handlePopupCallback(): Promise<void> {
+  await mgr.signinPopupCallback();
 }
 
 /**

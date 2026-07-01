@@ -6,18 +6,19 @@
  */
 import { useState } from "react";
 import type { AuthState } from "../../auth/useAuth.js";
-import { loginAs } from "../../auth/oidc.js";
 import type { Branding } from "../../config.js";
 import { Spinner } from "../../ui/Spinner.js";
 import { Button } from "../../ui/Button.js";
+import { useOnline } from "../../useOnline.js";
 
 interface Props {
-  auth:    AuthState;
-  onLogin: () => void;
-  branding: Branding;
+  auth:      AuthState;
+  onLogin:   () => void;
+  onLoginAs: (email: string) => void;
+  branding:  Branding;
 }
 
-export function LoginScreen({ auth, onLogin, branding }: Props) {
+export function LoginScreen({ auth, onLogin, onLoginAs, branding }: Props) {
   const [screen, setScreen] = useState<"login" | "access">("login");
   // Жизненный цикл демо-блока (didakticon_design.md §3.4):
   //  - первый визит → полный блок (3 кнопки + подсказка с паролем)
@@ -26,10 +27,11 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
   const [demoOpen, setDemoOpen] = useState(!hasLoggedInBefore);
   const [pwCopied, setPwCopied] = useState(false);
   const b = branding.brandColor;
+  const online = useOnline();
   const isLoading = auth.phase === "checking" || auth.phase === "logging_in";
   const hasError = auth.phase === "error";
   const oidcReady = branding.oidcEnabled;
-  const loginDisabled = isLoading || !oidcReady;
+  const loginDisabled = isLoading || !oidcReady || !online;
 
   const DEMO_USERS = [
     { label: "👨‍🎓 Студент",  email: "student@didacticon.test" },
@@ -58,17 +60,23 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
         <h1 style={r.title}>ЭИОС</h1>
         <p style={r.subtitle}>Электронная информационно-образовательная среда</p>
 
+        {!online && (
+          <div role="status" aria-live="polite" style={r.offlineBanner}>
+            <span aria-hidden="true">⚡</span> Нет сети. Вход недоступен.
+          </div>
+        )}
+
         <Button
           variant="primary"
           size="lg"
           className="w-full"
           onClick={loginDisabled ? undefined : onLogin}
           disabled={loginDisabled}
-          title={!oidcReady ? "Авторизация не настроена — обратитесь к администратору" : undefined}
+          title={!online ? "Нет сети — вход недоступен" : !oidcReady ? "Авторизация не настроена — обратитесь к администратору" : undefined}
         >
           {isLoading
             ? <><Spinner size={16} />{auth.phase === "checking" ? "Проверка сессии…" : "Выполняется вход…"}</>
-            : <><LoginIcon />{!oidcReady ? "Войти (не настроено)" : auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
+            : <><LoginIcon />{!online ? "Нет сети" : !oidcReady ? "Войти (не настроено)" : auth.phase === "error" ? "Попробовать снова" : "Войти"}</>
           }
         </Button>
 
@@ -98,7 +106,8 @@ export function LoginScreen({ auth, onLogin, branding }: Props) {
                   size="md"
                   className="flex-1 border !px-2 !gap-1 text-[0.8rem] whitespace-nowrap"
                   style={{ borderColor: hex20(b), color: b }}
-                  onClick={() => loginAs(u.email)}
+                  onClick={online ? () => onLoginAs(u.email) : undefined}
+                  disabled={!online}
                 >
                   {u.label}
                 </Button>
@@ -380,6 +389,18 @@ const r: Record<string, React.CSSProperties> = {
     color: "#E07070",
     fontSize: "0.8rem",
     lineHeight: 1.5,
+  },
+  offlineBanner: {
+    marginBottom: 16,
+    width: "100%",
+    background: "#241C05",
+    border: "0.5px solid #5A4712",
+    borderRadius: 8,
+    padding: "8px 14px",
+    color: "#E0B050",
+    fontSize: "0.78rem",
+    fontWeight: 500,
+    textAlign: "center",
   },
   section: {
     marginTop: 16,

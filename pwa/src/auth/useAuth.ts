@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from "react";
 import type { StudentId } from "@eios/contracts";
-import { login, logout, getUser, type RoleName, type PersonIdentity } from "./oidc.js";
+import { login, loginAs as oidcLoginAs, logout, getUser, type RoleName, type PersonIdentity } from "./oidc.js";
 import { USE_MOCK, DEMO_PERSONA, personaToRole } from "./mock.js";
 import { resetContexts } from "../data/contexts.js";
 
@@ -50,9 +50,32 @@ function pickPrimaryRole(roles: PersonIdentity["roles"]): EiosRole {
 }
 
 export interface AuthHook {
-  auth:   AuthState;
-  login:  () => Promise<void>;
-  logout: () => void;
+  auth:     AuthState;
+  login:    () => Promise<void>;
+  loginAs:  (email: string) => Promise<void>;
+  logout:   () => void;
+}
+
+/** Общая логика "прочитать текущего юзера из oidc и превратить в AuthState".
+ *  Нужна и при первой загрузке (mount), и сразу после успешного
+ *  signinPopup() — там нет редиректа/перезагрузки страницы, поэтому mount-эффект
+ *  не перезапустится сам, состояние надо обновить вручную. */
+async function resolveAuth(): Promise<AuthState> {
+  const u = await getUser();
+  if (!u) return { phase: "anonymous" };
+  const returnPath = sessionStorage.getItem("eios_return_path");
+  if (returnPath) {
+    sessionStorage.removeItem("eios_return_path");
+    window.history.replaceState({}, "", returnPath);
+  }
+  localStorage.setItem("eios_has_logged_in_before", "1");
+  return {
+    phase:     "authenticated",
+    studentId: u.sub as unknown as StudentId,
+    role:      pickPrimaryRole(u.roles),
+    name:      u.name,
+    identity:  u,
+  };
 }
 
 export function useAuth(): AuthHook {
@@ -64,27 +87,7 @@ export function useAuth(): AuthHook {
 
   useEffect(() => {
     if (USE_MOCK) return;
-    getUser()
-      .then((u) => {
-        if (u) {
-          const returnPath = sessionStorage.getItem("eios_return_path");
-          if (returnPath) {
-            sessionStorage.removeItem("eios_return_path");
-            window.history.replaceState({}, "", returnPath);
-          }
-          localStorage.setItem("eios_has_logged_in_before", "1");
-          setAuth({
-            phase:     "authenticated",
-            studentId: u.sub as unknown as StudentId,
-            role:      pickPrimaryRole(u.roles),
-            name:      u.name,
-            identity:  u,
-          });
-        } else {
-          setAuth({ phase: "anonymous" });
-        }
-      })
-      .catch(() => setAuth({ phase: "anonymous" }));
+    resolveAuth().then(setAuth).catch(() => setAuth({ phase: "anonymous" }));
   }, []);
 
   function handleLogout() {
@@ -100,19 +103,37 @@ export function useAuth(): AuthHook {
     setAuth({ phase: "anonymous" });
   }
 
-  async function handleLogin() {
-    setAuth({ phase: "logging_in" });
+  function prepareReturnPath() {
     const path = window.location.pathname + window.location.search;
     if (path !== "/" && !path.startsWith("/callback")) {
       sessionStorage.setItem("eios_return_path", path);
     }
+  }
+
+  async function handleLogin() {
+    setAuth({ phase: "logging_in" });
+    prepareReturnPath();
     try {
       await login();
+      // signinPopup() не перезагружает страницу — сами читаем свежего юзера.
+      setAuth(await resolveAuth());
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setAuth({ phase: "error", message: msg });
     }
   }
 
-  return { auth, login: handleLogin, logout: handleLogout };
+  async function handleLoginAs(email: string) {
+    setAuth({ phase: "logging_in" });
+    prepareReturnPath();
+    try {
+      await oidcLoginAs(email);
+      setAuth(await resolveAuth());
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setAuth({ phase: "error", message: msg });
+    }
+  }
+
+  return { auth, login: handleLogin, loginAs: handleLoginAs, logout: handleLogout };
 }
