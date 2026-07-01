@@ -16,6 +16,8 @@ import { FeedCard, FeedCardSkeleton } from "./FeedCard.js";
 import { useDocumentTitle } from "../../useDocumentTitle.js";
 import { navigate } from "../../router.js";
 import { USE_MOCK } from "../../auth/mock.js";
+import { usePullToRefresh } from "../../usePullToRefresh.js";
+import { Spinner } from "../../ui/Spinner.js";
 
 // Demo-фиды для разных ролей (определяются по prefixe contextId)
 function getDemoFeed(contextId: string): FeedResponse {
@@ -417,6 +419,11 @@ export function TodayScreen({ contextId }: Props) {
   const feed: FeedResponse | null = USE_MOCK ? getDemoFeed(contextId) : data;
   const isLoading = !USE_MOCK && loading && !feed;
 
+  const { pullDistance, refreshing, ready } = usePullToRefresh(
+    () => setRefreshKey(k => k + 1),
+    !USE_MOCK,
+  );
+
   function handleCardTap(card: FeedCardType) {
     // TODO Block III: маршрутизация по card.action.kind
     if (card.kind === "event" || card.kind === "active_attempt") {
@@ -428,6 +435,24 @@ export function TodayScreen({ contextId }: Props) {
 
   return (
     <div className="px-4 py-4 space-y-3">
+      {/* Pull-to-refresh индикатор — растёт вместе с оттягиванием пальца,
+          жест дублирует кнопку "Обновить" ниже, не заменяет её. */}
+      {(pullDistance > 0 || refreshing) && (
+        <div
+          className="flex items-center justify-center gap-2 text-xs text-fg-muted overflow-hidden transition-[height]"
+          style={{ height: refreshing ? 40 : pullDistance }}
+          role="status"
+          aria-live="polite"
+        >
+          {refreshing
+            ? <><Spinner size={16} /> Обновление…</>
+            : ready
+              ? "Отпустите для обновления"
+              : "Потяните для обновления"
+          }
+        </div>
+      )}
+
       {/* Заголовок + обновлено */}
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-base font-semibold text-fg">Актуальное</h2>
