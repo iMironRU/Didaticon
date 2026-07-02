@@ -167,6 +167,94 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
 
   const initials = (person.lastName[0] ?? "") + (person.firstName[0] ?? "");
 
+  // ── tab/tabs/middle/renderScreen — подняты сюда (были ниже, вычислялись
+  // только для финального switch по табам), потому что детальные экраны
+  // (lesson/unit/group/notification/estudent/contexts) теперь ТОЖЕ рендерят
+  // полный chrome — Header + LeftRail/BottomNav, не только "‹ Назад" внутри
+  // экрана (найдено 2026-07-02: без этого некуда прыгнуть на другую вкладку,
+  // не выходя назад). Детальные route'ы не входят в switch ниже, поэтому
+  // естественно попадают в дефолт "schedule" — активный таб в нав-панели.
+  const tab = isTeacher
+    ? (route.name === "today" || route.name === "tasks" || route.name === "profile" ? route.name : "schedule")
+    : (route.name === "today"       ? "today"
+       : route.name === "performance" ? "performance"
+       : route.name === "gradebook" ? "gradebook"
+       : route.name === "profile"   ? "profile"
+       : "schedule");
+
+  const gradebookMap = isTeacher ? null : source.getGradebookMap();
+  const gradebook = learner ? gradebookMap?.get(learner.learnerId) : undefined;
+  const debtCount = gradebook
+    ? gradebook.semesters.flatMap(s => s.entries).filter(
+        e => e.finalControl.state === "failed_retake_pending" || e.finalControl.state === "failed_retake_scheduled"
+      ).length
+    : 0;
+
+  const tabs = isTeacher
+    ? [
+        { id: "today"    as const, label: "Сегодня",    icon: <TodayIcon /> },
+        { id: "schedule" as const, label: "Расписание", icon: <CalIcon /> },
+        { id: "tasks"    as const, label: "Задания",    icon: <TasksIcon /> },
+        { id: "profile"  as const, label: "Профиль",    icon: <PersonIcon /> },
+      ]
+    : [
+        { id: "today"       as const, label: "Сегодня",        icon: <TodayIcon /> },
+        { id: "schedule"    as const, label: t("schedule"),     icon: <CalIcon /> },
+        { id: "performance" as const, label: t("disciplines"),  icon: <BookIcon /> },
+        { id: "gradebook"   as const, label: t("gradebook"),    icon: <GradebookIcon />, badge: debtCount },
+        { id: "profile"     as const, label: t("profile"),      icon: <PersonIcon /> },
+      ];
+
+  // Header middle — для учителя метка "Педагог", для остальных context-switcher
+  const middle = isTeacher
+    ? <ContextLabel text="Педагог" />
+    : (learner ? (
+        <ContextSwitcher
+          programType={learner.programType}
+          group={learner.group}
+          periodLabel={learner.periodLabel}
+          onTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+        />
+      ) : <ContextLabel text="—" />);
+
+  /** Общая обёртка chrome — Header + LeftRail/BottomNav + main — для ЛЮБОГО
+   *  экрана: и вкладок, и детальных (lesson/unit/group/...). */
+  function renderScreen(screenTitle: string, content: React.ReactNode) {
+    return (
+      <Frame swUpdate={swUpdate} screenTitle={screenTitle}>
+        <Header
+          initials={initials}
+          onAvatarTap={() => navigate({ name: "profile" })}
+          bell={isTeacher ? undefined : { unreadCount, onTap: () => navigate({ name: "notifications" }) }}
+          middle={middle}
+        />
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+          <LeftRail
+            activeId={tab}
+            onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
+            tabs={tabs}
+          />
+          <main
+            id="main-content"
+            style={st.body}
+            className={`md:mx-auto md:w-full md:pt-8 ${tab === "today" ? "md:max-w-5xl" : "md:max-w-2xl"}`}
+            aria-labelledby="page-h1"
+          >
+            {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
+                при переходе по табам. Визуально не нужен (есть BottomNav / LeftRail). */}
+            <h1 id="page-h1" className="sr-only">{screenTitle}</h1>
+            {content}
+          </main>
+        </div>
+        <BottomNav
+          activeId={tab}
+          onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
+          tabs={tabs}
+        />
+      </Frame>
+    );
+  }
+
   // ── Дальше — switch по роли для основных экранов ──────────────────────
   // Учитель / Студент-родитель ветвятся в render-блоках ниже.
 
@@ -179,12 +267,8 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       if (found) {
         const att = attendance[found.slot.slotId]?.students ?? [];
         const title = `Занятие · ${found.slot.unitRef.title}`;
-        return (
-          <Frame swUpdate={swUpdate} screenTitle={title}>
-            <MainContent title={title}>
-              <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />
-            </MainContent>
-          </Frame>
+        return renderScreen(title,
+          <TeacherLessonScreen slot={found.slot} date={found.date} students={att} onBack={() => history.back()} />,
         );
       }
     } else {
@@ -195,21 +279,17 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       const slotInfo  = findSlotByLessonId(schedule, route.id);
       if (entry) {
         const title = `Занятие · ${entry.unitTitle}`;
-        return (
-          <Frame swUpdate={swUpdate} screenTitle={title}>
-            <MainContent title={title}>
-              <LearnerLessonScreen
-                lesson={entry.lesson}
-                slot={slotInfo?.slot ?? null}
-                slotDate={slotInfo?.date ?? null}
-                unitTitle={entry.unitTitle}
-                onBack={() => history.back()}
-                onLaunch={() => entry.lesson.packageUrl && window.open(entry.lesson.packageUrl)}
-                readOnly={role === "parent"}
-              />
-            </MainContent>
-          </Frame>
-        );
+        return renderScreen(title, (
+          <LearnerLessonScreen
+            lesson={entry.lesson}
+            slot={slotInfo?.slot ?? null}
+            slotDate={slotInfo?.date ?? null}
+            unitTitle={entry.unitTitle}
+            onBack={() => history.back()}
+            onLaunch={() => entry.lesson.packageUrl && window.open(entry.lesson.packageUrl)}
+            readOnly={role === "parent"}
+          />
+        ));
       }
     }
   }
@@ -217,12 +297,8 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
   // ── e-Student — только для студентов (parent видит контексты детей,
   //   но карту выпускает Univerkon на конкретного физика) ─────────────────
   if (!isTeacher && role === "student" && route.name === "estudent" && urlCtx) {
-    return (
-      <Frame swUpdate={swUpdate} screenTitle="Студенческий билет">
-        <MainContent title="Студенческий билет">
-          <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />
-        </MainContent>
-      </Frame>
+    return renderScreen("Студенческий билет",
+      <EStudentScreen contextId={urlCtx.contextId} onBack={() => history.back()} />,
     );
   }
 
@@ -232,91 +308,56 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       const unit = findUnitById(learner?.units ?? [], route.id);
       if (unit) {
         const title = `Дисциплина · ${unit.title}`;
-        return (
-          <Frame swUpdate={swUpdate} screenTitle={title}>
-            <MainContent title={title}>
-              <UnitScreen unit={unit} onBack={() => history.back()}
-                onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
-            </MainContent>
-          </Frame>
-        );
+        return renderScreen(title, (
+          <UnitScreen unit={unit} onBack={() => history.back()}
+            onLesson={lesson => navigate({ name: "lesson", id: lesson.lessonId })} />
+        ));
       }
     }
     if (route.name === "group") {
       const group = findGroupById(learner?.units ?? [], route.id);
       if (group) {
         const title = `ПМ · ${group.title}`;
-        return (
-          <Frame swUpdate={swUpdate} screenTitle={title}>
-            <MainContent title={title}>
-              <GroupScreen group={group} onBack={() => history.back()}
-                onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
-            </MainContent>
-          </Frame>
-        );
+        return renderScreen(title, (
+          <GroupScreen group={group} onBack={() => history.back()}
+            onUnit={unit => navigate({ name: "unit", id: unit.unitId })} />
+        ));
       }
     }
     if (route.name === "contexts") {
       const title = person.personType === "parent" ? "Мои дети" : "Мои профили обучения";
-      return (
-        <Frame swUpdate={swUpdate} screenTitle={title}>
-          <Header
-            initials={initials}
-            onAvatarTap={() => navigate({ name: "profile" })}
-            bell={{ unreadCount, onTap: () => navigate({ name: "notifications" }) }}
-            middle={<ContextLabel text={person.personType === "parent" ? t("myChildren") : t("learnersTitle")} />}
-          />
-          <MainContent title={title}>
-            <ContextSwitcherScreen
-              person={person}
-              learners={allLearners}
-              currentId={currentLearnerId}
-              defaultId={defaultLearnerId}
-              onSelect={switchLearner}
-              onSetDefault={setDefault}
-            />
-          </MainContent>
-        </Frame>
-      );
+      return renderScreen(title, (
+        <ContextSwitcherScreen
+          person={person}
+          learners={allLearners}
+          currentId={currentLearnerId}
+          defaultId={defaultLearnerId}
+          onSelect={switchLearner}
+          onSetDefault={setDefault}
+        />
+      ));
     }
     if (route.name === "notification") {
       const n = notifs.find(n => n.notificationId === route.id);
       if (n) {
         const title = `Уведомление · ${n.title}`;
-        return (
-          <Frame swUpdate={swUpdate} screenTitle={title}>
-            <MainContent title={title}>
-              <NotificationDetailScreen notification={n} onBack={() => history.back()} />
-            </MainContent>
-          </Frame>
-        );
+        return renderScreen(title, <NotificationDetailScreen notification={n} onBack={() => history.back()} />);
       }
     }
     if (route.name === "notifications") {
-      return (
-        <Frame swUpdate={swUpdate} screenTitle="Уведомления">
-          <MainContent title="Уведомления">
-            <NotificationsScreen
-              notifications={notifs}
-              onBack={() => history.back()}
-              onOpen={n => { markRead(n.notificationId); navigate({ name: "notification", id: n.notificationId }); }}
-              onRead={markRead}
-              onReadAll={markAllRead}
-            />
-          </MainContent>
-        </Frame>
-      );
+      return renderScreen("Уведомления", (
+        <NotificationsScreen
+          notifications={notifs}
+          onBack={() => history.back()}
+          onOpen={n => { markRead(n.notificationId); navigate({ name: "notification", id: n.notificationId }); }}
+          onRead={markRead}
+          onReadAll={markAllRead}
+        />
+      ));
     }
   }
 
   // ── Основной шаблон с табами ──────────────────────────────────────────
-  const tab = isTeacher
-    ? (route.name === "today" || route.name === "tasks" || route.name === "profile" ? route.name : "schedule")
-    : (route.name === "today"       ? "today"
-       : route.name === "performance" ? "performance"
-       : route.name === "gradebook" ? "gradebook"
-       : route.name === "profile"   ? "profile"
-       : "schedule");
 
   // Schedule data — разное по роли
   let scheduleNode: React.ReactNode = null;
@@ -377,126 +418,55 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
     }
   }
 
-  // Performance / Gradebook (только студент/родитель)
-  const gradebookMap = isTeacher ? null : source.getGradebookMap();
-  const gradebook = learner ? gradebookMap?.get(learner.learnerId) : undefined;
-  const debtCount = gradebook
-    ? gradebook.semesters.flatMap(s => s.entries).filter(
-        e => e.finalControl.state === "failed_retake_pending" || e.finalControl.state === "failed_retake_scheduled"
-      ).length
-    : 0;
-
-  // Tabs config
-  const tabs = isTeacher
-    ? [
-        { id: "today"    as const, label: "Сегодня",    icon: <TodayIcon /> },
-        { id: "schedule" as const, label: "Расписание", icon: <CalIcon /> },
-        { id: "tasks"    as const, label: "Задания",    icon: <TasksIcon /> },
-        { id: "profile"  as const, label: "Профиль",    icon: <PersonIcon /> },
-      ]
-    : [
-        { id: "today"       as const, label: "Сегодня",        icon: <TodayIcon /> },
-        { id: "schedule"    as const, label: t("schedule"),     icon: <CalIcon /> },
-        { id: "performance" as const, label: t("disciplines"),  icon: <BookIcon /> },
-        { id: "gradebook"   as const, label: t("gradebook"),    icon: <GradebookIcon />, badge: debtCount },
-        { id: "profile"     as const, label: t("profile"),      icon: <PersonIcon /> },
-      ];
-
-  // Header middle — для учителя метка "Педагог", для остальных context-switcher
-  const middle = isTeacher
-    ? <ContextLabel text="Педагог" />
-    : (learner ? (
-        <ContextSwitcher
-          programType={learner.programType}
-          group={learner.group}
-          periodLabel={learner.periodLabel}
-          onTap={allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+  return renderScreen(tabHeading(tab, isTeacher), (
+    <>
+      {tab === "today" && (() => {
+        const defaultCtx = isTeacher
+          ? (teacherKind === "curator" ? "tch:demo-curator" : teacherKind === "senior_grader" ? "tch:demo-sg" : "tch:demo-1")
+          : role === "parent" ? "par:demo-child1"
+          : "stu:demo-1";
+        return <TodayScreen contextId={urlCtx?.contextId ?? defaultCtx} />;
+      })()}
+      {tab === "schedule" && (
+        <div className={isTeacher ? "px-4 py-2.5" : ""}>{scheduleNode}</div>
+      )}
+      {!isTeacher && tab === "performance" && learner && (
+        <PerformanceTab
+          learner={learner}
+          onUnit={u  => navigate({ name: "unit",  id: u.unitId  })}
+          onGroup={g => navigate({ name: "group", id: g.unitId })}
         />
-      ) : <ContextLabel text="—" />);
-
-  return (
-    <Frame swUpdate={swUpdate} screenTitle={tabHeading(tab, isTeacher)}>
-      <Header
-        initials={initials}
-        onAvatarTap={() => navigate({ name: "profile" })}
-        bell={isTeacher ? undefined : { unreadCount, onTap: () => navigate({ name: "notifications" }) }}
-        middle={middle}
-      />
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-      <LeftRail
-        activeId={tab}
-        onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
-        tabs={tabs}
-      />
-      <main
-        id="main-content"
-        style={st.body}
-        // «Сегодня» шире остальных вкладок на десктопе (найдено 2026-07-02):
-        // три колонки групп (Ближайшее/Просрочено/Внимание) внутри
-        // читаемых 672px превращали карточки в узкие тесные полоски.
-        // Карточки должны сохранять мобильную ширину/пропорции — не
-        // выглядеть квадратными огрызками — поэтому даём вкладке больше
-        // места, а не сжимаем карточки в стандартную колонку.
-        className={`md:mx-auto md:w-full md:pt-8 ${tab === "today" ? "md:max-w-5xl" : "md:max-w-2xl"}`}
-        aria-labelledby="page-h1"
-      >
-        {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
-            при переходе по табам. Визуально не нужен (есть BottomNav / LeftRail). */}
-        <h1 id="page-h1" className="sr-only">{tabHeading(tab, isTeacher)}</h1>
-        {tab === "today" && (() => {
-          const defaultCtx = isTeacher
-            ? (teacherKind === "curator" ? "tch:demo-curator" : teacherKind === "senior_grader" ? "tch:demo-sg" : "tch:demo-1")
-            : role === "parent" ? "par:demo-child1"
-            : "stu:demo-1";
-          return <TodayScreen contextId={urlCtx?.contextId ?? defaultCtx} />;
-        })()}
-        {tab === "schedule" && (
-          <div className={isTeacher ? "px-4 py-2.5" : ""}>{scheduleNode}</div>
-        )}
-        {!isTeacher && tab === "performance" && learner && (
-          <PerformanceTab
-            learner={learner}
-            onUnit={u  => navigate({ name: "unit",  id: u.unitId  })}
-            onGroup={g => navigate({ name: "group", id: g.unitId })}
-          />
-        )}
-        {!isTeacher && tab === "gradebook" && gradebook && (
-          <GradebookTab
-            gradebook={gradebook}
-            onBookRetake={(entry: GradebookEntry, slot: BookingSlot) => {
-              console.log("book retake", entry.unitId, slot.bookingSlotId);
-            }}
-          />
-        )}
-        {isTeacher && tab === "tasks" && (
-          <div style={st.stub}>
-            <div style={st.stubIcon} aria-hidden="true"><TasksIcon /></div>
-            <div style={st.stubTitle}>Очередь заданий</div>
-            <div style={st.stubSub}>Здесь будут задания студентов на проверку от Тестикона</div>
-          </div>
-        )}
-        {tab === "profile" && (
-          <ProfileTab
-            person={person}
-            learner={learner}
-            themeMode={themeMode}
-            onThemeChange={handleThemeChange}
-            locale={locale}
-            onLocaleChange={changeLocale}
-            lkUrl={lkUrl}
-            onSwitchContext={!isTeacher && allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
-            onLogout={onLogout}
-          />
-        )}
-      </main>
-      </div>
-      <BottomNav
-        activeId={tab}
-        onTap={(id) => navigate({ name: id as "today" | "schedule" | "performance" | "gradebook" | "tasks" | "profile" })}
-        tabs={tabs}
-      />
-    </Frame>
-  );
+      )}
+      {!isTeacher && tab === "gradebook" && gradebook && (
+        <GradebookTab
+          gradebook={gradebook}
+          onBookRetake={(entry: GradebookEntry, slot: BookingSlot) => {
+            console.log("book retake", entry.unitId, slot.bookingSlotId);
+          }}
+        />
+      )}
+      {isTeacher && tab === "tasks" && (
+        <div style={st.stub}>
+          <div style={st.stubIcon} aria-hidden="true"><TasksIcon /></div>
+          <div style={st.stubTitle}>Очередь заданий</div>
+          <div style={st.stubSub}>Здесь будут задания студентов на проверку от Тестикона</div>
+        </div>
+      )}
+      {tab === "profile" && (
+        <ProfileTab
+          person={person}
+          learner={learner}
+          themeMode={themeMode}
+          onThemeChange={handleThemeChange}
+          locale={locale}
+          onLocaleChange={changeLocale}
+          lkUrl={lkUrl}
+          onSwitchContext={!isTeacher && allLearners.length > 1 ? () => navigate({ name: "contexts" }) : undefined}
+          onLogout={onLogout}
+        />
+      )}
+    </>
+  ));
 }
 
 // ── Frame — обёртка корня + StatusBar для всех веток ────────────────────
@@ -528,26 +498,6 @@ function Frame({ swUpdate, screenTitle, children }: FrameProps) {
   );
 }
 
-/**
- * MainContent — единый landmark `<main id="main-content">` для detail-экранов
- * (lesson, unit, group, contexts, notifications, estudent). Skip-link
- * целится в `#main-content`.
- *
- * `display: contents` делает main «прозрачным» для layout — children flow
- * напрямую в Frame. Современные браузеры (Chrome 87+, Safari 15+, Firefox 117+)
- * корректно сохраняют landmark-role при display:contents.
- *
- * sr-only h1 — каждая страница имеет один (a11y spec §5.1).
- */
-function MainContent({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <main id="main-content" style={{ display: "contents" }}>
-      <h1 className="sr-only">{title}</h1>
-      {children}
-    </main>
-  );
-}
-
 /** Заголовок таба для sr-only h1 + aria-label main. */
 function tabHeading(tab: string, isTeacher: boolean): string {
   if (tab === "today")       return "Сегодня";
@@ -564,7 +514,13 @@ const st: Record<string, CSSProperties> = {
   // padding НЕ здесь — инлайн-стиль перебил бы md:pt-8 в className
   // (у main#main-content, UnifiedShell.tsx). Tailwind preflight и так
   // зануляет паддинг по умолчанию, инлайн-"0" был избыточен.
-  body:      { flex: 1, overflowY: "auto" },
+  // display:flex+column (найдено 2026-07-02, вместе с возвратом Header/Nav на
+  // детальные экраны): SubHeader (shrink-0) внутри lesson/unit/group и т.п.
+  // должен оставаться прижатым к верху, пока скроллится контент под ним —
+  // раньше это давал flex-column корня Frame, теперь main сам эту роль несёт.
+  // На обычных вкладках (Today/Schedule/...) с одним не-flex ребёнком ничего
+  // не меняется — просто ещё один уровень flex-column вокруг блочного контента.
+  body:      { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" },
   stub:      { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
   stubIcon:  { fontSize: 48 },
   stubTitle: { fontSize: "1rem", fontWeight: 600, color: "var(--c-text-primary)" },
