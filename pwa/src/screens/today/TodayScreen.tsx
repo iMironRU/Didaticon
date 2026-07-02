@@ -37,18 +37,29 @@ const GROUP_EMPTY: Record<FeedGroup, string> = {
   attention: "Ничего не требует внимания",
 };
 
-// Demo-фиды для разных ролей (определяются по prefixe contextId)
-function getDemoFeed(contextId: string): FeedResponse {
-  if (contextId.includes("curator")) return DEMO_FEED_CURATOR;
-  if (contextId.includes("sg"))      return DEMO_FEED_SG;
-  if (contextId.startsWith("tch:")) return DEMO_FEED_INSTRUCTOR;
-  if (contextId.startsWith("par:")) return DEMO_FEED_PARENT;
-  return DEMO_FEED_STUDENT;
+// Demo-фиды для разных ролей (определяются по prefixe contextId). Та же
+// sort+slice+has_more логика, что и у реального feed.get в glue
+// (glue/src/routes/rpc/feed-get.ts) — иначе «Показать все» в demo-режиме
+// вело бы себя иначе, чем в проде.
+function getDemoFeed(contextId: string, limit: number): FeedResponse {
+  const cards =
+    contextId.includes("curator") ? DEMO_CARDS_CURATOR :
+    contextId.includes("sg")      ? DEMO_CARDS_SG :
+    contextId.startsWith("tch:")  ? DEMO_CARDS_INSTRUCTOR :
+    contextId.startsWith("par:")  ? DEMO_CARDS_PARENT :
+    DEMO_CARDS_STUDENT;
+  const sorted = [...cards].sort((a, b) => b.urgency - a.urgency);
+  return {
+    cards: sorted.slice(0, limit),
+    total_actionable: cards.length,
+    has_more: cards.length > limit,
+    generated_at: new Date().toISOString(),
+    cache_ttl_seconds: 60,
+  };
 }
 
 // ── Demo: студент ─────────────────────────────────────────────────────────────
-const DEMO_FEED_STUDENT: FeedResponse = {
-  cards: [
+const DEMO_CARDS_STUDENT: FeedCardType[] = [
     {
       id: "demo-evt-1",
       kind: "event",
@@ -148,16 +159,27 @@ const DEMO_FEED_STUDENT: FeedResponse = {
         recovery_options: { online: { available: false }, offline: { available: true } },
       },
     },
-  ],
-  total_actionable: 5,
-  has_more: false,
-  generated_at: new Date().toISOString(),
-  cache_ttl_seconds: 60,
-};
+    {
+      id: "demo-dr-1",
+      kind: "delivery_required",
+      source: "local",
+      urgency: 45,
+      due_at: new Date(Date.now() + 3 * 86400_000).toISOString(),
+      title: "Сдать курсовую работу",
+      subtitle: "Кафедра ИВТ, каб. 205 · срок через 3 дня",
+      action: { kind: "open_delivery", target_id: "obl:demo-kursach" },
+      details: {
+        obligation_id: "obl:demo-kursach",
+        work_title: "Курсовая работа по ОС",
+        discipline_id: "disc:os",
+        discipline_title: "Операционные системы",
+        delivery_point: "Кафедра ИВТ, каб. 205",
+      },
+    },
+  ];
 
 // ── Demo: instructor ──────────────────────────────────────────────────────────
-const DEMO_FEED_INSTRUCTOR: FeedResponse = {
-  cards: [
+const DEMO_CARDS_INSTRUCTOR: FeedCardType[] = [
     {
       id: "di-stg-1",
       kind: "submissions_to_grade",
@@ -236,16 +258,10 @@ const DEMO_FEED_INSTRUCTOR: FeedResponse = {
         unclosed_slots: 2,
       },
     },
-  ],
-  total_actionable: 4,
-  has_more: false,
-  generated_at: new Date().toISOString(),
-  cache_ttl_seconds: 60,
-};
+  ];
 
 // ── Demo: curator ─────────────────────────────────────────────────────────────
-const DEMO_FEED_CURATOR: FeedResponse = {
-  cards: [
+const DEMO_CARDS_CURATOR: FeedCardType[] = [
     {
       id: "dc-sar-1",
       kind: "student_at_risk",
@@ -299,16 +315,10 @@ const DEMO_FEED_CURATOR: FeedResponse = {
         total_students: 25,
       },
     },
-  ],
-  total_actionable: 3,
-  has_more: false,
-  generated_at: new Date().toISOString(),
-  cache_ttl_seconds: 60,
-};
+  ];
 
 // ── Demo: senior_grader ───────────────────────────────────────────────────────
-const DEMO_FEED_SG: FeedResponse = {
-  cards: [
+const DEMO_CARDS_SG: FeedCardType[] = [
     {
       id: "sg-stg-1",
       kind: "submissions_to_grade",
@@ -361,16 +371,10 @@ const DEMO_FEED_SG: FeedResponse = {
         requested_at: new Date(Date.now() - 86400_000).toISOString(),
       },
     },
-  ],
-  total_actionable: 3,
-  has_more: false,
-  generated_at: new Date().toISOString(),
-  cache_ttl_seconds: 60,
-};
+  ];
 
 // ── Demo: parent ──────────────────────────────────────────────────────────────
-const DEMO_FEED_PARENT: FeedResponse = {
-  cards: [
+const DEMO_CARDS_PARENT: FeedCardType[] = [
     {
       id: "dp-caa-1",
       kind: "child_attendance_alert",
@@ -406,12 +410,7 @@ const DEMO_FEED_PARENT: FeedResponse = {
         retake_at: new Date(Date.now() + 15 * 86400_000).toISOString(),
       },
     },
-  ],
-  total_actionable: 2,
-  has_more: false,
-  generated_at: new Date().toISOString(),
-  cache_ttl_seconds: 60,
-};
+  ];
 
 interface Props {
   contextId: string;
@@ -421,6 +420,11 @@ export function TodayScreen({ contextId }: Props) {
   useDocumentTitle("Сегодня");
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeGroup, setActiveGroup] = useState<FeedGroup>("upcoming");
+  // «Показать все» (issue найден 2026-07-02) — разворачиваем на месте, без
+  // перехода на отдельный экран. Отдельный SWR-хук (не переиспользуем базовый
+  // top-5 fetcher с другим limit) — иначе смена ключа на миг занулила бы
+  // data и весь список схлопнулся бы в skeleton вместо тихой подгрузки.
+  const [expanded, setExpanded] = useState(false);
 
   const fetcher = useCallback(
     () => rpc<FeedResponse>("feed.get", { context_id: contextId, limit: 5 }),
@@ -434,9 +438,24 @@ export function TodayScreen({ contextId }: Props) {
     enabled: !USE_MOCK,
   });
 
+  const expandedFetcher = useCallback(
+    () => rpc<FeedResponse>("feed.get", { context_id: contextId, limit: 50 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [contextId, refreshKey],
+  );
+
+  const { data: expandedData, loading: expandedLoading } = useSwrCache<FeedResponse>({
+    key:     `feed_cache_v1_${contextId}_all`,
+    fetcher: expandedFetcher,
+    enabled: !USE_MOCK && expanded,
+  });
+
   // В demo-режиме используем статичный мок напрямую (по роли из contextId)
-  const feed: FeedResponse | null = USE_MOCK ? getDemoFeed(contextId) : data;
+  const feed: FeedResponse | null = USE_MOCK
+    ? getDemoFeed(contextId, expanded ? 50 : 5)
+    : (expanded && expandedData ? expandedData : data);
   const isLoading = !USE_MOCK && loading && !feed;
+  const isExpanding = expanded && !expandedData && expandedLoading;
 
   const { pullDistance, refreshing, ready } = usePullToRefresh(
     () => setRefreshKey(k => k + 1),
@@ -630,10 +649,35 @@ export function TodayScreen({ contextId }: Props) {
         </div>
       )}
 
-      {/* Всего actionable */}
-      {feed && feed.has_more && (
+      {/* Показать все — разворачиваем на месте (limit=50 вместо 5), без
+          перехода на отдельный экран. */}
+      {feed && feed.has_more && !expanded && (
         <p className="text-xs text-fg-muted text-center pt-1">
-          Показаны 5 из {feed.total_actionable} срочных дел
+          Показаны {feed.cards.length} из {feed.total_actionable} срочных дел
+          {" · "}
+          <button
+            className="text-accent underline"
+            onClick={() => setExpanded(true)}
+          >
+            Показать все
+          </button>
+        </p>
+      )}
+      {isExpanding && (
+        <p className="flex items-center justify-center gap-2 text-xs text-fg-muted pt-1">
+          <Spinner size={14} /> Загружаем остальные…
+        </p>
+      )}
+      {expanded && feed && !isExpanding && (
+        <p className="text-xs text-fg-muted text-center pt-1">
+          Показаны все {feed.cards.length} из {feed.total_actionable}
+          {" · "}
+          <button
+            className="text-accent underline"
+            onClick={() => setExpanded(false)}
+          >
+            Свернуть
+          </button>
         </p>
       )}
     </div>

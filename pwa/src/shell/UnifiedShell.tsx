@@ -431,7 +431,13 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       <main
         id="main-content"
         style={st.body}
-        className="md:max-w-2xl md:mx-auto md:w-full md:pt-8"
+        // «Сегодня» шире остальных вкладок на десктопе (найдено 2026-07-02):
+        // три колонки групп (Ближайшее/Просрочено/Внимание) внутри
+        // читаемых 672px превращали карточки в узкие тесные полоски.
+        // Карточки должны сохранять мобильную ширину/пропорции — не
+        // выглядеть квадратными огрызками — поэтому даём вкладке больше
+        // места, а не сжимаем карточки в стандартную колонку.
+        className={`md:mx-auto md:w-full md:pt-8 ${tab === "today" ? "md:max-w-5xl" : "md:max-w-2xl"}`}
         aria-labelledby="page-h1"
       >
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
