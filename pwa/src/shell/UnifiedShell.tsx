@@ -431,7 +431,7 @@ export function UnifiedShell({ role, teacherKind, authName, lkUrl, onLogout }: P
       <main
         id="main-content"
         style={st.body}
-        className="md:max-w-2xl md:mx-auto md:w-full"
+        className="md:max-w-2xl md:mx-auto md:w-full md:pt-8"
         aria-labelledby="page-h1"
       >
         {/* sr-only h1 — каждый экран должен иметь один. Скринридер объявляет
@@ -555,7 +555,10 @@ function tabHeading(tab: string, isTeacher: boolean): string {
 
 const st: Record<string, CSSProperties> = {
   root:      { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", background: "var(--c-bg)", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
-  body:      { flex: 1, overflowY: "auto", padding: "0" },
+  // padding НЕ здесь — инлайн-стиль перебил бы md:pt-8 в className
+  // (у main#main-content, UnifiedShell.tsx). Tailwind preflight и так
+  // зануляет паддинг по умолчанию, инлайн-"0" был избыточен.
+  body:      { flex: 1, overflowY: "auto" },
   stub:      { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 32 },
   stubIcon:  { fontSize: 48 },
   stubTitle: { fontSize: "1rem", fontWeight: 600, color: "var(--c-text-primary)" },
