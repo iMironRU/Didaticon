@@ -3,8 +3,10 @@
  *
  * Единый протокол для всех новых API (Block I §2.5):
  *  - identity.contexts.get   (Block I §8)
- *  - identity.e_student.issue (Block I §9) — будет позже
- *  - dashboard.feed.get, schedule.get, gradebook.get — следующие блоки
+ *  - identity.e_student.issue (Block I §9)
+ *  - feed.get                (Block II §9)
+ *  - event.get, event.state  (Block III §4, §15.1, issue #80)
+ *  - schedule.get, gradebook.get — следующие блоки
  *
  * Auth — JWT в Authorization: Bearer header (тот же JWKS что и /commit).
  *
@@ -25,6 +27,7 @@ import { AuthError, verifyBearerToken } from "../auth/index.js";
 import { identityContextsGet } from "./rpc/identity-contexts.js";
 import { identityEStudentIssue } from "./rpc/identity-estudent.js";
 import { feedGet } from "./rpc/feed-get.js";
+import { eventGet, eventState } from "./rpc/event-get.js";
 import { RpcValidationError, type RpcErrorData } from "./rpc/rpcError.js";
 
 interface JsonRpcRequest {
@@ -53,6 +56,8 @@ const methods: Record<string, Handler> = {
   "identity.contexts.get":    identityContextsGet,
   "identity.e_student.issue": identityEStudentIssue,
   "feed.get":                 feedGet,
+  "event.get":                eventGet,
+  "event.state":              eventState,
 };
 
 function rpcError(id: JsonRpcRequest["id"], code: number, message: string, data?: RpcErrorData): JsonRpcResponse {

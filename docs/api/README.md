@@ -5,7 +5,7 @@
 | Файл | Протокол | Эндпоинт | Issue |
 |---|---|---|---|
 | `glue.openapi.json` | REST | `/commit`, `/resume`, `/projection`, `/admin/*` | [#68](https://github.com/iMironRU/Didaticon/issues/68) |
-| `rpc.openrpc.json`  | JSON-RPC 2.0 | `/rpc` (`identity.*`, `feed.get`) | [#69](https://github.com/iMironRU/Didaticon/issues/69) |
+| `rpc.openrpc.json`  | JSON-RPC 2.0 | `/rpc` (`identity.*`, `feed.get`, `event.*`) | [#69](https://github.com/iMironRU/Didaticon/issues/69) |
 
 Ошибки: REST — RFC 9457 Problem Details ([#66](https://github.com/iMironRU/Didaticon/issues/66),
 `glue/src/errors.ts`). JSON-RPC — `{code, message, data}` с actionable-подсказками

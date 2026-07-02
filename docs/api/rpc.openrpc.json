@@ -68,6 +68,48 @@
         { "$ref": "#/components/errors/AuthRejected" },
         { "$ref": "#/components/errors/InternalError" }
       ]
+    },
+    {
+      "name": "event.get",
+      "summary": "Карточка учебного события целиком (Block III §4, §15.1, issue #80)",
+      "params": [
+        {
+          "name": "event_id",
+          "description": "Идентификатор события",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "result": {
+        "name": "EventResult",
+        "schema": { "$ref": "#/components/schemas/EventModel" }
+      },
+      "errors": [
+        { "$ref": "#/components/errors/AuthRejected" },
+        { "$ref": "#/components/errors/InvalidParams" },
+        { "$ref": "#/components/errors/InternalError" }
+      ]
+    },
+    {
+      "name": "event.state",
+      "summary": "Только текущее состояние события — для дешёвого polling (Block III §15.1, §17.4, issue #80)",
+      "params": [
+        {
+          "name": "event_id",
+          "description": "Идентификатор события",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "result": {
+        "name": "EventStateResult",
+        "schema": { "$ref": "#/components/schemas/EventStateResponse" }
+      },
+      "errors": [
+        { "$ref": "#/components/errors/AuthRejected" },
+        { "$ref": "#/components/errors/InvalidParams" },
+        { "$ref": "#/components/errors/InternalError" }
+      ]
     }
   ],
   "components": {
@@ -255,6 +297,69 @@
           "has_more":          { "type": "boolean" },
           "generated_at":      { "type": "string", "description": "ISO-8601" },
           "cache_ttl_seconds": { "type": "number" }
+        }
+      },
+      "EventModel": {
+        "type": "object",
+        "description": "Block III §15.1. Registration-based модель состояний (§4): запланировано → регистрация → регистрация_закрыта → идёт → завершено, либо перенесено.",
+        "required": [
+          "id", "state", "discipline_id", "discipline_title", "event_kind",
+          "planned_start_at", "planned_end_at", "registration_opened_at",
+          "actually_started_at", "actually_ended_at", "postponed_at",
+          "postponement_reason_code", "replacement_event_id", "format",
+          "room", "meeting_url", "groups", "package_ref", "teacher"
+        ],
+        "properties": {
+          "id":                       { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": ["запланировано", "регистрация", "регистрация_закрыта", "идёт", "завершено", "перенесено"]
+          },
+          "discipline_id":            { "type": "string" },
+          "discipline_title":         { "type": "string" },
+          "event_kind":               { "type": "string", "description": "lecture|seminar|lab|... — открытый список" },
+          "planned_start_at":         { "type": "string", "description": "ISO-8601" },
+          "planned_end_at":           { "type": "string", "description": "ISO-8601 — обязателен, используется §11.6 защитой от переработки" },
+          "registration_opened_at":   { "type": ["string", "null"], "description": "ISO-8601" },
+          "actually_started_at":      { "type": ["string", "null"], "description": "ISO-8601" },
+          "actually_ended_at":        { "type": ["string", "null"], "description": "ISO-8601" },
+          "postponed_at":             { "type": ["string", "null"], "description": "ISO-8601" },
+          "postponement_reason_code": { "type": ["string", "null"] },
+          "replacement_event_id":     { "type": ["string", "null"] },
+          "format":                   { "type": "string", "enum": ["offline", "online", "hybrid"] },
+          "room":                     { "type": ["string", "null"] },
+          "meeting_url":              { "type": ["string", "null"] },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["group_id", "title", "count"],
+              "properties": {
+                "group_id": { "type": "string" },
+                "title":    { "type": "string" },
+                "count":    { "type": "number" }
+              }
+            }
+          },
+          "package_ref": { "type": ["string", "null"] },
+          "teacher": {
+            "type": "object",
+            "required": ["context_id", "name"],
+            "properties": {
+              "context_id": { "type": "string" },
+              "name":       { "type": "string" }
+            }
+          }
+        }
+      },
+      "EventStateResponse": {
+        "type": "object",
+        "required": ["state"],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["запланировано", "регистрация", "регистрация_закрыта", "идёт", "завершено", "перенесено"]
+          }
         }
       }
     }
