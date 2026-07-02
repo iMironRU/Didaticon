@@ -19,7 +19,11 @@
  * Что Radix даёт бесплатно: focus trap, Esc close, click-outside close, scroll lock,
  * aria-* атрибуты, portal в body, корректное удаление при размонтировании.
  *
- * Без анимаций пока — добавим позже через tw-animate-css или CSS keyframes.
+ * Раскладка (issue #7): на мобиле (<768px) — bottom sheet (снизу, во всю
+ * ширину, скруглённые верхние углы, drag-хэндл для affordance). На десктопе
+ * (≥768px) — прежнее центральное модальное окно. Radix's dismiss-логика
+ * (Esc/click-outside/close-кнопка) не меняется — драг-жест dismiss НЕ
+ * реализован (не входит в объём issue), только позиционирование+анимация.
  *
  * См. memory: architecture.md → правило 6.
  */
@@ -52,14 +56,27 @@ export const DialogContent = forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 " +
-        "w-[calc(100%-2rem)] max-w-md p-6 " +
-        "bg-surface border border-line rounded-lg shadow-2xl " +
-        "focus:outline-none",
+        // Mobile — bottom sheet: прижато к низу, во всю ширину, скруглены
+        // только верхние углы, safe-area под iOS home indicator.
+        "fixed inset-x-0 bottom-0 z-50 " +
+        "w-full max-h-[85vh] overflow-y-auto " +
+        "p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] " +
+        "bg-surface border border-line rounded-t-2xl shadow-2xl " +
+        "animate-sheet-up " +
+        "focus:outline-none " +
+        // Desktop — прежнее центральное модальное окно, без анимации.
+        "md:inset-x-auto md:left-1/2 md:top-1/2 md:bottom-auto " +
+        "md:-translate-x-1/2 md:-translate-y-1/2 " +
+        "md:w-[calc(100%-2rem)] md:max-w-md md:max-h-[90vh] " +
+        "md:rounded-lg md:animate-none",
         className,
       )}
       {...props}
     >
+      <div
+        aria-hidden="true"
+        className="md:hidden mx-auto mb-4 -mt-2 h-1 w-10 rounded-full bg-line"
+      />
       {children}
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>

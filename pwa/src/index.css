@@ -112,6 +112,17 @@ html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
   scroll-margin-bottom: 80px;
 }
 
+/* Bottom sheet (issue #7) — выезд снизу на мобиле. prefers-reduced-motion /
+ * data-motion="reduce" ниже зануляют animation-duration глобально через *,
+ * так что эта анимация тоже отключается для тех, кто выбрал меньше движения. */
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-sheet-up {
+  animation: sheet-slide-up 0.25s ease-out;
+}
+
 /* prefers-reduced-motion — отключаем анимации для людей с вестибулярными
  * нарушениями (a11y политика §5.13, WCAG 2.3.3 Animation from Interactions). */
 @media (prefers-reduced-motion: reduce) {
