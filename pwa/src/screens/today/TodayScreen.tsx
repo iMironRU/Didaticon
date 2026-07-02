@@ -20,6 +20,7 @@ import { USE_MOCK } from "../../auth/mock.js";
 import { usePullToRefresh } from "../../usePullToRefresh.js";
 import { Spinner } from "../../ui/Spinner.js";
 import { Button } from "../../ui/Button.js";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../ui/Tabs.js";
 import { login } from "../../auth/oidc.js";
 
 const GROUP_ORDER: FeedGroup[] = ["upcoming", "overdue", "attention"];
@@ -27,6 +28,13 @@ const GROUP_LABEL: Record<FeedGroup, string> = {
   upcoming:  "Ближайшее",
   overdue:   "Просрочено",
   attention: "Требует внимания",
+};
+// Пустое состояние колонки/таба, когда в конкретной группе нет карточек
+// (обсуждено 2026-07-02: мобиле — табы, десктоп — три колонки).
+const GROUP_EMPTY: Record<FeedGroup, string> = {
+  upcoming:  "Нет ближайших дел",
+  overdue:   "Просрочек нет",
+  attention: "Ничего не требует внимания",
 };
 
 // Demo-фиды для разных ролей (определяются по prefixe contextId)
@@ -412,6 +420,7 @@ interface Props {
 export function TodayScreen({ contextId }: Props) {
   useDocumentTitle("Сегодня");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeGroup, setActiveGroup] = useState<FeedGroup>("upcoming");
 
   const fetcher = useCallback(
     () => rpc<FeedResponse>("feed.get", { context_id: contextId, limit: 5 }),
@@ -535,25 +544,65 @@ export function TodayScreen({ contextId }: Props) {
 
       {/* Карточки — сгруппированы по kind (обсуждено 2026-07-01), не единой
           лентой вперемешку. Порядок групп: сначала то, что ещё можно успеть,
-          потом просроченное, потом мониторинг-алерты без чёткого дедлайна. */}
+          потом просроченное, потом мониторинг-алерты без чёткого дедлайна.
+          Мобиле — табы (обсуждено 2026-07-02, экономит вертикаль на узком
+          экране), десктоп — три колонки side-by-side (места достаточно,
+          сравнение групп одним взглядом важнее). Обе разметки в DOM
+          одновременно, переключаются md:-брейкпоинтом — тот же паттерн,
+          что у LeftRail/BottomNav. */}
       {feed && feed.cards.length > 0 && (() => {
         const grouped = groupFeedCards(feed.cards);
         return (
           <>
-            {GROUP_ORDER.map(group => grouped[group].length > 0 && (
-              <div key={group} className="space-y-2">
-                <div className="text-fg-muted text-[0.68rem] tracking-[0.08em] uppercase font-semibold">
-                  {GROUP_LABEL[group]}
-                </div>
-                <div className="space-y-3" role="list" aria-label={GROUP_LABEL[group]}>
-                  {grouped[group].map(card => (
-                    <div key={card.id} role="listitem">
-                      <FeedCard card={card} onTap={handleCardTap} />
-                    </div>
+            <div className="md:hidden">
+              <Tabs value={activeGroup} onValueChange={(v) => setActiveGroup(v as FeedGroup)}>
+                <TabsList aria-label="Группа карточек">
+                  {GROUP_ORDER.map(group => (
+                    <TabsTrigger key={group} value={group}>
+                      {GROUP_LABEL[group]}
+                      {grouped[group].length > 0 ? ` (${grouped[group].length})` : ""}
+                    </TabsTrigger>
                   ))}
+                </TabsList>
+                {GROUP_ORDER.map(group => (
+                  <TabsContent key={group} value={group}>
+                    {grouped[group].length > 0 ? (
+                      <div className="space-y-3" role="list" aria-label={GROUP_LABEL[group]}>
+                        {grouped[group].map(card => (
+                          <div key={card.id} role="listitem">
+                            <FeedCard card={card} onTap={handleCardTap} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-fg-muted text-sm text-center py-6">{GROUP_EMPTY[group]}</p>
+                    )}
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
+
+            <div className="hidden md:grid md:grid-cols-3 md:gap-4 md:items-start">
+              {GROUP_ORDER.map(group => (
+                <div key={group} className="space-y-2">
+                  <div className="text-fg-muted text-[0.68rem] tracking-[0.08em] uppercase font-semibold">
+                    {GROUP_LABEL[group]}
+                    {grouped[group].length > 0 ? ` (${grouped[group].length})` : ""}
+                  </div>
+                  {grouped[group].length > 0 ? (
+                    <div className="space-y-3" role="list" aria-label={GROUP_LABEL[group]}>
+                      {grouped[group].map(card => (
+                        <div key={card.id} role="listitem">
+                          <FeedCard card={card} onTap={handleCardTap} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-fg-muted text-xs">{GROUP_EMPTY[group]}</p>
+                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </>
         );
       })()}
