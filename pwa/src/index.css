@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* КРИТИЧНО: без этого Tailwind v4 триггерит dark: по системному
+ * prefers-color-scheme, ИГНОРИРУЯ наш собственный переключатель темы
+ * (Профиль → Тема оформления → Авто/Светлая/Тёмная, ставит data-theme
+ * на <html> через theme.ts). Пользователь с тёмной ОС, выбравший
+ * "Светлая" в приложении, видел бы карточки с dark:-цветами поверх
+ * светлого фона — низкий контраст, местами нечитаемый текст.
+ * Найдено 2026-07-02 при проверке #72 (лейблы карточек кураторa/родителя). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--c-bg);height:100%}
 #root{min-height:100vh;display:flex;flex-direction:column}

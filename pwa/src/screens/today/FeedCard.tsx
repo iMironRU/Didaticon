@@ -43,6 +43,16 @@ function kindMeta(kind: string): { label: string; border: string; badge: string 
     case "submissions_to_grade":   return { label: "На проверке",   border: "border-l-sky-400", badge: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300" };
     case "teacher_event_debt":     return { label: "Методический долг", border: "border-l-rose-400", badge: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" };
     case "module_close_required":  return { label: "Завершить модуль", border: "border-l-amber-400", badge: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" };
+    case "appeals":                 return { label: "Апелляция",        border: "border-l-amber-400", badge: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" };
+    case "grade_override_pending":  return { label: "Пересмотр оценки", border: "border-l-sky-400",   badge: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300" };
+    // curator/senior_grader kinds
+    case "group_attendance_summary": return { label: "Посещаемость",  border: "border-l-amber-400", badge: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" };
+    case "group_debts_summary":      return { label: "Долги группы",  border: "border-l-rose-400",  badge: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" };
+    case "student_at_risk":          return { label: "Риск отчисления", border: "border-l-red-500", badge: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200" };
+    // parent kinds
+    case "child_attendance_alert":   return { label: "Пропуск",        border: "border-l-rose-400", badge: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" };
+    case "child_debts_alert":        return { label: "Задолженность",  border: "border-l-red-500",  badge: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300" };
+    case "child_at_risk":            return { label: "Риск",           border: "border-l-red-500",  badge: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200" };
     default:                   return { label: kind,             border: "border-l-fg-dim",               badge: "bg-surface text-fg-muted" };
   }
 }

@@ -20,13 +20,21 @@ export function LeftRail({ tabs, activeId, onTap }: Props) {
         return (
           <button
             key={it.id}
-            className="flex flex-col items-center gap-1 bg-transparent border-0 py-2.5 cursor-pointer"
+            className="relative flex flex-col items-center gap-1 bg-transparent border-0 py-2.5 cursor-pointer"
             onClick={() => onTap(it.id)}
             aria-label={navAriaLabel(it)}
             aria-current={active ? "page" : undefined}
           >
-            <NavIcon icon={it.icon} badge={it.badge} colorClass={colorCls} />
-            <span className={`text-[0.62rem] font-medium ${colorCls}`} aria-hidden="true">
+            {/* Свечение активного пункта (issue #75) — размытый акцентный
+                ореол позади иконки, читается быстрее чем просто смена цвета. */}
+            {active && (
+              <span
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/25 blur-md"
+              />
+            )}
+            <span className="relative"><NavIcon icon={it.icon} badge={it.badge} colorClass={colorCls} /></span>
+            <span className={`relative text-[0.62rem] font-medium ${colorCls}`} aria-hidden="true">
               {it.label}
             </span>
           </button>
