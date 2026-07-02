@@ -556,9 +556,15 @@ export function TodayScreen({ contextId }: Props) {
           <>
             <div className="md:hidden">
               <Tabs value={activeGroup} onValueChange={(v) => setActiveGroup(v as FeedGroup)}>
-                <TabsList aria-label="Группа карточек">
+                {/* grid-cols-3 вместо базового inline-flex+overflow-x-auto (Tabs.tsx) —
+                    у нас всегда ровно 3 таба, фиксированная сетка не даёт им
+                    переполниться по ширине. overflow-visible обязателен: CSS
+                    трактует overflow-x:auto БЕЗ overflow-y как overflow-y:auto
+                    тоже (спека), и однопиксельное переполнение рисовало
+                    паразитный scrollbar (issue #84, найдено после деплоя). */}
+                <TabsList aria-label="Группа карточек" className="grid grid-cols-3 gap-0 overflow-visible">
                   {GROUP_ORDER.map(group => (
-                    <TabsTrigger key={group} value={group}>
+                    <TabsTrigger key={group} value={group} className="whitespace-normal text-center px-2 leading-tight">
                       {GROUP_LABEL[group]}
                       {grouped[group].length > 0 ? ` (${grouped[group].length})` : ""}
                     </TabsTrigger>
